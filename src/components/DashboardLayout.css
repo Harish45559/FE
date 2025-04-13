@@ -1,0 +1,84 @@
+.sidebar {
+  width: 220px;
+  background-color: #1f2a36;
+  color: #fff;
+  height: 100vh;
+  padding: 20px 10px;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+.sidebar h2 {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 30px;
+  text-align: center;
+  color: #fff;
+}
+
+.sidebar nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar nav ul li {
+  margin-bottom: 15px;
+}
+
+.sidebar nav ul li a,
+.sidebar nav ul li button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: #e0e0e0;
+  font-size: 15px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.sidebar nav ul li a.active,
+.sidebar nav ul li a:hover,
+.sidebar nav ul li button:hover {
+  background-color: #2f3d4f;
+  color: #fff;
+}
+
+.sidebar nav ul li button {
+  font-family: inherit;
+}
+
+/* Make sure icons and text align well */
+.sidebar nav ul li svg,
+.sidebar nav ul li img,
+.sidebar nav ul li span {
+  vertical-align: middle;
+}
+
+/* Optional: scrollbar for long menus */
+.sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background-color: #444;
+  border-radius: 6px;
+}
+
+.main-content {
+  margin-left: 220px;
+  padding: 20px;
+  min-height: 100vh;
+  background-color: #f8f9fa;
+}

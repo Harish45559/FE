@@ -1,0 +1,79 @@
+/* HeldOrders.css */
+
+.held-orders-wrapper {
+    padding: 1rem;
+    background: #f9fafb;
+    min-height: 100vh;
+  }
+  
+  .held-orders-wrapper h2 {
+    font-size: 1.6rem;
+    margin-bottom: 1rem;
+    color: #1f2937;
+  }
+  
+  .held-orders-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  
+  .held-orders-table th,
+  .held-orders-table td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  
+  .held-orders-table th {
+    background: #f1f5f9;
+    color: #374151;
+    font-weight: 600;
+  }
+  
+  .held-orders-table tr:hover {
+    background-color: #f9fafb;
+  }
+  
+  .held-orders-table button {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.2s ease-in-out;
+  }
+  
+  .held-orders-table button:hover {
+    background: #2563eb;
+  }
+  
+  .held-orders-table button[style*="red"] {
+    background-color: #f87171;
+  }
+  
+  .held-orders-table button[style*="red"]:hover {
+    background-color: #dc2626;
+  }
+  
+  .clear-btn {
+    margin-top: 1rem;
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    font-size: 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-block;
+  }
+  
+  .clear-btn:hover {
+    background: #b91c1c;
+  }
+  

@@ -1,0 +1,433 @@
+/* === Main Layout === */
+.billing-wrapper {
+  display: flex;
+  gap: 1.5rem;
+  padding: 1rem;
+  background: #f4f7f9;
+  height: 100vh;
+}
+
+.menu-left {
+  width: 60%;
+  overflow-y: auto;
+  padding-right: 1rem;
+}
+
+.summary-right {
+  width: 40%;
+  background: #fff;
+  border-radius: 10px;
+  padding: 1rem;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* === Header & Filters === */
+.billing-header h2 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.order-type-selector,
+.filters {
+  margin: 0.5rem 0;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.filters button {
+  background: #e2e8f0;
+  border: none;
+  border-radius: 20px;
+  padding: 6px 14px;
+  cursor: pointer;
+}
+
+.filters button.active {
+  background: #2563eb;
+  color: white;
+}
+
+/* === Menu Cards === */
+.menu-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.menu-card {
+  background: #fff;
+  padding: 10px;
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.menu-card:hover {
+  transform: scale(1.02);
+}
+
+.menu-card .veg {
+  background: green;
+}
+
+.menu-card .non-veg {
+  background: red;
+}
+
+/* === Order Items === */
+.order-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.customer-input {
+  width: 100%;
+  margin: 0.5rem 0;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e0;
+}
+
+.order-items {
+  margin-bottom: 1rem;
+}
+
+.order-item {
+  background: #f9fafb;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.item-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.item-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.item-controls button {
+  background: #edf2f7;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.item-controls button:hover {
+  background: #cbd5e0;
+}
+
+.item-remove {
+  background: none;
+  color: red;
+  font-size: 14px;
+  margin-left: 6px;
+  cursor: pointer;
+  border: none;
+}
+
+/* === Summary === */
+.order-summary .line {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  border-bottom: 1px dashed #e2e8f0;
+}
+
+.order-summary .total {
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+/* === Order Buttons === */
+.order-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+  align-items: center;
+}
+
+.order-row {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.payment-row {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.order-btn {
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  transition: 0.2s ease;
+}
+
+.btn-cash {
+  background-color: #2196f3;
+  color: white;
+}
+
+.btn-card {
+  background-color: #e0e0e0;
+  color: #333;
+}
+
+.btn-clear {
+  color: white;
+  padding: 10px;
+  width: 42px;
+  height: 42px;
+  justify-content: center;
+}
+
+.btn-hold {
+  background-color: #f1f1f1;
+  color: #333;
+}
+
+.btn-place {
+  background-color: #4caf50;
+  color: white;
+}
+
+/* === Veg Status & Category === */
+.veg-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dot.veg {
+  background-color: green;
+}
+
+.dot.non-veg {
+  background-color: red;
+}
+
+.category-label {
+  display: block;
+  margin-top: 4px;
+  color: #666;
+  font-size: 13px;
+}
+
+/* === Receipt Preview Overlay === */
+.receipt-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.bill-section {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  width: 360px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  position: relative;
+  animation: fadeIn 0.2s ease-in-out;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+@keyframes fadeIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.receipt-header {
+  text-align: center;
+}
+
+.receipt-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.receipt-table th,
+.receipt-table td {
+  padding: 4px;
+  text-align: left;
+  border-bottom: 1px dotted #ccc;
+}
+
+.receipt-summary {
+  font-size: 14px;
+  margin-top: 1rem;
+}
+
+.includes-label {
+  font-size: 13px;
+  color: #666;
+}
+
+.grand-total {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.server-name {
+  margin-top: 10px;
+}
+
+.footer-note {
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.qr-section {
+  text-align: center;
+}
+
+/* === Print Styling for Thermal Printer (80mm) === */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .bill-section, .bill-section * {
+    visibility: visible;
+  }
+
+  .bill-section {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 80mm;
+    padding: 10px;
+    margin: 0;
+    box-shadow: none;
+    border-radius: 0;
+    background: white;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 11px;
+    color: #000;
+  }
+
+  .bill-section h2 {
+    font-size: 16px;
+    text-align: center;
+    margin: 4px 0;
+  }
+
+  .receipt-header,
+  .receipt-summary {
+    text-align: left;
+  }
+
+  .receipt-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 6px;
+    font-size: 11px;
+  }
+
+  .receipt-table th,
+  .receipt-table td {
+    padding: 5px 0;
+    text-align: left;
+  }
+
+  .receipt-summary p {
+    margin: 2px 0;
+  }
+
+  .receipt-summary hr {
+    margin: 4px 0;
+    border: 0;
+    border-top: 1px dashed #000;
+  }
+
+  .qr-section {
+    margin-top: 8px;
+  }
+
+  .close-preview-btn,
+  .print-btn {
+    display: none !important;
+  }
+
+  .receipt-overlay {
+    background: none !important;
+  }
+
+  @page {
+    size: 80mm auto;
+    margin: 0;
+  }
+}
+
+
+.receipt-header-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.print-btn {
+  font-size: 12px;
+  background: #000;
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: none;
+}
+
+.close-preview-btn {
+  font-size: 12px;
+  background: transparent;
+  color: red;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+}
