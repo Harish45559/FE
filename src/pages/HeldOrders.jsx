@@ -9,9 +9,16 @@ const HeldOrders = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem("heldOrders")) || [];
-    setHeldOrders(stored);
+    const data = localStorage.getItem("heldOrders");
+    try {
+      const parsed = JSON.parse(data ?? "[]");
+      setHeldOrders(Array.isArray(parsed) ? parsed : []);
+    } catch (err) {
+      console.error("Failed to parse heldOrders from localStorage", err);
+      setHeldOrders([]);
+    }
   }, []);
+  
 
   const handleResume = (order) => {
     localStorage.setItem("resumedOrder", JSON.stringify(order));
