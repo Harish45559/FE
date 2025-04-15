@@ -27,12 +27,12 @@ const DashboardLayout = ({ children }) => {
             <li><NavLink to="/previous-orders">📜 Previous Orders</NavLink></li>
             <li><NavLink to="/held-orders">🕒 Held Orders</NavLink></li>
             <li><NavLink to="/master-data">🗂️ Master Data</NavLink></li>
-            {user?.role === 'admin' && (
-              <>
+           
+             
                 <li><NavLink to="/billing">🍽 Billing Counter</NavLink></li>
                 <li><NavLink to="/sales-report">📊 Sales Report</NavLink></li>
-              </>
-            )}
+              
+         
             <li><button onClick={handleLogout}>🔒 Logout</button></li>
           </ul>
         </nav>
