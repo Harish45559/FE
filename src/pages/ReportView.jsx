@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import api from '../services/api'; // ✅ use axios instance
 
 const ReportView = () => {
   const { id } = useParams();
   const [reportHtml, setReportHtml] = useState('');
 
   useEffect(() => {
-    fetch(`http://localhost:5000/api/reports/view/${id}`)
-      .then((res) => res.text())
-      .then(setReportHtml)
+    api.get(`/reports/view/${id}`)
+      .then((res) => setReportHtml(res.data)) // ✅ axios returns res.data
       .catch(() => setReportHtml('<p>Failed to load report</p>'));
   }, [id]);
 
