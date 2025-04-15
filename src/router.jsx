@@ -5,12 +5,11 @@ import Login from './pages/Login';
 import Attendance from './pages/Attendance';
 import Employees from './pages/Employees';
 import Reports from './pages/Reports';
-
 import PreviousOrders from './pages/PreviousOrders';
 import HeldOrders from './pages/HeldOrders';
 import MasterData from './pages/MasterData';
 import BillingCounter from './pages/BillingCounter';
-import EndOfDaySales from './pages/EndOfDaySales'; // adjust path if needed
+import EndOfDaySales from './pages/EndOfDaySales';
 
 const AppRouter = () => {
   const routes = useRoutes([
@@ -23,9 +22,7 @@ const AppRouter = () => {
     { path: '/held-orders', element: <HeldOrders /> },
     { path: '/master-data', element: <MasterData /> },
     { path: '/billing', element: <BillingCounter /> },
-    {path: '/sales-report', element: <EndOfDaySales />} 
-    
-    
+    { path: '/sales-report', element: <EndOfDaySales /> }
   ]);
   return routes;
 };
