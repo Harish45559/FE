@@ -14,14 +14,18 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const res = await api.post('/login', form); // Because backend route is /api/login
+      const res = await api.post('/login', form);
+  
+      // Save token
       localStorage.setItem('token', res.data.token);
-      localStorage.setItem('user', JSON.stringify(res.data.user));
-      navigate(res.data.user.role === 'admin' ? '/dashboard' : '/attendance');
+  
+      // Navigate manually (no user.role, so assume admin for now)
+      navigate('/dashboard'); // or '/attendance' based on your logic
     } catch (err) {
-      setError(err.response?.data?.error || 'Login failed');
+      setError(err.response?.data?.message || 'Login failed');
     }
   };
+  
 
   return (
     <div className="login-page">
