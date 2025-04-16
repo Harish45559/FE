@@ -19,25 +19,23 @@ const DashboardLayout = ({ children }) => {
       <aside className="sidebar">
         <h2>Cozy Cup</h2>
         <nav>
-  <ul>
-    {user?.role === 'admin' && (
-      <>
-        <li><NavLink to="/dashboard">🏠 Dashboard</NavLink></li>
-        <li><NavLink to="/employees">👥 Employees</NavLink></li>
-        <li><NavLink to="/reports">📊 Reports</NavLink></li>
-        <li><NavLink to="/master-data">🧾 Master Data</NavLink></li>
-        <li><NavLink to="/end-of-day-sales">📈 End of Day Sales</NavLink></li>
-      </>
-    )}
-    
-    {/* Shared routes */}
-    <li><NavLink to="/attendance">⏰ Attendance</NavLink></li>
-    <li><NavLink to="/billing-counter">🧾 Billing</NavLink></li>
-    <li><NavLink to="/previous-orders">📜 Previous Orders</NavLink></li>
-    <li><NavLink to="/held-orders">⏳ Held Orders</NavLink></li>
-  </ul>
-</nav>
-
+          <ul>
+            <li><NavLink to="/dashboard">🏠 Dashboard</NavLink></li>
+            <li><NavLink to="/employees">👥 Employees</NavLink></li>
+            <li><NavLink to="/attendance">⏰ Attendance</NavLink></li>
+            <li><NavLink to="/reports">📊 Reports</NavLink></li>
+            <li><NavLink to="/previous-orders">📜 Previous Orders</NavLink></li>
+            <li><NavLink to="/held-orders">🕒 Held Orders</NavLink></li>
+            <li><NavLink to="/master-data">🗂️ Master Data</NavLink></li>
+           
+             
+                <li><NavLink to="/billing">🍽 Billing Counter</NavLink></li>
+                <li><NavLink to="/sales-report">📊 Sales Report</NavLink></li>
+              
+         
+            <li><button onClick={handleLogout}>🔒 Logout</button></li>
+          </ul>
+        </nav>
       </aside>
 
       <main className="main-content">
