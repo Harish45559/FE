@@ -19,7 +19,7 @@ const DashboardLayout = ({ children }) => {
       <aside className="sidebar">
         <h2>Cozy Cup</h2>
         <ul>
-          {/* 🔐 Admin-only routes */}
+          {/* Admin-only routes */}
           {user?.role === 'admin' && (
             <>
               <li><NavLink to="/dashboard">📊 Dashboard</NavLink></li>
@@ -30,13 +30,13 @@ const DashboardLayout = ({ children }) => {
             </>
           )}
 
-          {/* ✅ Shared routes (visible to both admin and employee) */}
+          {/* Shared for both admin and employee */}
           <li><NavLink to="/attendance">⏰ Attendance</NavLink></li>
           <li><NavLink to="/billing">💵 Billing Counter</NavLink></li>
           <li><NavLink to="/previous-orders">📜 Previous Orders</NavLink></li>
           <li><NavLink to="/held-orders">⏳ Held Orders</NavLink></li>
 
-          {/* 🚪 Logout button */}
+          {/* Logout */}
           <li>
             <button onClick={handleLogout} style={{ marginTop: '1rem' }}>
               🚪 Logout
