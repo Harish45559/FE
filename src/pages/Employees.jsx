@@ -44,26 +44,18 @@ const Employees = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     try {
       const payload = { ...form };
-
-      // Hash password if provided
-      if (payload.password) {
-        payload.password = await bcrypt.hash(payload.password, 10);
-      }
-
-      // Hash PIN if provided
-      if (payload.pin) {
-        payload.pin = await bcrypt.hash(payload.pin, 10);
-      }
-
+  
+      // ✅ No more bcrypt.hash here — let backend handle it
+  
       if (editingId) {
         await api.put(`/employees/${editingId}`, payload);
       } else {
         await api.post('/employees', payload);
       }
-
+  
       setForm({
         first_name: '',
         last_name: '',
@@ -79,7 +71,7 @@ const Employees = () => {
         brp: '',
         pin: ''
       });
-
+  
       setEditingId(null);
       setFormVisible(false);
       fetchEmployees();
@@ -88,6 +80,7 @@ const Employees = () => {
       alert(err.response?.data?.error || 'Failed to add employee');
     }
   };
+  
 
   const handleEdit = (emp) => {
     setForm({
