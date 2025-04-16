@@ -18,7 +18,7 @@ const AppRouter = () => {
     { path: '/', element: <Login /> },
     { path: '/forgot-password', element: <ForgotPassword /> },
 
-    // ✅ Admin-only routes wrapped with ProtectedRoute
+    // 🔐 Admin-only routes
     {
       path: '/dashboard',
       element: (
@@ -60,11 +60,11 @@ const AppRouter = () => {
       )
     },
 
-    // ✅ Shared routes (admin + employee)
+    // ✅ Shared routes
     { path: '/attendance', element: <Attendance /> },
+    { path: '/billing', element: <BillingCounter /> },
     { path: '/previous-orders', element: <PreviousOrders /> },
     { path: '/held-orders', element: <HeldOrders /> },
-    { path: '/billing', element: <BillingCounter /> }
   ]);
 
   return routes;
