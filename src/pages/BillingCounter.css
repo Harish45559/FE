@@ -164,7 +164,12 @@
   align-items: center;
 }
 
-.order-row,
+.order-row {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
 .payment-row {
   display: flex;
   gap: 12px;
@@ -322,32 +327,6 @@
   text-align: center;
 }
 
-.receipt-header-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.print-btn {
-  font-size: 12px;
-  background: #000;
-  color: #fff;
-  padding: 4px 10px;
-  border-radius: 4px;
-  cursor: pointer;
-  border: none;
-}
-
-.close-preview-btn {
-  font-size: 12px;
-  background: transparent;
-  color: red;
-  border: none;
-  font-weight: bold;
-  cursor: pointer;
-}
-
 /* === Print Styling for Thermal Printer (80mm) === */
 @media print {
   body * {
@@ -423,5 +402,78 @@
   @page {
     size: 80mm auto;
     margin: 0;
+  }
+}
+
+
+.receipt-header-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.print-btn {
+  font-size: 12px;
+  background: #000;
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: none;
+}
+
+.close-preview-btn {
+  font-size: 12px;
+  background: transparent;
+  color: red;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+
+@media print {
+  body {
+    margin: 0;
+    padding: 0;
+    background: white;
+  }
+
+  .dashboard-container,
+  .sidebar,
+  .billing-wrapper,
+  .menu-left,
+  .summary-right,
+  .non-print-area {
+    display: none !important;
+  }
+
+  .receipt-overlay {
+    display: block;
+    padding: 0;
+    margin: 0;
+  }
+
+  .bill-section {
+    width: 72mm;
+    margin: 0 auto;
+    font-size: 12px;
+    line-height: 1.3;
+    background: white;
+    color: black;
+    padding: 0;
+    page-break-inside: avoid;
+  }
+
+  .bill-section * {
+    page-break-inside: avoid !important;
+    page-break-before: avoid !important;
+    page-break-after: avoid !important;
+  }
+
+  .print-btn,
+  .close-preview-btn {
+    display: none !important;
   }
 }
