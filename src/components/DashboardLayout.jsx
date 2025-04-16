@@ -20,7 +20,7 @@ const DashboardLayout = ({ children }) => {
         <h2>Cozy Cup</h2>
         <ul>
           {/* 🔐 Admin-only routes */}
-          {user?.role === 'employee' && (
+          {user?.role === 'admin' && (
             <>
               <li><NavLink to="/dashboard">📊 Dashboard</NavLink></li>
               <li><NavLink to="/employees">👥 Employees</NavLink></li>
