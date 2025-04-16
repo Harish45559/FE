@@ -3,7 +3,7 @@ import DashboardLayout from '../components/DashboardLayout';
 import api from '../services/api';
 import { FaEdit, FaTrash } from 'react-icons/fa';
 import './Employees.css';
-import bcrypt from 'bcryptjs';
+
 
 const Employees = () => {
   const [employees, setEmployees] = useState([]);
