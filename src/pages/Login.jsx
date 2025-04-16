@@ -16,9 +16,13 @@ const Login = () => {
     try {
       const res = await api.post('/login', form);
 
-      // Save token + role
+      // Save token + full user object
       localStorage.setItem('token', res.data.token);
-      localStorage.setItem('role', res.data.role);
+      localStorage.setItem('user', JSON.stringify({
+        username: form.username,
+        role: res.data.role,
+        token: res.data.token,
+      }));
 
       // Redirect based on role
       if (res.data.role === 'admin') {
