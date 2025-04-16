@@ -10,10 +10,13 @@ import HeldOrders from './pages/HeldOrders';
 import MasterData from './pages/MasterData';
 import BillingCounter from './pages/BillingCounter';
 import EndOfDaySales from './pages/EndOfDaySales';
+import ForgotPassword from './pages/ForgotPassword'; // <-- add this with other imports
+
 
 const AppRouter = () => {
   const routes = useRoutes([
     { path: '/', element: <Login /> },
+    { path: '/forgot-password', element: <ForgotPassword /> },
     { path: '/dashboard', element: <Dashboard /> },
     { path: '/attendance', element: <Attendance /> },
     { path: '/employees', element: <Employees /> },
@@ -23,6 +26,7 @@ const AppRouter = () => {
     { path: '/master-data', element: <MasterData /> },
     { path: '/billing', element: <BillingCounter /> },
     { path: '/sales-report', element: <EndOfDaySales /> }
+
   ]);
   return routes;
 };
