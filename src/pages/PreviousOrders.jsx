@@ -63,22 +63,44 @@ const PreviousOrders = () => {
   );
 
   const handlePrint = () => {
-    const win = window.open("", "", "width=600,height=600");
-    win.document.write(`
+    const printWindow = window.open("", "_blank", "width=600,height=600");
+    printWindow.document.write(`
       <html><head><title>Receipt</title>
       <style>
-        body { font-family: 'Courier New', Courier, monospace; padding: 20px; }
-        .receipt-header, .receipt-summary, table { width: 100%; }
-        table { border-collapse: collapse; font-size: 13px; }
-        th, td { border-bottom: 1px dotted #ccc; padding: 4px; text-align: left; }
-        h2 { text-align: center; }
+        @page { size: 80mm auto; margin: 0; }
+        body {
+          font-family: 'Courier New', monospace;
+          font-size: 11px;
+          padding: 0;
+          margin: 0;
+          background: white;
+          width: 80mm;
+        }
+        .receipt-header, .receipt-summary, table {
+          width: 100%;
+        }
+        table {
+          border-collapse: collapse;
+          font-size: 11px;
+        }
+        th, td {
+          border-bottom: 1px dotted #ccc;
+          padding: 4px;
+          text-align: left;
+        }
+        h2 {
+          text-align: center;
+          font-size: 16px;
+          margin: 4px 0;
+        }
       </style>
       </head><body>
     `);
-    win.document.write(printRef.current.innerHTML);
-    win.document.write("</body></html>");
-    win.document.close();
-    win.print();
+    printWindow.document.write(printRef.current.innerHTML);
+    printWindow.document.write("</body></html>");
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
   };
 
   const clearSearch = () => {
