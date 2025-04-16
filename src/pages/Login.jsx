@@ -15,23 +15,28 @@ const Login = () => {
     e.preventDefault();
     try {
       const res = await api.post('/login', form);
-  
-      // Save token
+
+      // Save token + role
       localStorage.setItem('token', res.data.token);
-  
-      // Navigate manually (no user.role, so assume admin for now)
-      navigate('/dashboard'); // or '/attendance' based on your logic
+      localStorage.setItem('role', res.data.role);
+
+      // Redirect based on role
+      if (res.data.role === 'admin') {
+        navigate('/dashboard');
+      } else if (res.data.role === 'employee') {
+        navigate('/attendance');
+      } else {
+        setError('Unknown role');
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed');
     }
   };
-  
 
   return (
     <div className="login-page">
       <div className="login-left">
         <div className="login-box">
-        
           <h2>Login</h2>
           {error && <div className="error">{error}</div>}
           <form onSubmit={handleLogin}>
@@ -52,14 +57,12 @@ const Login = () => {
             <button type="submit">Login</button>
           </form>
           <p className="forgot-password-link">
-  <a href="/forgot-password">Forgot Password?</a>
-</p>
-
+            <a href="/forgot-password">Forgot Password?</a>
+          </p>
         </div>
       </div>
       <div className="login-right">
         <img src="download.png" alt="Logo" />
-        
       </div>
     </div>
   );
