@@ -1,27 +1,41 @@
 import React, { useEffect, useState } from 'react';
-import api from '../services/api';
 import DashboardLayout from '../components/DashboardLayout';
+import api from '../services/api';
+import { DateTime } from 'luxon';
 import './Attendance.css';
-import toast from 'react-hot-toast';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const Attendance = () => {
   const [employees, setEmployees] = useState([]);
-  const [pin, setPin] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState(null);
-  const [action, setAction] = useState('clock-in');
-  const [refresh, setRefresh] = useState(false);
+  const [pin, setPin] = useState('');
+  const [actionType, setActionType] = useState(null);
+  const [currentTime, setCurrentTime] = useState(DateTime.now().setZone('Europe/London'));
 
   useEffect(() => {
     fetchEmployees();
-  }, [refresh]);
+
+    const interval = setInterval(fetchEmployees, 30000);
+    const clockInterval = setInterval(() => {
+      setCurrentTime(DateTime.now().setZone('Europe/London'));
+    }, 1000);
+
+    return () => {
+      clearInterval(interval);
+      clearInterval(clockInterval);
+    };
+  }, []);
 
   const fetchEmployees = async () => {
     try {
-      const empRes = await api.get('/employees');
-      const statusRes = await api.get('/attendance/status');
+      const [empRes, statusRes] = await Promise.all([
+        api.get('/employees'),
+        api.get('/attendance/status'),
+      ]);
 
       const statusMap = statusRes.data.reduce((map, emp) => {
-        map[emp.id] = emp.status;  // 'Clocked In', 'Clocked Out', etc.
+        map[emp.id] = emp.status;
         return map;
       }, {});
 
@@ -32,31 +46,44 @@ const Attendance = () => {
 
       setEmployees(updated);
     } catch (err) {
-      console.error('Fetch employees error:', err);
+      toast.error('Failed to fetch employees or status');
+      console.error(err);
     }
   };
 
-  const handleClockAction = async () => {
-    if (!selectedEmployee) return;
-    if (!pin) {
-      toast.error('Enter your PIN');
+  const handleNumberClick = (num) => {
+    if (pin.length < 4) setPin(prev => prev + num);
+  };
+
+  const handleClear = () => setPin('');
+  const handleBackspace = () => setPin(pin.slice(0, -1));
+
+  const handleSubmit = async () => {
+    if (!selectedEmployee || !actionType || pin.length !== 4) {
+      toast.warning('Select employee, action, and enter 4-digit PIN');
       return;
     }
 
     try {
-      const endpoint = action === 'clock-in' ? '/attendance/clock-in' : '/attendance/clock-out';
-      await api.post(endpoint, {
+      const endpoint = actionType === 'clock_in' ? '/attendance/clock-in' : '/attendance/clock-out';
+      const res = await api.post(endpoint, {
         employee_id: selectedEmployee.id,
         pin,
       });
 
-      toast.success(`${action === 'clock-in' ? 'Clocked In' : 'Clocked Out'} successfully!`);
+      const clockedAt = res.data.clock_in || res.data.clock_out;
+      const totalHours = res.data.total_work_hours || '—';
+      const timeFormatted = DateTime.fromISO(clockedAt).setZone('Europe/London').toFormat('dd/MM/yyyy HH:mm');
+
+      toast.success(`✅ ${actionType.replace('_', ' ')} successful at ${timeFormatted}. Worked: ${totalHours}`);
+
       setPin('');
+      setActionType(null);
       setSelectedEmployee(null);
-      setRefresh(!refresh);
+      await fetchEmployees();
     } catch (err) {
-      console.error(`${action} error:`, err.response?.data || err.message);
-      toast.error(err.response?.data?.error || 'Failed');
+      console.error('Attendance Error:', err);
+      toast.error(err.response?.data?.error || 'Attendance failed');
     }
   };
 
@@ -64,50 +91,71 @@ const Attendance = () => {
     <DashboardLayout>
       <div className="attendance-container">
         <div className="employee-list">
-          {employees.map((emp) => (
-            <div
-              key={emp.id}
-              className={`employee-card ${selectedEmployee?.id === emp.id ? 'selected' : ''}`}
-              onClick={() => setSelectedEmployee(emp)}
-            >
-              <h3>{emp.first_name} {emp.last_name}</h3>
-              <p>{emp.username}</p>
-              <div style={{ marginTop: 4, fontWeight: 'bold' }}>
-                {emp.attendance_status === 'Clocked In' && <span style={{ color: 'green' }}>🟢 Clocked In</span>}
-                {emp.attendance_status === 'Clocked Out' && <span style={{ color: 'red' }}>🔴 Clocked Out</span>}
-                {(!emp.attendance_status || emp.attendance_status === 'Not Clocked In') && <span style={{ color: 'gray' }}>⚪ Not Clocked In</span>}
+          <h4>Employees</h4>
+          <div className="employee-grid">
+            {employees.map(emp => (
+              <div
+                key={emp.id}
+                className={`employee-card ${selectedEmployee?.id === emp.id ? 'selected' : ''}`}
+                onClick={() => setSelectedEmployee(emp)}
+              >
+                <strong>{emp.first_name} {emp.last_name}</strong>
+                <div>{emp.username}</div>
+                <div style={{ marginTop: 4, fontWeight: 'bold' }}>
+                  {emp.attendance_status === 'Clocked In' && <span style={{ color: 'green' }}>🟢 Clocked In</span>}
+                  {emp.attendance_status === 'Clocked Out' && <span style={{ color: 'red' }}>🔴 Clocked Out</span>}
+                  {(!emp.attendance_status || emp.attendance_status === 'Not Clocked In') && <span style={{ color: 'gray' }}>⚪ Not Clocked In</span>}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
 
         <div className="clock-panel">
-          <div className="action-toggle">
-            <button
-              className={action === 'clock-in' ? 'active' : ''}
-              onClick={() => setAction('clock-in')}
-            >
-              Clock In
-            </button>
-            <button
-              className={action === 'clock-out' ? 'active' : ''}
-              onClick={() => setAction('clock-out')}
-            >
-              Clock Out
-            </button>
+          <div className="live-clock">
+            <div>{currentTime.toFormat('dd/MM/yyyy')}</div>
+            <div>{currentTime.toFormat('HH:mm:ss')}</div>
           </div>
 
-          <div className="pin-display">{pin.replace(/./g, '*')}</div>
-          <div className="pin-pad">
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map((n) => (
-              <button key={n} onClick={() => setPin(pin + n)}>{n}</button>
-            ))}
-            <button onClick={() => setPin('')}>Clear</button>
+          {selectedEmployee && (
+            <div className="selected-employee">
+              Selected: {selectedEmployee.first_name} {selectedEmployee.last_name}
+            </div>
+          )}
+
+          <div className="pin-display">
+            {pin.split('').map((digit, i) => <span key={i}>{digit}</span>)}
+            {[...Array(4 - pin.length)].map((_, i) => <span key={`dot-${i}`}>•</span>)}
           </div>
 
-          <button className="submit-button" onClick={handleClockAction}>
-            Submit
-          </button>
+          <div className="pinpad-row">
+            <div className="numbers">
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => (
+                <button key={n} onClick={() => handleNumberClick(n.toString())}>{n}</button>
+              ))}
+              <button onClick={() => handleNumberClick('0')}>0</button>
+              <button onClick={handleClear}>C</button>
+              <button onClick={handleBackspace}>←</button>
+            </div>
+
+            <div className="action-buttons">
+              <button
+                className={`action-card blue ${actionType === 'clock_in' ? 'active' : ''}`}
+                onClick={() => setActionType('clock_in')}
+              >
+                Clock In
+              </button>
+              <button
+                className={`action-card red ${actionType === 'clock_out' ? 'active' : ''}`}
+                onClick={() => setActionType('clock_out')}
+              >
+                Clock Out
+              </button>
+              <button className="action-card green" onClick={handleSubmit}>
+                Submit
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </DashboardLayout>
