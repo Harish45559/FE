@@ -431,3 +431,49 @@
   font-weight: bold;
   cursor: pointer;
 }
+
+
+@media print {
+  body {
+    margin: 0;
+    padding: 0;
+    background: white;
+  }
+
+  .dashboard-container,
+  .sidebar,
+  .billing-wrapper,
+  .menu-left,
+  .summary-right,
+  .non-print-area {
+    display: none !important;
+  }
+
+  .receipt-overlay {
+    display: block;
+    padding: 0;
+    margin: 0;
+  }
+
+  .bill-section {
+    width: 72mm;
+    margin: 0 auto;
+    font-size: 12px;
+    line-height: 1.3;
+    background: white;
+    color: black;
+    padding: 0;
+    page-break-inside: avoid;
+  }
+
+  .bill-section * {
+    page-break-inside: avoid !important;
+    page-break-before: avoid !important;
+    page-break-after: avoid !important;
+  }
+
+  .print-btn,
+  .close-preview-btn {
+    display: none !important;
+  }
+}
