@@ -10,24 +10,63 @@ import HeldOrders from './pages/HeldOrders';
 import MasterData from './pages/MasterData';
 import BillingCounter from './pages/BillingCounter';
 import EndOfDaySales from './pages/EndOfDaySales';
-import ForgotPassword from './pages/ForgotPassword'; // <-- add this with other imports
-
+import ForgotPassword from './pages/ForgotPassword';
+import ProtectedRoute from './components/ProtectedRoute';
 
 const AppRouter = () => {
   const routes = useRoutes([
     { path: '/', element: <Login /> },
     { path: '/forgot-password', element: <ForgotPassword /> },
-    { path: '/dashboard', element: <Dashboard /> },
+
+    // ✅ Admin-only routes wrapped with ProtectedRoute
+    {
+      path: '/dashboard',
+      element: (
+        <ProtectedRoute allowedRoles={['admin']}>
+          <Dashboard />
+        </ProtectedRoute>
+      )
+    },
+    {
+      path: '/employees',
+      element: (
+        <ProtectedRoute allowedRoles={['admin']}>
+          <Employees />
+        </ProtectedRoute>
+      )
+    },
+    {
+      path: '/reports',
+      element: (
+        <ProtectedRoute allowedRoles={['admin']}>
+          <Reports />
+        </ProtectedRoute>
+      )
+    },
+    {
+      path: '/master-data',
+      element: (
+        <ProtectedRoute allowedRoles={['admin']}>
+          <MasterData />
+        </ProtectedRoute>
+      )
+    },
+    {
+      path: '/sales-report',
+      element: (
+        <ProtectedRoute allowedRoles={['admin']}>
+          <EndOfDaySales />
+        </ProtectedRoute>
+      )
+    },
+
+    // ✅ Shared routes (admin + employee)
     { path: '/attendance', element: <Attendance /> },
-    { path: '/employees', element: <Employees /> },
-    { path: '/reports', element: <Reports /> },
     { path: '/previous-orders', element: <PreviousOrders /> },
     { path: '/held-orders', element: <HeldOrders /> },
-    { path: '/master-data', element: <MasterData /> },
-    { path: '/billing', element: <BillingCounter /> },
-    { path: '/sales-report', element: <EndOfDaySales /> }
-
+    { path: '/billing', element: <BillingCounter /> }
   ]);
+
   return routes;
 };
 
