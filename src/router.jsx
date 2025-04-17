@@ -25,23 +25,60 @@ const AppRouter = () => {
         <ProtectedRoute allowedRoles={['admin']}>
           <Dashboard />
         </ProtectedRoute>
-      )
+      ),
     },
+
     {
       path: '/employees',
       element: (
         <ProtectedRoute allowedRoles={['admin']}>
           <Employees />
         </ProtectedRoute>
-      )
+      ),
     },
+
+          // 🔐 Shared routes - for both admin and employee
+          {
+            path: '/attendance',
+            element: (
+              <ProtectedRoute allowedRoles={['admin', 'employee']}>
+                <Attendance />
+              </ProtectedRoute>
+            ),
+          },
+  
+    {
+      path: '/billing',
+      element: (
+        <ProtectedRoute allowedRoles={['admin', 'employee']}>
+          <BillingCounter />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: '/previous-orders',
+      element: (
+        <ProtectedRoute allowedRoles={['admin', 'employee']}>
+          <PreviousOrders />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: '/held-orders',
+      element: (
+        <ProtectedRoute allowedRoles={['admin', 'employee']}>
+          <HeldOrders />
+        </ProtectedRoute>
+      ),
+    },
+
     {
       path: '/reports',
       element: (
         <ProtectedRoute allowedRoles={['admin']}>
           <Reports />
         </ProtectedRoute>
-      )
+      ),
     },
     {
       path: '/master-data',
@@ -49,7 +86,7 @@ const AppRouter = () => {
         <ProtectedRoute allowedRoles={['admin']}>
           <MasterData />
         </ProtectedRoute>
-      )
+      ),
     },
     {
       path: '/sales-report',
@@ -57,15 +94,11 @@ const AppRouter = () => {
         <ProtectedRoute allowedRoles={['admin']}>
           <EndOfDaySales />
         </ProtectedRoute>
-      )
+      ),
     },
-
-    // ✅ Shared routes
-    { path: '/attendance', element: <Attendance /> },
-    { path: '/billing', element: <BillingCounter /> },
-    { path: '/previous-orders', element: <PreviousOrders /> },
-    { path: '/held-orders', element: <HeldOrders /> },
   ]);
+
+
 
   return routes;
 };
