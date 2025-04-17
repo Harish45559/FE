@@ -342,8 +342,8 @@
     top: 0;
     left: 0;
     width: 80mm;
-    padding: 10px;
     margin: 0;
+    padding: 4mm;
     box-shadow: none;
     border-radius: 0;
     background: white;
@@ -352,27 +352,30 @@
     color: #000;
   }
 
-  .bill-section h2 {
-    font-size: 16px;
-    text-align: center;
-    margin: 4px 0;
+  .receipt-header {
+    text-align: center !important;
   }
 
-  .receipt-header,
-  .receipt-summary {
-    text-align: left;
+  .receipt-header h2 {
+    font-size: 16px;
+    margin: 2px 0;
+  }
+
+  .receipt-header p {
+    margin: 2px 0;
+    text-align: center;
   }
 
   .receipt-table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 6px;
     font-size: 11px;
+    margin-top: 6px;
   }
 
   .receipt-table th,
   .receipt-table td {
-    padding: 5px 0;
+    padding: 3px 0;
     text-align: left;
   }
 
@@ -382,16 +385,12 @@
 
   .receipt-summary hr {
     margin: 4px 0;
-    border: 0;
+    border: none;
     border-top: 1px dashed #000;
   }
 
-  .qr-section {
-    margin-top: 8px;
-  }
-
-  .close-preview-btn,
-  .print-btn {
+  .print-btn,
+  .close-preview-btn {
     display: none !important;
   }
 
@@ -404,6 +403,7 @@
     margin: 0;
   }
 }
+
 
 
 .receipt-header-actions {
