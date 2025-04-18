@@ -7,11 +7,15 @@
   height: 100vh;
 }
 
+
+
 .menu-left {
   width: 60%;
   overflow-y: auto;
   padding-right: 1rem;
 }
+
+
 
 .summary-right {
   width: 40%;
@@ -24,11 +28,15 @@
   justify-content: space-between;
 }
 
+
+
 /* === Header & Filters === */
 .billing-header h2 {
   font-size: 1.5rem;
   margin-bottom: 0.5rem;
 }
+
+
 
 .order-type-selector,
 .filters {
@@ -39,6 +47,8 @@
   flex-wrap: wrap;
 }
 
+
+
 .filters button {
   background: #e2e8f0;
   border: none;
@@ -47,10 +57,14 @@
   cursor: pointer;
 }
 
+
+
 .filters button.active {
   background: #2563eb;
   color: white;
 }
+
+
 
 /* === Menu Cards === */
 .menu-grid {
@@ -59,6 +73,8 @@
   gap: 1rem;
   margin-top: 1rem;
 }
+
+
 
 .menu-card {
   background: #fff;
@@ -69,23 +85,33 @@
   transition: transform 0.2s;
 }
 
+
+
 .menu-card:hover {
   transform: scale(1.02);
 }
+
+
 
 .menu-card .veg {
   background: green;
 }
 
+
+
 .menu-card .non-veg {
   background: red;
 }
+
+
 
 /* === Order Items === */
 .order-panel {
   display: flex;
   flex-direction: column;
 }
+
+
 
 .customer-input {
   width: 100%;
@@ -95,9 +121,13 @@
   border: 1px solid #cbd5e0;
 }
 
+
+
 .order-items {
   margin-bottom: 1rem;
 }
+
+
 
 .order-item {
   background: #f9fafb;
@@ -110,16 +140,22 @@
   align-items: center;
 }
 
+
+
 .item-info {
   display: flex;
   flex-direction: column;
 }
+
+
 
 .item-controls {
   display: flex;
   align-items: center;
   gap: 0.3rem;
 }
+
+
 
 .item-controls button {
   background: #edf2f7;
@@ -129,9 +165,13 @@
   cursor: pointer;
 }
 
+
+
 .item-controls button:hover {
   background: #cbd5e0;
 }
+
+
 
 .item-remove {
   background: none;
@@ -142,6 +182,8 @@
   border: none;
 }
 
+
+
 /* === Summary === */
 .order-summary .line {
   display: flex;
@@ -150,10 +192,14 @@
   border-bottom: 1px dashed #e2e8f0;
 }
 
+
+
 .order-summary .total {
   font-weight: bold;
   font-size: 1.1rem;
 }
+
+
 
 /* === Order Buttons === */
 .order-buttons {
@@ -164,17 +210,23 @@
   align-items: center;
 }
 
+
+
 .order-row {
   display: flex;
   gap: 12px;
   justify-content: center;
 }
 
+
+
 .payment-row {
   display: flex;
   gap: 12px;
   justify-content: center;
 }
+
+
 
 .order-btn {
   padding: 10px 16px;
@@ -189,15 +241,21 @@
   transition: 0.2s ease;
 }
 
+
+
 .btn-cash {
   background-color: #2196f3;
   color: white;
 }
 
+
+
 .btn-card {
   background-color: #e0e0e0;
   color: #333;
 }
+
+
 
 .btn-clear {
   color: white;
@@ -207,15 +265,21 @@
   justify-content: center;
 }
 
+
+
 .btn-hold {
   background-color: #f1f1f1;
   color: #333;
 }
 
+
+
 .btn-place {
   background-color: #4caf50;
   color: white;
 }
+
+
 
 /* === Veg Status & Category === */
 .veg-status {
@@ -227,6 +291,8 @@
   font-weight: 500;
 }
 
+
+
 .dot {
   width: 10px;
   height: 10px;
@@ -234,13 +300,19 @@
   display: inline-block;
 }
 
+
+
 .dot.veg {
   background-color: green;
 }
 
+
+
 .dot.non-veg {
   background-color: red;
 }
+
+
 
 .category-label {
   display: block;
@@ -248,6 +320,8 @@
   color: #666;
   font-size: 13px;
 }
+
+
 
 /* === Receipt Preview Overlay === */
 .receipt-overlay {
@@ -263,34 +337,22 @@
   z-index: 1000;
 }
 
-.bill-section {
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
-  width: 360px;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-  position: relative;
-  animation: fadeIn 0.2s ease-in-out;
-  font-family: 'Courier New', Courier, monospace;
-}
+
 
 @keyframes fadeIn {
   from { transform: scale(0.9); opacity: 0; }
+
+
   to { transform: scale(1); opacity: 1; }
+
+
 }
 
 .receipt-header {
   text-align: center;
 }
 
-.receipt-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 0.5rem;
-  font-size: 0.85rem;
-}
+
 
 .receipt-table th,
 .receipt-table td {
@@ -299,33 +361,47 @@
   border-bottom: 1px dotted #ccc;
 }
 
+
+
 .receipt-summary {
   font-size: 14px;
   margin-top: 1rem;
 }
+
+
 
 .includes-label {
   font-size: 13px;
   color: #666;
 }
 
+
+
 .grand-total {
   font-size: 18px;
   font-weight: bold;
 }
 
+
+
 .server-name {
   margin-top: 10px;
 }
+
+
 
 .footer-note {
   text-align: center;
   margin-bottom: 4px;
 }
 
+
+
 .qr-section {
   text-align: center;
 }
+
+
 
 /* === Print Styling for Thermal Printer (80mm) === */
 @media print {
@@ -333,9 +409,13 @@
     visibility: hidden;
   }
 
+
+
   .bill-section, .bill-section * {
     visibility: visible;
   }
+
+
 
   .bill-section {
     position: absolute;
@@ -352,19 +432,27 @@
     color: #000;
   }
 
+
+
   .receipt-header {
     text-align: center !important;
   }
+
+
 
   .receipt-header h2 {
     font-size: 16px;
     margin: 2px 0;
   }
 
+
+
   .receipt-header p {
     margin: 2px 0;
     text-align: center;
   }
+
+
 
   .receipt-table {
     width: 100%;
@@ -373,15 +461,21 @@
     margin-top: 6px;
   }
 
+
+
   .receipt-table th,
   .receipt-table td {
     padding: 3px 0;
     text-align: left;
   }
 
+
+
   .receipt-summary p {
     margin: 2px 0;
   }
+
+
 
   .receipt-summary hr {
     margin: 4px 0;
@@ -389,19 +483,27 @@
     border-top: 1px dashed #000;
   }
 
+
+
   .print-btn,
   .close-preview-btn {
     display: none !important;
   }
 
+
+
   .receipt-overlay {
     background: none !important;
   }
+
+
 
   @page {
     size: 80mm auto;
     margin: 0;
   }
+
+
 }
 
 
@@ -413,6 +515,8 @@
   margin-bottom: 10px;
 }
 
+
+
 .print-btn {
   font-size: 12px;
   background: #000;
@@ -423,6 +527,8 @@
   border: none;
 }
 
+
+
 .close-preview-btn {
   font-size: 12px;
   background: transparent;
@@ -432,4 +538,21 @@
   cursor: pointer;
 }
 
+menu-search-bar {
+  margin-top: 1rem;
+}
 
+.menu-search-bar input {
+  width: 40%;
+  padding: 10px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  font-size: 14px;
+  transition: 0.2s ease;
+}
+
+.menu-search-bar input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  outline: none;
+}    

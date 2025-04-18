@@ -10,6 +10,7 @@ const BillingCounter = () => {
   const [selectedItems, setSelectedItems] = useState([]);
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [vegFilter, setVegFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [categories, setCategories] = useState([]);
   const [serverName] = useState('Cozy_Cup');
   const [orderType, setOrderType] = useState('Eat In');
@@ -161,13 +162,6 @@ const BillingCounter = () => {
           <div className="menu-left">
             <div className="billing-header">
               <h2>Billing Counter</h2>
-              <div className="order-type-selector">
-                <label><strong>Order Type:</strong></label>
-                <select value={orderType} onChange={e => setOrderType(e.target.value)}>
-                  <option value="Eat In">Eat In</option>
-                  <option value="Take Away">Take Away</option>
-                </select>
-              </div>
               <div className="filters">
                 <button onClick={() => setCategoryFilter('all')} className={categoryFilter === 'all' ? 'active' : ''}>All</button>
                 {categories.map(cat => (
@@ -179,6 +173,16 @@ const BillingCounter = () => {
                   <option value="nonveg">Non-Veg</option>
                 </select>
               </div>
+
+              {/* ✅ Search Bar */}
+              <div className="menu-search-bar">
+                <input
+                  type="text"
+                  placeholder="Search menu items..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
             </div>
 
             <div className="menu-grid">
@@ -188,7 +192,8 @@ const BillingCounter = () => {
                   vegFilter === 'all' ||
                   (vegFilter === 'veg' && item.veg) ||
                   (vegFilter === 'nonveg' && !item.veg)
-                )
+                ) &&
+                item.name.toLowerCase().includes(searchQuery.toLowerCase())
               ).map(item => (
                 <div key={item.id} className="menu-card" onClick={() => handleAddItem(item)}>
                   <h4>{item.name}</h4>
@@ -212,6 +217,15 @@ const BillingCounter = () => {
                     # {orderNumber || nextTempOrderNumber}
                   </span>
                 )}
+
+              <div className="order-type-selector">
+                <label><strong>Order Type:</strong></label>
+                <select value={orderType} onChange={e => setOrderType(e.target.value)}>
+                  <option value="Eat In">Eat In</option>
+                  <option value="Take Away">Take Away</option>
+                </select>
+              </div>  
+
               </h3>
 
               <input
@@ -220,6 +234,7 @@ const BillingCounter = () => {
                 value={customerName}
                 onChange={e => setCustomerName(e.target.value)}
               />
+              
 
               <div className="order-items">
                 {selectedItems.map((item, index) => (

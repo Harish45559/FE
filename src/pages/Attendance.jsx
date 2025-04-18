@@ -93,21 +93,29 @@ const Attendance = () => {
         <div className="employee-list">
           <h4>Employees</h4>
           <div className="employee-grid">
-            {employees.map(emp => (
-              <div
-                key={emp.id}
-                className={`employee-card ${selectedEmployee?.id === emp.id ? 'selected' : ''}`}
-                onClick={() => setSelectedEmployee(emp)}
-              >
-                <strong>{emp.first_name} {emp.last_name}</strong>
-                <div>{emp.username}</div>
-                <div style={{ marginTop: 4, fontWeight: 'bold' }}>
-                  {emp.attendance_status === 'Clocked In' && <span style={{ color: 'green' }}>🟢 Clocked In</span>}
-                  {emp.attendance_status === 'Clocked Out' && <span style={{ color: 'red' }}>🔴 Clocked Out</span>}
-                  {(!emp.attendance_status || emp.attendance_status === 'Not Clocked In') && <span style={{ color: 'gray' }}>⚪ Not Clocked In</span>}
+            {employees.map(emp => {
+              const initials = `${emp.first_name?.charAt(0) || ''}${emp.last_name?.charAt(0) || ''}`;
+              const status = emp.attendance_status;
+              let borderClass = 'border-gray';
+              if (status === 'Clocked In') borderClass = 'border-green';
+              else if (status === 'Clocked Out') borderClass = 'border-red';
+
+              return (
+                <div
+                  key={emp.id}
+                  className={`employee-card ${selectedEmployee?.id === emp.id ? 'selected' : ''} ${borderClass}`}
+                  onClick={() => setSelectedEmployee(emp)}
+                >
+                  <div className="avatar-circle">{initials}</div>
+                  <strong>{emp.first_name} {emp.last_name}</strong>
+                  <div className="status-text">
+                    {status === 'Clocked In' && <span style={{ color: 'green' }}>🟢 Clocked In</span>}
+                    {status === 'Clocked Out' && <span style={{ color: 'red' }}>🔴 Clocked Out</span>}
+                    {(!status || status === 'Not Clocked In') && <span style={{ color: 'gray' }}>⚪ Not Clocked In</span>}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -123,19 +131,24 @@ const Attendance = () => {
             </div>
           )}
 
-          <div className="pin-display">
-            {pin.split('').map((digit, i) => <span key={i}>{digit}</span>)}
-            {[...Array(4 - pin.length)].map((_, i) => <span key={`dot-${i}`}>•</span>)}
-          </div>
+            <div className="pin-display-box">
+              {[0, 1, 2, 3].map(i => (
+                <div className="pin-digit-box" key={i}>
+                  {pin[i] ? '•' : ''}
+                </div>
+              ))}
+            </div>
+    
+
 
           <div className="pinpad-row">
-            <div className="numbers">
+            <div className="numbers-grid">
               {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => (
-                <button key={n} onClick={() => handleNumberClick(n.toString())}>{n}</button>
+                <button key={n} className="keypad-btn" onClick={() => handleNumberClick(n.toString())}>{n}</button>
               ))}
-              <button onClick={() => handleNumberClick('0')}>0</button>
-              <button onClick={handleClear}>C</button>
-              <button onClick={handleBackspace}>←</button>
+              <button className="keypad-btn" onClick={handleClear}>C</button>
+              <button className="keypad-btn" onClick={() => handleNumberClick('0')}>0</button>
+              <button className="keypad-btn" onClick={handleBackspace}>×</button>
             </div>
 
             <div className="action-buttons">

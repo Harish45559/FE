@@ -193,3 +193,89 @@
   background-color: #664d03;
   color: white;
 }
+
+
+
+/* === Avatar Circle === */
+.avatar-circle {
+  background-color: #ddd;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  margin: 0 auto 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.1rem;
+  color: #444;
+}
+
+/* === Status borders === */
+.border-green {
+  border: 2px solid #4caf50;
+}
+
+.border-red {
+  border: 2px solid #f44336;
+}
+
+.border-gray {
+  border: 2px solid #ccc;
+}
+
+/* Optional: reduce bottom spacing in cards */
+.status-text {
+  margin-top: 5px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+
+/* Updated PIN display box with hidden dots */
+.pin-display-box {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 12px;
+  margin-bottom: 10px;
+}
+
+.pin-digit-box {
+  width: 48px;
+  height: 48px;
+  border: 2px solid #d1d5db;
+  border-radius: 12px;
+  background: #fff;
+  font-size: 2rem;
+  font-weight: 600;
+  text-align: center;
+  line-height: 48px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  color: #4b5563;
+}
+
+/* Matching PIN pad keypad buttons */
+.numbers-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 64px);
+  gap: 12px;
+}
+
+.keypad-btn {
+  width: 64px;
+  height: 64px;
+  border-radius: 14px;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #374151;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+  transition: background-color 0.2s;
+  cursor: pointer;
+}
+
+.keypad-btn:hover {
+  background-color: #f3f4f6;
+}
