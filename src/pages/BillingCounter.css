@@ -556,3 +556,141 @@ menu-search-bar {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
   outline: none;
 }    
+
+/* Highlight the receipt section when previewed */
+.receipt-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.6); /* darker background */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.bill-section {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  max-width: 380px;
+  width: 100%;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 13px;
+  animation: fadeInUp 0.3s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.receipt-header h2 {
+  font-size: 18px;
+  margin-bottom: 4px;
+  text-align: center;
+  color: #111827;
+}
+
+.receipt-header p {
+  font-size: 12px;
+  text-align: center;
+  margin: 2px 0;
+  color: #374151;
+}
+
+.receipt-table th,
+.receipt-table td {
+  font-size: 13px;
+  color: #111;
+  padding: 5px;
+}
+
+.receipt-summary p {
+  margin: 4px 0;
+  font-size: 13px;
+  color: #111827;
+}
+
+.print-btn,
+.close-preview-btn {
+  background: #111;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  border: none;
+}
+
+.close-preview-btn {
+  background: transparent;
+  color: red;
+  font-weight: bold;
+}
+
+.receipt-header-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+/* Ensure scrollable receipt */
+.bill-section {
+  max-height: 90vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  width: 360px;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 13px;
+  position: relative;
+}
+
+/* Keep header actions pinned at top */
+.receipt-header-actions {
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #ddd;
+}
+
+/* Close button styling */
+.close-preview-btn {
+  font-size: 14px;
+  background: transparent;
+  color: red;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.print-btn {
+  font-size: 14px;
+  background: #111;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+}

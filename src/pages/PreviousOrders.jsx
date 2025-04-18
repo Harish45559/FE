@@ -67,11 +67,11 @@ const PreviousOrders = () => {
     win.document.write(`
       <html><head><title>Receipt</title>
       <style>
-        body { font-family: 'Courier New', Courier, monospace; padding: 20px; }
-        .receipt-header, .receipt-summary, table { width: 100%; }
-        table { border-collapse: collapse; font-size: 13px; }
-        th, td { border-bottom: 1px dotted #ccc; padding: 4px; text-align: left; }
+        body { font-family: 'Courier New', Courier, monospace; padding: 10px; width: 80mm; }
         h2 { text-align: center; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th, td { border-bottom: 1px dotted #ccc; padding: 4px; text-align: left; }
+        .receipt-summary p { margin: 4px 0; font-size: 12px; }
       </style>
       </head><body>
     `);
@@ -163,57 +163,55 @@ const PreviousOrders = () => {
         </div>
 
         {viewOrder && (
-          <div className="receipt-modal">
-            <div>
-              <div className="bill-section" ref={printRef}>
-                <button className="close-preview-btn" onClick={() => setViewOrder(null)}>✖ Close</button>
-                <div className="receipt-header">
-                  <h2>Cozy Cup</h2>
-                  <p>Food Truck Lane, Flavor Town</p>
-                  <p>Phone: +91-9876543210</p>
-                  <p>www.cozycup.example.com</p>
-                  <p>Order Type: {viewOrder.order_type}</p>
-                  <p><strong>Customer:</strong> {viewOrder.customer_name || "N/A"}</p>
-                  <p><strong>Order No:</strong> #{viewOrder.order_number}</p>
-                  <hr />
-                  <p>Date: {viewOrder.date}</p>
-                  <hr />
-                </div>
-
-                <table className="receipt-table">
-                  <thead>
-                    <tr>
-                      <th>Product</th>
-                      <th>Price</th>
-                      <th>Qty</th>
-                      <th>Total</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {viewOrder.items.map((item, idx) => (
-                      <tr key={idx}>
-                        <td>{item.name}</td>
-                        <td>£{item.price}</td>
-                        <td>{item.qty}</td>
-                        <td>£{item.total}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-
-                <div className="receipt-summary">
-                  <p><strong>Total Qty:</strong> {viewOrder.items.reduce((sum, i) => sum + i.qty, 0)}</p>
-                  <p><strong>Sub Total:</strong> £{viewOrder.total_amount?.toFixed(2)}</p>
-                  <p>VAT (5%): £{(viewOrder.total_amount * 5 / 105).toFixed(2)}</p>
-                  <p>Service (5%): £{(viewOrder.total_amount * 5 / 105).toFixed(2)}</p>
-                  <hr />
-                  <p className="grand-total"><strong>Grand Total:</strong> £{viewOrder.total_amount?.toFixed(2)}</p>
-                  <p className="server-name">Staff: {viewOrder.server_name}</p>
-                </div>
+          <div className="receipt-overlay">
+            <div className="bill-section" ref={printRef}>
+              <div className="receipt-header-actions">
+                <button className="print-btn" onClick={handlePrint}>🖨️</button>
+                <button className="close-preview-btn" onClick={() => setViewOrder(null)}>✖</button>
               </div>
 
-              <div style={{ textAlign: "center", marginTop: "1rem" }}>
-                <button className="print-btn" onClick={handlePrint}>🖨️ Print</button>
+              <div className="receipt-header">
+                <h2>Cozy Cup</h2>
+                <p>Food Truck Lane, Flavor Town</p>
+                <p>Phone: +91-9876543210</p>
+                <p>www.cozycup.example.com</p>
+                <p>Order Type: {viewOrder.order_type}</p>
+                <p><strong>Customer:</strong> {viewOrder.customer_name || "N/A"}</p>
+                <p><strong>Order No:</strong> #{viewOrder.order_number}</p>
+                <hr />
+                <p>Date: {viewOrder.date}</p>
+                <hr />
+              </div>
+
+              <table className="receipt-table">
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>Price</th>
+                    <th>Qty</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {viewOrder.items.map((item, idx) => (
+                    <tr key={idx}>
+                      <td>{item.name}</td>
+                      <td>£{item.price}</td>
+                      <td>{item.qty}</td>
+                      <td>£{item.total}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <div className="receipt-summary">
+                <p><strong>Total Qty:</strong> {viewOrder.items.reduce((sum, i) => sum + i.qty, 0)}</p>
+                <p><strong>Sub Total:</strong> £{viewOrder.total_amount?.toFixed(2)}</p>
+                <p>VAT (5%): £{(viewOrder.total_amount * 5 / 105).toFixed(2)}</p>
+                <p>Service (5%): £{(viewOrder.total_amount * 5 / 105).toFixed(2)}</p>
+                <hr />
+                <p className="grand-total"><strong>Grand Total:</strong> £{viewOrder.total_amount?.toFixed(2)}</p>
+                <p className="server-name">Staff: {viewOrder.server_name}</p>
               </div>
             </div>
           </div>

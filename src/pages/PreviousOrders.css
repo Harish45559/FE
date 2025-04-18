@@ -121,3 +121,78 @@
     cursor: pointer;
   }
   
+
+  .receipt-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+  }
+  
+  .bill-section {
+    background: #fff;
+    width: 80mm;
+    max-height: 90vh;
+    padding: 10px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12px;
+    overflow-y: auto;
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.4);
+    position: relative;
+  }
+  
+  .receipt-header-actions {
+    display: flex;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    background: #fff;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #ccc;
+    z-index: 10;
+  }
+  
+  .print-btn,
+  .close-preview-btn {
+    background: #111;
+    color: #fff;
+    padding: 6px 10px;
+    border: none;
+    font-size: 12px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .close-preview-btn {
+    background: red;
+    font-weight: bold;
+  }
+  
+  .receipt-header {
+    text-align: center;
+  }
+  
+  .receipt-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+  }
+  
+  .receipt-table th,
+  .receipt-table td {
+    padding: 4px;
+    border-bottom: 1px dotted #ccc;
+    text-align: left;
+  }
+  
+  .receipt-summary p {
+    margin: 4px 0;
+  }
+  
