@@ -6,20 +6,21 @@ import './BillingCounter.css';
 
 const BillingCounter = () => {
   const printRef = useRef();
+  const user = JSON.parse(localStorage.getItem('user'));
   const [menuItems, setMenuItems] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [vegFilter, setVegFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [categories, setCategories] = useState([]);
-  const [serverName] = useState('Cozy_Cup');
+  const [serverName] = useState(user?.first_name || user?.username || 'Cozy_Cup');
   const [orderType, setOrderType] = useState('Eat In');
   const [customerName, setCustomerName] = useState('');
   const [showReceipt, setShowReceipt] = useState(false);
   const [orderNumber, setOrderNumber] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('Cash');
   const [nextTempOrderNumber, setNextTempOrderNumber] = useState(null);
-  const [orderDate, setOrderDate] = useState(null); // ✅ UK formatted string
+  const [orderDate, setOrderDate] = useState(null);
 
   useEffect(() => {
     fetchMenu();
@@ -102,6 +103,7 @@ const BillingCounter = () => {
     setOrderDate(null);
     fetchLastOrderNumber();
   };
+
 
   const handlePlaceOrder = async () => {
     if (selectedItems.length === 0) return alert('Add items first.');
