@@ -35,7 +35,7 @@ const PreviousOrders = () => {
 
     const startIndex = (currentPage - 1) * ordersPerPage;
     setFilteredOrders(filtered.slice(startIndex, startIndex + ordersPerPage));
-  }, [orders, search, currentPage, selectedDate]);
+  }, [orders, search, currentPage, selectedDate, ordersPerPage]); // ✅ added ordersPerPage here
 
   const fetchOrders = async () => {
     try {

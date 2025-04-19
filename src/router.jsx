@@ -22,11 +22,12 @@ const AppRouter = () => {
     {
       path: '/dashboard',
       element: (
-        <ProtectedRoute allowedRoles={['admin']}>
+        <ProtectedRoute allowedRoles={['admin', 'employee']}>
           <Dashboard />
         </ProtectedRoute>
       ),
     },
+    
 
     {
       path: '/employees',

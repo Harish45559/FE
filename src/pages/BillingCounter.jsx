@@ -231,9 +231,11 @@ const BillingCounter = () => {
               <input
                 type="text"
                 placeholder="Customer Name"
+                className="customer-input"
                 value={customerName}
                 onChange={e => setCustomerName(e.target.value)}
               />
+
               
 
               <div className="order-items">
