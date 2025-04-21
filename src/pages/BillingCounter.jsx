@@ -3,15 +3,20 @@ import api from '../services/api';
 import DashboardLayout from '../components/DashboardLayout';
 import { DateTime } from 'luxon';
 import './BillingCounter.css';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 
 const BillingCounter = () => {
   const printRef = useRef();
+  const user = JSON.parse(localStorage.getItem('user'));
   const [menuItems, setMenuItems] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [vegFilter, setVegFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [categories, setCategories] = useState([]);
-  const [serverName] = useState('Cozy_Cup');
+  const [serverName] = useState(user?.first_name || user?.username || 'Cozy_Cup');
   const [orderType, setOrderType] = useState('Eat In');
   const [customerName, setCustomerName] = useState('');
   const [showReceipt, setShowReceipt] = useState(false);
@@ -19,6 +24,21 @@ const BillingCounter = () => {
   const [paymentMethod, setPaymentMethod] = useState('Cash');
   const [nextTempOrderNumber, setNextTempOrderNumber] = useState(null);
   const [orderDate, setOrderDate] = useState(null); // ✅ UK formatted string
+  const [isTillOpen, setIsTillOpen] = useState(false);
+
+
+
+  const handleOpenTill = () => {
+    setIsTillOpen(true);
+    toast.success('Till opened. You can now place orders.');
+  };
+  
+  const handleCloseTill = () => {
+    setIsTillOpen(false);
+    toast.info('Till closed. Order actions are now disabled.');
+  };
+  
+
 
   useEffect(() => {
     fetchMenu();
@@ -161,13 +181,7 @@ const BillingCounter = () => {
           <div className="menu-left">
             <div className="billing-header">
               <h2>Billing Counter</h2>
-              <div className="order-type-selector">
-                <label><strong>Order Type:</strong></label>
-                <select value={orderType} onChange={e => setOrderType(e.target.value)}>
-                  <option value="Eat In">Eat In</option>
-                  <option value="Take Away">Take Away</option>
-                </select>
-              </div>
+             
               <div className="filters">
                 <button onClick={() => setCategoryFilter('all')} className={categoryFilter === 'all' ? 'active' : ''}>All</button>
                 {categories.map(cat => (
@@ -178,6 +192,16 @@ const BillingCounter = () => {
                   <option value="veg">Veg</option>
                   <option value="nonveg">Non-Veg</option>
                 </select>
+              </div>
+
+
+              <div className="menu-search-bar">
+                <input
+                  type="text"
+                  placeholder="Search menu items..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
               </div>
             </div>
 
@@ -212,21 +236,58 @@ const BillingCounter = () => {
                     # {orderNumber || nextTempOrderNumber}
                   </span>
                 )}
+
+<div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+  <button
+    onClick={handleOpenTill}
+    className="order-btn"
+    style={{ backgroundColor: '#10b981', color: '#fff' }}
+  >
+    🟢 Open Till
+  </button>
+  <button
+    onClick={handleCloseTill}
+    className="order-btn"
+    style={{ backgroundColor: '#ef4444', color: '#fff' }}
+  >
+    🔴 Close Till
+  </button>
+</div>
+
+
+                <div className="order-type-selector">
+                <label><strong>Order Type:</strong></label>
+                <select value={orderType} onChange={e => setOrderType(e.target.value)}>
+                  <option value="Eat In">Eat In</option>
+                  <option value="Take Away">Take Away</option>
+                </select>
+                </div>
               </h3>
 
               <input
-                type="text"
-                placeholder="Customer Name"
-                value={customerName}
-                onChange={e => setCustomerName(e.target.value)}
-              />
+  type="text"
+  placeholder="Customer Name"
+  value={customerName}
+  onChange={e => setCustomerName(e.target.value)}
+  style={{
+    width: '100%',
+    padding: '12px 16px',
+    fontSize: '16px',
+    border: '2px solid #e0e0e0',
+    borderRadius: '12px',
+    backgroundColor: '#f9f9f9',
+    marginBottom: '12px'
+  }}
+/>
+
 
               <div className="order-items">
                 {selectedItems.map((item, index) => (
                   <div key={index} className="order-item">
                     <div className="item-info">
-                      <span>{item.name} £{item.price}</span>
-                    </div>
+  <span><strong>{index + 1}.</strong> {item.name} £{item.price}</span>
+</div>
+
                     <div className="item-controls">
                       <button onClick={() => {
                         const updated = [...selectedItems];
@@ -258,9 +319,16 @@ const BillingCounter = () => {
 
               <div className="order-buttons">
                 <div className="order-row">
-                  <button className="order-btn btn-clear" onClick={clearCurrentOrder}>❌</button>
-                  <button className="order-btn btn-hold" onClick={holdCurrentOrder}>⏱ Hold Order</button>
-                  <button className="order-btn btn-place" onClick={handlePlaceOrder}>✅ Place Order</button>
+                <button className="order-btn btn-place" onClick={handlePlaceOrder} disabled={!isTillOpen}>
+  ✅ Place Order
+</button>
+<button className="order-btn btn-hold" onClick={holdCurrentOrder} disabled={!isTillOpen}>
+  ⏱ Hold Order
+</button>
+<button className="order-btn btn-clear" onClick={clearCurrentOrder} disabled={!isTillOpen}>
+  ❌
+</button>
+
                 </div>
                 <div className="payment-row">
                   <button className="order-btn btn-cash" onClick={() => setPaymentMethod('Cash')}>💵 Cash</button>

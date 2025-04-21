@@ -133,6 +133,15 @@ const MasterData = () => {
         {/* CATEGORIES */}
         <div className="category-panel">
           <h3>Categories</h3>
+          <input
+              value={newCategory}
+              onChange={(e) => setNewCategory(e.target.value)}
+              placeholder="New Category"
+              required
+            />
+            <button type="submit">Add</button>
+
+            
           <ul>
             {categories.map((cat) => (
               <li key={cat.id}>
@@ -168,13 +177,7 @@ const MasterData = () => {
             ))}
           </ul>
           <form onSubmit={handleCategorySubmit}>
-            <input
-              value={newCategory}
-              onChange={(e) => setNewCategory(e.target.value)}
-              placeholder="New Category"
-              required
-            />
-            <button type="submit">Add</button>
+            
           </form>
         </div>
 

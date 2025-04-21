@@ -43,6 +43,23 @@ const DashboardLayout = ({ children }) => {
             </button>
           </li>
         </ul>
+        
+        {/* ✅ Show logged in employee or admin at bottom */}
+        <div className="user-info">
+  {user?.role === 'admin' ? (
+    '👑 Admin Logged In'
+  ) : user?.first_name ? (
+    `👤 Logged in as ${user.first_name} ${user.last_name || ''}`
+  ) : user?.username ? (
+    `👤 Logged in as ${user.username}`
+  ) : user?.id ? (
+    `👤 Logged in as User ${user.id}`
+  ) : (
+    '👤 Employee Logged In'
+  )}
+</div>
+
+
       </aside>
 
       <main className="main-content">

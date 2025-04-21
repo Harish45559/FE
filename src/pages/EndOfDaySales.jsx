@@ -7,6 +7,7 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend, BarElement, CategoryScal
 import { Bar, Pie } from "react-chartjs-2";
 import './EndOfDaySales.css';
 
+
 ChartJS.register(ArcElement, Tooltip, Legend, BarElement, CategoryScale, LinearScale);
 
 const EndOfDaySales = () => {
@@ -21,6 +22,10 @@ const EndOfDaySales = () => {
   const [selectedItem, setSelectedItem] = useState('');
   const [categories, setCategories] = useState([]);
   const [topItems, setTopItems] = useState([]);
+  const [tillCash, setTillCash] = useState(0);
+  const [tillStatus, setTillStatus] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const fetchSales = useCallback(async () => {
     try {
@@ -32,12 +37,6 @@ const EndOfDaySales = () => {
       console.error('Error fetching sales:', err);
     }
   }, [from, to, search, orderType, category, selectedItem, paymentMethod]);
-
-  useEffect(() => {
-    fetchSales();
-    fetchCategories();
-    fetchTopItems();
-  }, [fetchSales]);
 
   const fetchCategories = async () => {
     try {
@@ -56,6 +55,33 @@ const EndOfDaySales = () => {
       console.error('Top items error:', err);
     }
   };
+
+  const fetchTillCash = async () => {
+    try {
+      const res = await api.get(`/sales/till-cash?from=${from}&to=${to}`);
+      setTillCash(res.data.totalCash);
+    } catch (err) {
+      console.error('Till cash fetch error:', err);
+    }
+  };
+
+  const fetchTillStatus = async () => {
+    try {
+      const date = DateTime.now().setZone('Europe/London').toFormat('yyyy-MM-dd');
+      const res = await api.get(`/sales/till/status/${date}`);
+      setTillStatus(res.data);
+    } catch (err) {
+      console.error('Till status error:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchSales();
+    fetchCategories();
+    fetchTopItems();
+    fetchTillCash();
+    fetchTillStatus();
+  }, [fetchSales]);
 
   const handleExportCSV = () => {
     const csvContent = [
@@ -81,6 +107,7 @@ const EndOfDaySales = () => {
     setCategory('');
     setOrderType('All');
     setPaymentMethod('All');
+    setCurrentPage(1);
     fetchSales();
   };
 
@@ -97,10 +124,20 @@ const EndOfDaySales = () => {
     }],
   }), [totalSales, totalVAT, totalService]);
 
+
   return (
     <DashboardLayout>
       <div className="sales-wrapper">
         <h2>End of Day Sales Report</h2>
+
+        <div className="till-cash-summary">
+          <h4>💰 Till Cash Summary</h4>
+          <p><strong>Opened By:</strong> {tillStatus?.employee || '—'}</p>
+          <p><strong>Opening Time:</strong> {tillStatus?.open_time ? DateTime.fromISO(tillStatus.open_time).toFormat('HH:mm') : '—'}</p>
+          <p><strong>Closing Time:</strong> {tillStatus?.close_time ? DateTime.fromISO(tillStatus.close_time).toFormat('HH:mm') : '—'}</p>
+          <p><strong>Opening Cash:</strong> £100.00</p>
+          <p><strong>Cash Sales:</strong> £{tillCash.toFixed(2)}</p>
+        </div>
 
         <div className="tabs">
           <button className={tab === 'summary' ? 'active' : ''} onClick={() => setTab('summary')}>Summary</button>
@@ -111,6 +148,7 @@ const EndOfDaySales = () => {
 
         <div className="filters">
           <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+          <input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
           <input type="text" placeholder="Search" value={search} onChange={(e) => setSearch(e.target.value)} />
           <select value={orderType} onChange={(e) => setOrderType(e.target.value)}>
             <option value="All">All</option>
@@ -174,16 +212,32 @@ const EndOfDaySales = () => {
                 </tr>
               </thead>
               <tbody>
-                {sales.map(order => (
-                  <tr key={order.id}>
-                    <td>{DateTime.fromISO(order.created_at).setZone('Europe/London').toFormat('dd/MM/yyyy')}</td>
-                    <td>{order.order_number}</td>
-                    <td>{order.customer_name}</td>
-                    <td>{order.order_type}</td>
-                    <td>{order.payment_method}</td>
-                    <td>£{parseFloat(order.total_amount).toFixed(2)}</td>
-                  </tr>
-                ))}
+              {sales
+  .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+  .map(order => (
+    <tr key={order.id}>
+      <td>{DateTime.fromISO(order.created_at).setZone('Europe/London').toFormat('dd/MM/yyyy')}</td>
+      <td>{order.order_number}</td>
+      <td>{order.customer_name}</td>
+      <td>{order.order_type}</td>
+      <td>{order.payment_method}</td>
+      <td>£{parseFloat(order.total_amount).toFixed(2)}</td>
+    </tr>
+))}
+
+<div className="pagination-controls">
+  {Array.from({ length: Math.ceil(sales.length / itemsPerPage) }).map((_, i) => (
+    <button
+      key={i}
+      onClick={() => setCurrentPage(i + 1)}
+      className={currentPage === i + 1 ? 'active' : ''}
+    >
+      {i + 1}
+    </button>
+  ))}
+</div>
+
+
               </tbody>
             </table>
           </div>

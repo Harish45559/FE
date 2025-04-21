@@ -1,76 +1,110 @@
-/* ✅ Updated: client/src/pages/EndOfDaySales.css */
+/* EndOfDaySales.css */
 
 .sales-wrapper {
-  padding: 20px;
-  background: #fff;
-  border-radius: 6px;
-  margin-top: 10px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+  background: #f9fafb;
+  font-family: 'Segoe UI', sans-serif;
 }
 
 .sales-wrapper h2 {
-  text-align: center;
-  margin-bottom: 20px;
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  color: #1e293b;
+}
+
+.till-cash-summary {
+  background: #ffffff;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+  margin-bottom: 1.5rem;
+  border: 1px solid #e2e8f0;
+}
+
+.till-cash-summary h4 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.till-cash-summary p {
+  font-size: 16px;
+  margin: 0.4rem 0;
+  color: #334155;
+  font-weight: 500;
 }
 
 .tabs {
   display: flex;
-  justify-content: center;
-  margin-bottom: 15px;
-  gap: 10px;
+  gap: 12px;
+  margin-bottom: 1.5rem;
 }
 
 .tabs button {
-  padding: 8px 16px;
+  padding: 10px 20px;
+  border-radius: 8px;
   border: none;
-  background: #e0e0e0;
-  border-radius: 20px;
+  background-color: #e2e8f0;
+  color: #1e293b;
+  font-weight: 600;
   cursor: pointer;
+  transition: 0.2s;
 }
 
 .tabs button.active {
-  background: #4caf50;
-  color: white;
-  font-weight: bold;
+  background-color: #3b82f6;
+  color: #ffffff;
+  box-shadow: 0 0 0 2px #1d4ed8 inset;
 }
 
 .filters {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  margin-bottom: 20px;
-  justify-content: center;
+  margin-bottom: 2rem;
 }
 
 .filters input,
-.filters select,
-.filters button {
-  padding: 6px 10px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-  min-width: 120px;
+.filters select {
+  padding: 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
   font-size: 14px;
+  min-width: 140px;
 }
 
 .filters button {
-  background: #4caf50;
+  background-color: #1e293b;
   color: white;
+  padding: 10px 16px;
   border: none;
+  border-radius: 8px;
   cursor: pointer;
+  font-weight: 600;
 }
 
 .filters button:hover {
-  opacity: 0.9;
+  background-color: #0f172a;
+}
+
+.summary {
+  background: #f1f5f9;
+  padding: 1rem 1.5rem;
+  border-radius: 10px;
+  margin-top: 1rem;
+  color: #1e293b;
 }
 
 .summary p {
+  margin: 6px 0;
   font-size: 16px;
-  margin: 5px 0;
-  text-align: center;
-}
-
-.top-items {
-  text-align: center;
+  font-weight: 500;
 }
 
 .top-items ul {
@@ -79,56 +113,78 @@
 }
 
 .top-items li {
-  padding: 5px 0;
+  background: #ffffff;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
   font-size: 15px;
-  color: #333;
 }
 
 .chart-section {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 30px;
+  flex-wrap: wrap;
+  gap: 2rem;
+  margin-top: 1rem;
 }
 
 .chart-wrapper {
-  width: 100%;
-  max-width: 500px;
+  flex: 1;
+  min-width: 300px;
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 1rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
 }
 
-
-.sales-table-container {
+.sales-table-wrapper {
+  margin-top: 2rem;
   overflow-x: auto;
-  margin-top: 20px;
 }
 
 .sales-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  background: white;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px #e2e8f0;
 }
 
-.sales-table th, .sales-table td {
-  padding: 10px;
-  border: 1px solid #ccc;
-  text-align: center;
+.sales-table th,
+.sales-table td {
+  padding: 14px;
+  font-size: 14px;
+  text-align: left;
+  border-bottom: 1px solid #f1f5f9;
 }
 
 .sales-table th {
-  background-color: #f5f5f5;
+  background-color: #f1f5f9;
+  font-weight: 600;
+  color: #1e293b;
 }
 
-.filters select:nth-child(4) {
-  background: #f0f8ff;
+.sales-table td {
+  color: #475569;
 }
 
-@media screen and (max-width: 768px) {
-  .filters {
-    flex-direction: column;
-    align-items: center;
-  }
+.pagination-controls {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
 
-  .sales-table {
-    font-size: 12px;
-  }
+.pagination-controls button {
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: #e2e8f0;
+  border: none;
+  cursor: pointer;
+}
+
+.pagination-controls button.active {
+  background: #2563eb;
+  color: white;
 }
