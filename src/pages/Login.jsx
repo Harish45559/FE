@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import './login.css'; 
+import './login.css';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -14,7 +14,7 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const res = await api.post('/login', form);
+      const res = await api.post('/auth/login', form); // ✅ Corrected path
 
       // Save token + full user object
       localStorage.setItem('token', res.data.token);
