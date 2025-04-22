@@ -13,32 +13,37 @@
   color: #1e293b;
 }
 
+/* 🔵 NEW: Styled Till Cash Summary Like a Tab */
 .till-cash-summary {
-  background: #ffffff;
-  padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+  border-radius: 8px;
+  overflow: hidden;
   margin-bottom: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   border: 1px solid #e2e8f0;
 }
 
-.till-cash-summary h4 {
-  font-size: 20px;
-  font-weight: 700;
-  margin-bottom: 1rem;
-  color: #1e293b;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.till-cash-summary-header {
+  background-color: #3b82f6;
+  color: white;
+  font-weight: 600;
+  padding: 12px 20px;
+  font-size: 16px;
+  border-bottom: 1px solid #e2e8f0;
 }
 
-.till-cash-summary p {
-  font-size: 16px;
-  margin: 0.4rem 0;
+.till-cash-summary-body {
+  background: #f9fafb;
+  padding: 16px 20px;
+  font-size: 15px;
   color: #334155;
+}
+
+.till-cash-summary-body p {
+  margin: 0.5rem 0;
   font-weight: 500;
 }
 
+/* === Tabs === */
 .tabs {
   display: flex;
   gap: 12px;
@@ -62,6 +67,7 @@
   box-shadow: 0 0 0 2px #1d4ed8 inset;
 }
 
+/* === Filters === */
 .filters {
   display: flex;
   flex-wrap: wrap;
@@ -93,6 +99,7 @@
   background-color: #0f172a;
 }
 
+/* === Summary === */
 .summary {
   background: #f1f5f9;
   padding: 1rem 1.5rem;
@@ -107,6 +114,7 @@
   font-weight: 500;
 }
 
+/* === Top Items === */
 .top-items ul {
   list-style: none;
   padding: 0;
@@ -121,6 +129,7 @@
   font-size: 15px;
 }
 
+/* === Charts === */
 .chart-section {
   display: flex;
   flex-wrap: wrap;
@@ -137,6 +146,7 @@
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
 }
 
+/* === Sales Table === */
 .sales-table-wrapper {
   margin-top: 2rem;
   overflow-x: auto;
@@ -169,6 +179,7 @@
   color: #475569;
 }
 
+/* === Pagination === */
 .pagination-controls {
   display: flex;
   gap: 8px;

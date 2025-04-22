@@ -23,7 +23,7 @@ const EndOfDaySales = () => {
   const [categories, setCategories] = useState([]);
   const [topItems, setTopItems] = useState([]);
   const [tillCash, setTillCash] = useState(0);
-  const [tillStatus, setTillStatus] = useState(null);
+
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -58,29 +58,23 @@ const EndOfDaySales = () => {
 
   const fetchTillCash = async () => {
     try {
-      const res = await api.get(`/sales/till-cash?from=${from}&to=${to}`);
+      const res = await api.get(`/sales/till-cash`, {
+        params: { from, to }
+      });
       setTillCash(res.data.totalCash);
     } catch (err) {
       console.error('Till cash fetch error:', err);
     }
   };
+  
 
-  const fetchTillStatus = async () => {
-    try {
-      const date = DateTime.now().setZone('Europe/London').toFormat('yyyy-MM-dd');
-      const res = await api.get(`/sales/till/status/${date}`);
-      setTillStatus(res.data);
-    } catch (err) {
-      console.error('Till status error:', err);
-    }
-  };
 
   useEffect(() => {
     fetchSales();
     fetchCategories();
     fetchTopItems();
     fetchTillCash();
-    fetchTillStatus();
+ 
   }, [fetchSales]);
 
   const handleExportCSV = () => {
@@ -130,14 +124,14 @@ const EndOfDaySales = () => {
       <div className="sales-wrapper">
         <h2>End of Day Sales Report</h2>
 
-        <div className="till-cash-summary">
-          <h4>💰 Till Cash Summary</h4>
-          <p><strong>Opened By:</strong> {tillStatus?.employee || '—'}</p>
-          <p><strong>Opening Time:</strong> {tillStatus?.open_time ? DateTime.fromISO(tillStatus.open_time).toFormat('HH:mm') : '—'}</p>
-          <p><strong>Closing Time:</strong> {tillStatus?.close_time ? DateTime.fromISO(tillStatus.close_time).toFormat('HH:mm') : '—'}</p>
-          <p><strong>Opening Cash:</strong> £100.00</p>
-          <p><strong>Cash Sales:</strong> £{tillCash.toFixed(2)}</p>
-        </div>
+        <div className="till-cash-tab">
+  <button className="till-tab-header active">💰 Till Cash Summary</button>
+  <div className="till-tab-content">
+    <p><strong>Opening Cash:</strong> £100.00</p>
+    <p><strong>Cash Sales:</strong> £{tillCash.toFixed(2)}</p>
+  </div>
+</div>
+
 
         <div className="tabs">
           <button className={tab === 'summary' ? 'active' : ''} onClick={() => setTab('summary')}>Summary</button>
