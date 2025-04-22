@@ -7,7 +7,6 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend, BarElement, CategoryScal
 import { Bar, Pie } from "react-chartjs-2";
 import './EndOfDaySales.css';
 
-
 ChartJS.register(ArcElement, Tooltip, Legend, BarElement, CategoryScale, LinearScale);
 
 const EndOfDaySales = () => {
@@ -23,7 +22,6 @@ const EndOfDaySales = () => {
   const [categories, setCategories] = useState([]);
   const [topItems, setTopItems] = useState([]);
   const [tillCash, setTillCash] = useState(0);
-
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -58,23 +56,18 @@ const EndOfDaySales = () => {
 
   const fetchTillCash = async () => {
     try {
-      const res = await api.get(`/sales/till-cash`, {
-        params: { from, to }
-      });
+      const res = await api.get(`/sales/till-cash`, { params: { from, to } });
       setTillCash(res.data.totalCash);
     } catch (err) {
       console.error('Till cash fetch error:', err);
     }
   };
-  
-
 
   useEffect(() => {
     fetchSales();
     fetchCategories();
     fetchTopItems();
     fetchTillCash();
- 
   }, [fetchSales]);
 
   const handleExportCSV = () => {
@@ -118,26 +111,17 @@ const EndOfDaySales = () => {
     }],
   }), [totalSales, totalVAT, totalService]);
 
-
   return (
     <DashboardLayout>
       <div className="sales-wrapper">
         <h2>End of Day Sales Report</h2>
-
-        <div className="till-cash-tab">
-  <button className="till-tab-header active">💰 Till Cash Summary</button>
-  <div className="till-tab-content">
-    <p><strong>Opening Cash:</strong> £100.00</p>
-    <p><strong>Cash Sales:</strong> £{tillCash.toFixed(2)}</p>
-  </div>
-</div>
-
 
         <div className="tabs">
           <button className={tab === 'summary' ? 'active' : ''} onClick={() => setTab('summary')}>Summary</button>
           <button className={tab === 'top' ? 'active' : ''} onClick={() => setTab('top')}>Top Selling Items</button>
           <button className={tab === 'chart' ? 'active' : ''} onClick={() => setTab('chart')}>Revenue Charts</button>
           <button className={tab === 'table' ? 'active' : ''} onClick={() => setTab('table')}>Total Sales</button>
+          <button className={tab === 'till' ? 'active' : ''} onClick={() => setTab('till')}>💰 Till Cash Summary</button>
         </div>
 
         <div className="filters">
@@ -178,7 +162,7 @@ const EndOfDaySales = () => {
           <div className="top-items">
             <h3>Top Selling Items</h3>
             <ul>
-              {topItems.map((item) => (
+              {topItems.map(item => (
                 <li key={item.name}>{item.name} – {item.total_sold} sold</li>
               ))}
             </ul>
@@ -206,34 +190,40 @@ const EndOfDaySales = () => {
                 </tr>
               </thead>
               <tbody>
-              {sales
-  .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-  .map(order => (
-    <tr key={order.id}>
-      <td>{DateTime.fromISO(order.created_at).setZone('Europe/London').toFormat('dd/MM/yyyy')}</td>
-      <td>{order.order_number}</td>
-      <td>{order.customer_name}</td>
-      <td>{order.order_type}</td>
-      <td>{order.payment_method}</td>
-      <td>£{parseFloat(order.total_amount).toFixed(2)}</td>
-    </tr>
-))}
-
-<div className="pagination-controls">
-  {Array.from({ length: Math.ceil(sales.length / itemsPerPage) }).map((_, i) => (
-    <button
-      key={i}
-      onClick={() => setCurrentPage(i + 1)}
-      className={currentPage === i + 1 ? 'active' : ''}
-    >
-      {i + 1}
-    </button>
-  ))}
-</div>
-
-
+                {sales
+                  .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                  .map(order => (
+                    <tr key={order.id}>
+                      <td>{DateTime.fromISO(order.created_at).setZone('Europe/London').toFormat('dd/MM/yyyy')}</td>
+                      <td>{order.order_number}</td>
+                      <td>{order.customer_name}</td>
+                      <td>{order.order_type}</td>
+                      <td>{order.payment_method}</td>
+                      <td>£{parseFloat(order.total_amount).toFixed(2)}</td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
+            <div className="pagination-controls">
+              {Array.from({ length: Math.ceil(sales.length / itemsPerPage) }).map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentPage(i + 1)}
+                  className={currentPage === i + 1 ? 'active' : ''}
+                >
+                  {i + 1}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {tab === 'till' && (
+          <div className="till-cash-tab">
+            <div className="till-tab-content">
+              <p><strong>Opening Cash:</strong> £100.00</p>
+              <p><strong>Cash Sales:</strong> £{tillCash.toFixed(2)}</p>
+            </div>
           </div>
         )}
       </div>
