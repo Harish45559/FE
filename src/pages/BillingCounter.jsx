@@ -6,7 +6,6 @@ import './BillingCounter.css';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-
 const BillingCounter = () => {
   const printRef = useRef();
   const user = JSON.parse(localStorage.getItem('user'));
@@ -23,28 +22,37 @@ const BillingCounter = () => {
   const [orderNumber, setOrderNumber] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('Cash');
   const [nextTempOrderNumber, setNextTempOrderNumber] = useState(null);
-  const [orderDate, setOrderDate] = useState(null); // ✅ UK formatted string
+  const [orderDate, setOrderDate] = useState(null);
   const [isTillOpen, setIsTillOpen] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [tillActionType, setTillActionType] = useState(null);
+  const [authUsername, setAuthUsername] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [tillOpenedBy, setTillOpenedBy] = useState('');
+  const [discountPercent, setDiscountPercent] = useState(0);
+  const [userRole, setUserRole] = useState('');
 
-
-
-  const handleOpenTill = () => {
-    setIsTillOpen(true);
-    toast.success('Till opened. You can now place orders.');
-  };
   
-  const handleCloseTill = () => {
-    setIsTillOpen(false);
-    toast.info('Till closed. Order actions are now disabled.');
-  };
-  
-
 
   useEffect(() => {
+    const storedTillStatus = localStorage.getItem('isTillOpen');
+    if (storedTillStatus === 'true') {
+      setIsTillOpen(true);
+    }
+  
+    const storedTillUser = localStorage.getItem('tillOpenedBy');
+    if (storedTillUser) {
+      setTillOpenedBy(storedTillUser);
+    }
+
+    const storedRole = localStorage.getItem('userRole');
+if (storedRole) setUserRole(storedRole);
+
+  
     fetchMenu();
     fetchCategories();
     fetchLastOrderNumber();
-
+  
     const resumed = localStorage.getItem('resumedOrder');
     if (resumed) {
       const order = JSON.parse(resumed);
@@ -54,6 +62,7 @@ const BillingCounter = () => {
       localStorage.removeItem('resumedOrder');
     }
   }, []);
+  
 
   const fetchMenu = async () => {
     const res = await api.get('/menu');
@@ -88,7 +97,17 @@ const BillingCounter = () => {
   const clearCurrentOrder = () => {
     setSelectedItems([]);
     setCustomerName('');
+    setDiscountPercent(0); // 🔁 Reset discount input
   };
+  
+
+  {isTillOpen && tillOpenedBy && (
+    <div className="till-user">
+      🧑‍💼 Opened by: <strong>{tillOpenedBy}</strong>
+    </div>
+  )}
+  
+
 
   const handleAddItem = (item) => {
     const index = selectedItems.findIndex(i => i.id === item.id);
@@ -107,10 +126,14 @@ const BillingCounter = () => {
     updated.splice(index, 1);
     setSelectedItems(updated);
   };
-
   const getTotal = () => selectedItems.reduce((sum, i) => sum + i.total, 0);
   const getIncludedTax = () => getTotal() * (5 / 105);
   const getIncludedService = () => getTotal() * (5 / 105);
+  
+  // 💸 Discount Calculations
+  const getDiscountAmount = () => (getTotal() * discountPercent) / 100;
+  const getGrandTotal = () => getTotal() - getDiscountAmount();
+  
   const getDateTime = () => DateTime.now().setZone('Europe/London').toFormat('dd/MM/yyyy HH:mm:ss');
 
   const startNewOrder = () => {
@@ -124,7 +147,6 @@ const BillingCounter = () => {
 
   const handlePlaceOrder = async () => {
     if (selectedItems.length === 0) return alert('Add items first.');
-
     const payload = {
       customer_name: customerName,
       server_name: serverName,
@@ -136,15 +158,18 @@ const BillingCounter = () => {
         total: item.total
       })),
       total_amount: getTotal(),
+      discount_percent: discountPercent,
+      discount_amount: getDiscountAmount(),
+      final_amount: getGrandTotal(),
       payment_method: paymentMethod,
-      created_at: DateTime.now().toUTC().toISO(), // UTC for DB
-      date: getDateTime(), // UK time for display
+      created_at: DateTime.now().toUTC().toISO(),
+      date: getDateTime()
     };
 
     try {
       const res = await api.post('/orders', payload);
       setOrderNumber(res.data.order.order_number);
-      setOrderDate(res.data.order.date); // ✅ Set UK time string
+      setOrderDate(res.data.order.date);
       setShowReceipt(true);
     } catch (err) {
       console.error('Order placement failed:', err);
@@ -155,10 +180,7 @@ const BillingCounter = () => {
   const holdCurrentOrder = () => {
     if (selectedItems.length === 0) return alert('No items to hold');
     const existing = JSON.parse(localStorage.getItem('heldOrders')) || [];
-    const nextDisplayNumber = existing.length
-      ? Math.max(...existing.map(o => parseInt(o.displayNumber?.replace('H', '') || 0))) + 1
-      : 1001;
-
+    const nextDisplayNumber = existing.length ? Math.max(...existing.map(o => parseInt(o.displayNumber?.replace('H', '') || 0))) + 1 : 1001;
     const heldOrder = {
       id: Date.now(),
       customer: customerName,
@@ -168,14 +190,66 @@ const BillingCounter = () => {
       date: getDateTime(),
       displayNumber: `H${nextDisplayNumber}`
     };
-
     existing.push(heldOrder);
     localStorage.setItem('heldOrders', JSON.stringify(existing));
     startNewOrder();
   };
 
+  const confirmTillAction = async () => {
+    try {
+      const res = await api.post('/auth/login', {
+        username: authUsername,
+        password: authPassword
+      });
+      if (res.status === 200 && res.data.token) {
+        const role = res.data.role || 'staff';
+        setUserRole(role);
+        localStorage.setItem('userRole', role);
+
+        if (tillActionType === 'open') {
+          setIsTillOpen(true);
+          localStorage.setItem('isTillOpen', 'true');
+          setTillOpenedBy(authUsername);
+          localStorage.setItem('tillOpenedBy', authUsername);
+        } else {
+          setIsTillOpen(false);
+          localStorage.setItem('isTillOpen', 'false');
+          toast.info('Till closed.');
+          setTillOpenedBy('');
+          localStorage.removeItem('tillOpenedBy');
+
+        }
+        setShowAuthModal(false);
+        setAuthUsername('');
+        setAuthPassword('');
+      } else {
+        toast.error('Invalid credentials');
+      }
+    } catch (err) {
+      toast.error('Auth failed');
+    }
+  };
+
+  
+
+
   return (
     <DashboardLayout>
+
+            {/* Auth Modal */}
+            {showAuthModal && (
+        <div className="auth-modal-overlay">
+          <div className="auth-modal">
+            <h3>{tillActionType === 'open' ? 'Open Till' : 'Close Till'} - Authentication</h3>
+            <input type="text" placeholder="Username" value={authUsername} onChange={(e) => setAuthUsername(e.target.value)} />
+            <input type="password" placeholder="Password" value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} />
+            <div className="auth-buttons">
+              <button onClick={confirmTillAction}>✅ Confirm</button>
+              <button onClick={() => setShowAuthModal(false)}>✖ Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
       <>
         <div className="billing-wrapper">
           <div className="menu-left">
@@ -227,8 +301,16 @@ const BillingCounter = () => {
             </div>
           </div>
 
-          <div className="summary-right">
-            <div className="order-panel">
+            
+            <div className="summary-right">
+
+            {isTillOpen && tillOpenedBy && (
+              <div className="till-user">
+                🧑‍💼 Opened by: <strong>{tillOpenedBy}</strong>
+              </div>
+            )}
+
+            <div className="order-panel">       
               <h3 className="order-title">
                 Current Order{' '}
                 {(orderNumber || nextTempOrderNumber) && (
@@ -237,22 +319,43 @@ const BillingCounter = () => {
                   </span>
                 )}
 
-<div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-  <button
-    onClick={handleOpenTill}
-    className="order-btn"
-    style={{ backgroundColor: '#10b981', color: '#fff' }}
-  >
-    🟢 Open Till
-  </button>
-  <button
-    onClick={handleCloseTill}
-    className="order-btn"
-    style={{ backgroundColor: '#ef4444', color: '#fff' }}
-  >
-    🔴 Close Till
-  </button>
-</div>
+                  {isTillOpen ? (
+                    <div className="till-banner open">
+                      🟢 Till is Open
+                    </div>
+                  ) : (
+                    <div className="till-banner closed">
+                      🔴 Till is Closed
+                    </div>
+                  )}
+
+
+
+
+                <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+                <button
+  onClick={() => {
+    setTillActionType('open');
+    setShowAuthModal(true);
+  }}
+  className="order-btn"
+  style={{ backgroundColor: '#10b981', color: '#fff' }}
+>
+  🟢 Open Till
+</button>
+
+<button
+  onClick={() => {
+    setTillActionType('close');
+    setShowAuthModal(true);
+  }}
+  className="order-btn"
+  style={{ backgroundColor: '#ef4444', color: '#fff' }}
+>
+  🔴 Close Till
+</button>
+
+                </div>
 
 
                 <div className="order-type-selector">
@@ -311,25 +414,51 @@ const BillingCounter = () => {
               </div>
 
               <div className="order-summary">
-                <div className="line"><span>Subtotal</span><span>£{getTotal().toFixed(2)}</span></div>
-                <div className="line"><span>VAT (5%)</span><span>£{getIncludedTax().toFixed(2)}</span></div>
-                <div className="line"><span>Service (5%)</span><span>£{getIncludedService().toFixed(2)}</span></div>
-                <div className="line total"><strong>Total</strong><strong>£{getTotal().toFixed(2)}</strong></div>
-              </div>
+  <div className="line"><span>Subtotal</span><span>£{getTotal().toFixed(2)}</span></div>
+  <div className="line"><span>VAT (5%)</span><span>£{getIncludedTax().toFixed(2)}</span></div>
+  <div className="line"><span>Service (5%)</span><span>£{getIncludedService().toFixed(2)}</span></div>
+
+  {discountPercent > 0 && (
+    <div className="line">
+      <span>Discount ({discountPercent}%)</span>
+      <span>-£{getDiscountAmount().toFixed(2)}</span>
+    </div>
+  )}
+
+  <div className="line total"><strong>Total</strong><strong>£{getGrandTotal().toFixed(2)}</strong></div>
+</div>
 
               <div className="order-buttons">
-                <div className="order-row">
-                <button className="order-btn btn-place" onClick={handlePlaceOrder} disabled={!isTillOpen}>
-  ✅ Place Order
-</button>
-<button className="order-btn btn-hold" onClick={holdCurrentOrder} disabled={!isTillOpen}>
-  ⏱ Hold Order
-</button>
-<button className="order-btn btn-clear" onClick={clearCurrentOrder} disabled={!isTillOpen}>
-  ❌
-</button>
+              <div className="order-row" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+  {isTillOpen && userRole === 'admin' && (
+    <>
+      <input
+        type="number"
+        value={discountPercent === 0 ? '' : discountPercent}
+        onChange={(e) => setDiscountPercent(Math.max(0, Math.min(100, Number(e.target.value))))}
+        placeholder="0–100%"
+        className="discount-input"
+      />
+      <button className="action-btn btn-apply" onClick={() => toast.success(`Discount ${discountPercent}% applied`)}>
+        🎁 Apply
+      </button>
+    </>
+  )}
+  <button className="action-btn btn-place" onClick={handlePlaceOrder} disabled={!isTillOpen}>
+    ✅ Place Order
+  </button>
+  <button className="action-btn btn-hold" onClick={holdCurrentOrder} disabled={!isTillOpen}>
+    ⏱ Hold Order
+  </button>
+  <button className="action-btn btn-clear" onClick={clearCurrentOrder} disabled={!isTillOpen}>
+    ❌
+  </button>
+</div>
 
-                </div>
+
+
+               
+
                 <div className="payment-row">
                   <button className="order-btn btn-cash" onClick={() => setPaymentMethod('Cash')}>💵 Cash</button>
                   <button className="order-btn btn-card" onClick={() => setPaymentMethod('Card')}>💳 Card</button>
@@ -342,14 +471,15 @@ const BillingCounter = () => {
         {showReceipt && (
           <div className="receipt-overlay">
             <div className="bill-section" ref={printRef}>
-            <div className="receipt-header-actions">
-  <button className="print-btn" onClick={() => window.print()}>
-    🖨️
+            <div className="receipt-header-actions" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+  <button className="print-btn" onClick={() => window.print()} style={{ alignSelf: 'flex-start' }}>
+    🖨️ print
   </button>
-  <button className="close-preview-btn" onClick={startNewOrder}>
+  <button className="close-preview-btn" onClick={startNewOrder} style={{ alignSelf: 'flex-end' }}>
     ✖
   </button>
 </div>
+
 
               {/* Header */}
               <div className="receipt-header">
@@ -395,8 +525,14 @@ const BillingCounter = () => {
                 <p>VAT (5%): £{getIncludedTax().toFixed(2)}</p>
                 <p>Service Charge (5%): £{getIncludedService().toFixed(2)}</p>
                 <hr />
-                <p className="grand-total"><strong>Grand Total:</strong> £ {getTotal().toFixed(2)}</p>
-                <p className="server-name">Staff: {serverName}</p>
+                {discountPercent > 0 && (
+  <p><strong>Discount ({discountPercent}%):</strong> -£{getDiscountAmount().toFixed(2)}</p>
+)}
+<p className="grand-total"><strong>Grand Total:</strong> £ {getGrandTotal().toFixed(2)}</p>
+
+                <p className="server-name">Staff:{tillOpenedBy && `(${tillOpenedBy})`}
+</p>
+
                 <hr />
               </div>
             </div>

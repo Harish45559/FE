@@ -9,7 +9,6 @@ import PreviousOrders from './pages/PreviousOrders';
 import HeldOrders from './pages/HeldOrders';
 import MasterData from './pages/MasterData';
 import BillingCounter from './pages/BillingCounter';
-import EndOfDaySales from './pages/EndOfDaySales';
 import ForgotPassword from './pages/ForgotPassword';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -88,18 +87,8 @@ const AppRouter = () => {
         </ProtectedRoute>
       ),
     },
-    {
-      path: '/sales-report',
-      element: (
-        <ProtectedRoute allowedRoles={['admin']}>
-          <EndOfDaySales />
-        </ProtectedRoute>
-      ),
-    },
   ]);
-
-
-
+  
   return routes;
 };
 

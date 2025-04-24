@@ -26,7 +26,6 @@ const DashboardLayout = ({ children }) => {
               <li><NavLink to="/employees">👥 Employees</NavLink></li>
               <li><NavLink to="/reports">📈 Reports</NavLink></li>
               <li><NavLink to="/master-data">🗂️ Master Data</NavLink></li>
-              <li><NavLink to="/sales-report">🧾 End of Day Sales</NavLink></li>
             </>
           )}
 

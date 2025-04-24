@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+
+import React, { useEffect, useRef, useState } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import api from '../services/api';
 import { DateTime } from 'luxon';
@@ -12,7 +13,7 @@ const Attendance = () => {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [pin, setPin] = useState('');
   const [currentTime, setCurrentTime] = useState(DateTime.now().setZone('Europe/London'));
-  const [actionType, setActionType] = useState(null);
+  const actionTypeRef = useRef(null);
 
   useEffect(() => {
     fetchEmployees();
@@ -32,14 +33,25 @@ const Attendance = () => {
         api.get('/employees'),
         api.get('/attendance/status'),
       ]);
+  
       const statusMap = statusRes.data.reduce((map, emp) => {
         map[emp.id] = emp.status;
         return map;
       }, {});
-      const updated = empRes.data.map(emp => ({
-        ...emp,
-        attendance_status: statusMap[emp.id] || 'Not Clocked In',
-      }));
+  
+      const updated = empRes.data.map(emp => {
+        const rawStatus = statusMap[emp.id];
+        let attendanceStatus = 'Not Clocked In';
+  
+        if (rawStatus === 'Clocked In') attendanceStatus = 'Clocked In';
+        else if (rawStatus === 'Clocked Out') attendanceStatus = 'Clocked Out';
+  
+        return {
+          ...emp,
+          attendance_status: attendanceStatus,
+        };
+      });
+  
       setAllEmployees(updated);
       setEmployees(updated);
     } catch (err) {
@@ -47,6 +59,7 @@ const Attendance = () => {
       console.error(err);
     }
   };
+  
 
   const handleNumberClick = (num) => {
     if (pin.length < 4) setPin(prev => prev + num);
@@ -54,14 +67,13 @@ const Attendance = () => {
   const handleClear = () => setPin('');
   const handleBackspace = () => setPin(pin.slice(0, -1));
 
-
   const handleSubmit = async () => {
+    const actionType = actionTypeRef.current;
     if (!selectedEmployee || !actionType || pin.length !== 4) {
       toast.warning('Select employee, action, and enter 4-digit PIN');
       return;
     }
-  
-    // ⛔ Prevent clock in if already Clocked In
+
     if (
       actionType === 'clock_in' &&
       selectedEmployee.attendance_status === 'Clocked In'
@@ -69,8 +81,7 @@ const Attendance = () => {
       toast.info('Employee is already clocked in');
       return;
     }
-  
-    // ⛔ Prevent clock out if already Clocked Out
+
     if (
       actionType === 'clock_out' &&
       selectedEmployee.attendance_status === 'Clocked Out'
@@ -78,23 +89,23 @@ const Attendance = () => {
       toast.info('Employee is already clocked out');
       return;
     }
-  
+
     try {
       const endpoint = actionType === 'clock_in' ? '/attendance/clock-in' : '/attendance/clock-out';
       const res = await api.post(endpoint, {
         employee_id: selectedEmployee.id,
         pin,
       });
-  
+
       const clockedAt = res.data.clock_in || res.data.clock_out;
       const totalHours = res.data.total_work_hours || '—';
       const timeFormatted = DateTime.fromISO(clockedAt).setZone('Europe/London').toFormat('dd/MM/yyyy HH:mm');
-  
+
       toast.success(`✅ ${actionType.replace('_', ' ')} successful at ${timeFormatted}. Worked: ${totalHours}`);
-  
+
       setPin('');
-      setActionType(null);
       setSelectedEmployee(null);
+      actionTypeRef.current = null;
       await fetchEmployees();
     } catch (err) {
       console.error('Attendance Error:', err);
@@ -152,7 +163,7 @@ const Attendance = () => {
         </div>
 
         <div className="clock-panel">
-        <h3>Time Clock Actions</h3>
+          <h3>Time Clock Actions</h3>
           <div className="live-clock">
             🕒 {currentTime.toFormat('dd/MM/yyyy HH:mm:ss')} (BST)
           </div>
@@ -162,8 +173,6 @@ const Attendance = () => {
               {selectedEmployee.first_name} {selectedEmployee.last_name}
             </div>
           )}
-
-
 
           <div className="pin-display-box">
             {[0, 1, 2, 3].map(i => (
@@ -183,26 +192,25 @@ const Attendance = () => {
           </div>
 
           <div className="action-buttons">
-  <button
-    className="action-card green"
-    onClick={() => {
-      setActionType('clock_in');
-      handleSubmit();
-    }}
-  >
-    ✔ Clock In
-  </button>
-  <button
-    className="action-card gray"
-    onClick={() => {
-      setActionType('clock_out');
-      handleSubmit();
-    }}
-  >
-    ⏺ Clock Out
-  </button>
-</div>
-
+            <button
+              className="action-card green"
+              onClick={() => {
+                actionTypeRef.current = 'clock_in';
+                handleSubmit();
+              }}
+            >
+              ✔ Clock In
+            </button>
+            <button
+              className="action-card gray"
+              onClick={() => {
+                actionTypeRef.current = 'clock_out';
+                handleSubmit();
+              }}
+            >
+              ⏺ Clock Out
+            </button>
+          </div>
         </div>
       </div>
     </DashboardLayout>
@@ -210,44 +218,3 @@ const Attendance = () => {
 };
 
 export default Attendance;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

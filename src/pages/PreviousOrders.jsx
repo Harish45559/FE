@@ -12,6 +12,9 @@ const PreviousOrders = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [ordersPerPage] = useState(10);
   const [selectedDate, setSelectedDate] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
   const printRef = useRef();
 
   useEffect(() => {
@@ -20,22 +23,23 @@ const PreviousOrders = () => {
 
   useEffect(() => {
     const filtered = orders.filter((o) => {
+      const createdDate = DateTime.fromISO(o.created_at, { zone: "utc" }).setZone("Europe/London").toISODate();
       const matchSearch =
         o.customer_name?.toLowerCase().includes(search.toLowerCase()) ||
         String(o.order_number).includes(search);
 
-      const matchDate = selectedDate
-        ? DateTime.fromISO(o.created_at, { zone: "utc" })
-            .setZone("Europe/London")
-            .toISODate() === selectedDate
-        : true;
+      const matchSelectedDate = selectedDate ? createdDate === selectedDate : true;
 
-      return matchSearch && matchDate;
+      const matchCustomRange =
+        (!fromDate || createdDate >= fromDate) &&
+        (!toDate || createdDate <= toDate);
+
+      return matchSearch && matchSelectedDate && matchCustomRange;
     });
 
     const startIndex = (currentPage - 1) * ordersPerPage;
     setFilteredOrders(filtered.slice(startIndex, startIndex + ordersPerPage));
-  }, [orders, search, currentPage, selectedDate]);
+  }, [orders, search, currentPage, selectedDate, fromDate, toDate]);
 
   const fetchOrders = async () => {
     try {
@@ -48,17 +52,18 @@ const PreviousOrders = () => {
 
   const totalPages = Math.ceil(
     orders.filter((o) => {
+      const createdDate = DateTime.fromISO(o.created_at, { zone: "utc" }).setZone("Europe/London").toISODate();
       const matchSearch =
         o.customer_name?.toLowerCase().includes(search.toLowerCase()) ||
         String(o.order_number).includes(search);
 
-      const matchDate = selectedDate
-        ? DateTime.fromISO(o.created_at, { zone: "utc" })
-            .setZone("Europe/London")
-            .toISODate() === selectedDate
-        : true;
+      const matchSelectedDate = selectedDate ? createdDate === selectedDate : true;
 
-      return matchSearch && matchDate;
+      const matchCustomRange =
+        (!fromDate || createdDate >= fromDate) &&
+        (!toDate || createdDate <= toDate);
+
+      return matchSearch && matchSelectedDate && matchCustomRange;
     }).length / ordersPerPage
   );
 
@@ -84,6 +89,16 @@ const PreviousOrders = () => {
   const clearSearch = () => {
     setSearch("");
     setSelectedDate("");
+    setFromDate("");
+    setToDate("");
+    setCurrentPage(1);
+  };
+
+  const handleToday = () => {
+    const today = DateTime.now().setZone("Europe/London").toISODate();
+    setSelectedDate(today);
+    setFromDate("");
+    setToDate("");
     setCurrentPage(1);
   };
 
@@ -103,6 +118,23 @@ const PreviousOrders = () => {
         <div className="header">
           <h2>Previous Orders</h2>
           <div className="controls">
+            <button className="clear-btn" onClick={() => setShowFilters(!showFilters)}>Filters</button>
+            {showFilters && (
+              <>
+                <input
+                  type="date"
+                  value={fromDate}
+                  onChange={(e) => setFromDate(e.target.value)}
+                  className="date-picker"
+                />
+                <input
+                  type="date"
+                  value={toDate}
+                  onChange={(e) => setToDate(e.target.value)}
+                  className="date-picker"
+                />
+              </>
+            )}
             <input
               type="text"
               placeholder="Search by name/order no"
@@ -113,15 +145,8 @@ const PreviousOrders = () => {
               }}
               className="search-box"
             />
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => {
-                setSelectedDate(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="date-picker"
-            />
+ 
+            <button onClick={handleToday} className="clear-btn">Today</button>
             <button onClick={clearSearch} className="clear-btn">Clear</button>
           </div>
         </div>
@@ -163,57 +188,57 @@ const PreviousOrders = () => {
         </div>
 
         {viewOrder && (
-          <div className="receipt-modal">
-            <div>
-              <div className="bill-section" ref={printRef}>
-                <button className="close-preview-btn" onClick={() => setViewOrder(null)}>✖ Close</button>
-                <div className="receipt-header">
-                  <h2>Cozy Cup</h2>
-                  <p>Food Truck Lane, Flavor Town</p>
-                  <p>Phone: +91-9876543210</p>
-                  <p>www.cozycup.example.com</p>
-                  <p>Order Type: {viewOrder.order_type}</p>
-                  <p><strong>Customer:</strong> {viewOrder.customer_name || "N/A"}</p>
-                  <p><strong>Order No:</strong> #{viewOrder.order_number}</p>
-                  <hr />
-                  <p>Date: {viewOrder.date}</p>
-                  <hr />
-                </div>
-
-                <table className="receipt-table">
-                  <thead>
-                    <tr>
-                      <th>Product</th>
-                      <th>Price</th>
-                      <th>Qty</th>
-                      <th>Total</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {viewOrder.items.map((item, idx) => (
-                      <tr key={idx}>
-                        <td>{item.name}</td>
-                        <td>£{item.price}</td>
-                        <td>{item.qty}</td>
-                        <td>£{item.total}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-
-                <div className="receipt-summary">
-                  <p><strong>Total Qty:</strong> {viewOrder.items.reduce((sum, i) => sum + i.qty, 0)}</p>
-                  <p><strong>Sub Total:</strong> £{viewOrder.total_amount?.toFixed(2)}</p>
-                  <p>VAT (5%): £{(viewOrder.total_amount * 5 / 105).toFixed(2)}</p>
-                  <p>Service (5%): £{(viewOrder.total_amount * 5 / 105).toFixed(2)}</p>
-                  <hr />
-                  <p className="grand-total"><strong>Grand Total:</strong> £{viewOrder.total_amount?.toFixed(2)}</p>
-                  <p className="server-name">Staff: {viewOrder.server_name}</p>
-                </div>
+          <div className="receipt-modal" key={viewOrder.id}>
+            <div className="bill-section" ref={printRef}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
+                <button className="print-btn" onClick={handlePrint}>🖨️ Print</button>
+                <button className="close-preview-btn" onClick={() => setViewOrder(null)}>✖</button>
               </div>
 
-              <div style={{ textAlign: "center", marginTop: "1rem" }}>
-                <button className="print-btn" onClick={handlePrint}>🖨️ Print</button>
+              <div className="receipt-header">
+                <h2>Cozy Cup</h2>
+                <p>Food Truck Lane, Flavor Town</p>
+                <p>Phone: +91-9876543210</p>
+                <p>www.cozycup.example.com</p>
+                <p>Order Type: {viewOrder.order_type}</p>
+                <p><strong>Customer:</strong> {viewOrder.customer_name || "N/A"}</p>
+                <p><strong>Order No:</strong> #{viewOrder.order_number}</p>
+                <p>Date: {viewOrder.date}</p>
+                <hr />
+              </div>
+
+              <table className="receipt-table">
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>Price</th>
+                    <th>Qty</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {viewOrder.items.map((item, idx) => (
+                    <tr key={idx}>
+                      <td>{item.name}</td>
+                      <td>£{item.price}</td>
+                      <td>{item.qty}</td>
+                      <td>£{item.total}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <div className="receipt-summary">
+                <p><strong>Total Qty:</strong> {viewOrder.items.reduce((sum, i) => sum + i.qty, 0)}</p>
+                <p><strong>Sub Total:</strong> £{viewOrder.total_amount?.toFixed(2)}</p>
+                <p>VAT (5%): £{(viewOrder.total_amount * 5 / 105).toFixed(2)}</p>
+                <p>Service (5%): £{(viewOrder.total_amount * 5 / 105).toFixed(2)}</p>
+                {viewOrder.discount_percent > 0 && (
+                  <p><strong>Discount ({viewOrder.discount_percent}%):</strong> -£{viewOrder.discount_amount?.toFixed(2)}</p>
+                )}
+                <hr />
+                <p className="grand-total"><strong>Grand Total:</strong> £{viewOrder.final_amount?.toFixed(2)}</p>
+                <p className="server-name">Staff: {viewOrder.server_name}</p>
               </div>
             </div>
           </div>
