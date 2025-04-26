@@ -10,7 +10,7 @@ const PreviousOrders = () => {
   const [viewOrder, setViewOrder] = useState(null);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [ordersPerPage] = useState(10);
+  const [ordersPerPage, setOrdersPerPage] = useState(10); // ✅ fixed
   const [selectedDate, setSelectedDate] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [fromDate, setFromDate] = useState("");
@@ -29,17 +29,15 @@ const PreviousOrders = () => {
         String(o.order_number).includes(search);
 
       const matchSelectedDate = selectedDate ? createdDate === selectedDate : true;
-
       const matchCustomRange =
-        (!fromDate || createdDate >= fromDate) &&
-        (!toDate || createdDate <= toDate);
+        (!fromDate || createdDate >= fromDate) && (!toDate || createdDate <= toDate);
 
       return matchSearch && matchSelectedDate && matchCustomRange;
     });
 
     const startIndex = (currentPage - 1) * ordersPerPage;
     setFilteredOrders(filtered.slice(startIndex, startIndex + ordersPerPage));
-  }, [orders, search, currentPage, selectedDate, fromDate, toDate]);
+  }, [orders, search, currentPage, selectedDate, fromDate, toDate, ordersPerPage]);
 
   const fetchOrders = async () => {
     try {
@@ -56,12 +54,9 @@ const PreviousOrders = () => {
       const matchSearch =
         o.customer_name?.toLowerCase().includes(search.toLowerCase()) ||
         String(o.order_number).includes(search);
-
       const matchSelectedDate = selectedDate ? createdDate === selectedDate : true;
-
       const matchCustomRange =
-        (!fromDate || createdDate >= fromDate) &&
-        (!toDate || createdDate <= toDate);
+        (!fromDate || createdDate >= fromDate) && (!toDate || createdDate <= toDate);
 
       return matchSearch && matchSelectedDate && matchCustomRange;
     }).length / ordersPerPage
@@ -121,18 +116,8 @@ const PreviousOrders = () => {
             <button className="clear-btn" onClick={() => setShowFilters(!showFilters)}>Filters</button>
             {showFilters && (
               <>
-                <input
-                  type="date"
-                  value={fromDate}
-                  onChange={(e) => setFromDate(e.target.value)}
-                  className="date-picker"
-                />
-                <input
-                  type="date"
-                  value={toDate}
-                  onChange={(e) => setToDate(e.target.value)}
-                  className="date-picker"
-                />
+                <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="date-picker" />
+                <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="date-picker" />
               </>
             )}
             <input
@@ -145,7 +130,6 @@ const PreviousOrders = () => {
               }}
               className="search-box"
             />
- 
             <button onClick={handleToday} className="clear-btn">Today</button>
             <button onClick={clearSearch} className="clear-btn">Clear</button>
           </div>
@@ -180,11 +164,28 @@ const PreviousOrders = () => {
         </table>
 
         <div className="pagination">
-          {[...Array(totalPages)].map((_, i) => (
-            <button key={i} onClick={() => setCurrentPage(i + 1)} className={currentPage === i + 1 ? "active" : ""}>
-              {i + 1}
-            </button>
-          ))}
+          <div className="pagination-left">
+            Result {(currentPage - 1) * ordersPerPage + 1}–{Math.min(currentPage * ordersPerPage, orders.length)} of {orders.length}
+          </div>
+          <div className="pagination-center">
+            {[...Array(totalPages)].map((_, i) => (
+              <button key={i} onClick={() => setCurrentPage(i + 1)} className={currentPage === i + 1 ? "active" : ""}>
+                {i + 1}
+              </button>
+            ))}
+          </div>
+          <div>
+            <select
+              className="page-size-select"
+              value={ordersPerPage}
+              onChange={(e) => setOrdersPerPage(Number(e.target.value))}
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+            </select>
+          </div>
         </div>
 
         {viewOrder && (
@@ -194,7 +195,6 @@ const PreviousOrders = () => {
                 <button className="print-btn" onClick={handlePrint}>🖨️ Print</button>
                 <button className="close-preview-btn" onClick={() => setViewOrder(null)}>✖</button>
               </div>
-
               <div className="receipt-header">
                 <h2>Cozy Cup</h2>
                 <p>Food Truck Lane, Flavor Town</p>
