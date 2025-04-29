@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom'; // ✅ Add this
 import { useNavigate, NavLink } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -33,6 +34,11 @@ const DashboardLayout = ({ children }) => {
           <li><NavLink to="/attendance">⏰ Attendance</NavLink></li>
           <li><NavLink to="/billing">💵 Billing Counter</NavLink></li>
           <li><NavLink to="/previous-orders">📜 Previous Orders</NavLink></li>
+          <Link to="/end-of-day-sales" className="sidebar-link">
+  📊 End of Day Sales
+</Link>
+
+
           <li><NavLink to="/held-orders">⏳ Held Orders</NavLink></li>
 
           {/* Logout */}

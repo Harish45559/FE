@@ -5,6 +5,8 @@ import { DateTime } from 'luxon';
 import './BillingCounter.css';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import imageMapping from "./imageMapping";
+
 
 const BillingCounter = () => {
   const printRef = useRef();
@@ -226,8 +228,10 @@ if (storedRole) setUserRole(storedRole);
         toast.error('Invalid credentials');
       }
     } catch (err) {
-      toast.error('Auth failed');
+      console.error('Order placement failed:', err);
+      alert('Failed to place order');
     }
+    
   };
 
   
@@ -269,7 +273,7 @@ if (storedRole) setUserRole(storedRole);
               </div>
 
 
-              <div className="menu-search-bar">
+              <div className="menu-search-bar"> 
                 <input
                   type="text"
                   placeholder="Search menu items..."
@@ -280,25 +284,32 @@ if (storedRole) setUserRole(storedRole);
             </div>
 
             <div className="menu-grid">
-              {menuItems.filter(item =>
-                (categoryFilter === 'all' || item.category === categoryFilter) &&
-                (
-                  vegFilter === 'all' ||
-                  (vegFilter === 'veg' && item.veg) ||
-                  (vegFilter === 'nonveg' && !item.veg)
-                )
-              ).map(item => (
-                <div key={item.id} className="menu-card" onClick={() => handleAddItem(item)}>
-                  <h4>{item.name}</h4>
-                  <p>£{item.price}</p>
-                  <div className="veg-status">
-                    <span className={`dot ${item.veg ? 'veg' : 'non-veg'}`}></span>
-                    <span>{item.veg ? 'Veg' : 'Non-Veg'}</span>
-                  </div>
-                  <small className="category-label">{item.category}</small>
-                </div>
-              ))}
-            </div>
+  {menuItems.filter(item =>
+    (categoryFilter === 'all' || item.category === categoryFilter) &&
+    (
+      vegFilter === 'all' ||
+      (vegFilter === 'veg' && item.veg) ||
+      (vegFilter === 'nonveg' && !item.veg)
+    ) &&
+    (item.name.toLowerCase().includes(searchQuery.toLowerCase()))
+  ).map(item => (
+    <div key={item.id} className="menu-card" onClick={() => handleAddItem(item)}>
+      <img 
+        src={imageMapping[item.name] || "/images/default-food.jpg"} 
+        alt={item.name} 
+        className="menu-item-image" 
+      />
+      <h4>{item.name}</h4>
+      <p>£{item.price}</p>
+      <div className="veg-status">
+        <span className={`dot ${item.veg ? 'veg' : 'non-veg'}`}></span>
+        <span>{item.veg ? 'Veg' : 'Non-Veg'}</span>
+      </div>
+      <small className="category-label">{item.category}</small>
+    </div>
+  ))}
+</div>
+
           </div>
 
             

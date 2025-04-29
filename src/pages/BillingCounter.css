@@ -582,3 +582,78 @@
   box-shadow: inset 0 0 0 2px #d1d5db;
   margin-right: 12px;
 }
+
+
+/* === RESPONSIVE STYLES === */
+@media (max-width: 1024px) {
+  .billing-wrapper {
+    flex-direction: column;
+    height: auto;
+    padding: 1rem;
+  }
+
+  .menu-left,
+  .summary-right {
+    width: 100%;
+  }
+
+  .order-row, .payment-row {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 768px) {
+  .billing-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .filters button {
+    padding: 4px 10px;
+    font-size: 0.8rem;
+  }
+
+  .menu-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+
+  .menu-card {
+    padding: 8px;
+  }
+
+  .customer-input,
+  .discount-input {
+    font-size: 14px;
+    padding: 10px;
+  }
+
+  .order-title {
+    font-size: 1.2rem;
+  }
+
+  .order-btn,
+  .action-btn {
+    font-size: 14px;
+    padding: 8px 12px;
+  }
+
+  .bill-section {
+    width: 90%;
+  }
+
+  .receipt-table th,
+  .receipt-table td {
+    font-size: 0.8rem;
+  }
+}
+
+
+.menu-item-image {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+
+

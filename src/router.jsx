@@ -11,6 +11,7 @@ import MasterData from './pages/MasterData';
 import BillingCounter from './pages/BillingCounter';
 import ForgotPassword from './pages/ForgotPassword';
 import ProtectedRoute from './components/ProtectedRoute';
+import EndOfDaySales from './pages/EndOfDaySales'; // ✅ new import
 
 const AppRouter = () => {
   const routes = useRoutes([
@@ -36,41 +37,6 @@ const AppRouter = () => {
       ),
     },
 
-          // 🔐 Shared routes - for both admin and employee
-          {
-            path: '/attendance',
-            element: (
-              <ProtectedRoute allowedRoles={['admin', 'employee']}>
-                <Attendance />
-              </ProtectedRoute>
-            ),
-          },
-  
-    {
-      path: '/billing',
-      element: (
-        <ProtectedRoute allowedRoles={['admin', 'employee']}>
-          <BillingCounter />
-        </ProtectedRoute>
-      ),
-    },
-    {
-      path: '/previous-orders',
-      element: (
-        <ProtectedRoute allowedRoles={['admin', 'employee']}>
-          <PreviousOrders />
-        </ProtectedRoute>
-      ),
-    },
-    {
-      path: '/held-orders',
-      element: (
-        <ProtectedRoute allowedRoles={['admin', 'employee']}>
-          <HeldOrders />
-        </ProtectedRoute>
-      ),
-    },
-
     {
       path: '/reports',
       element: (
@@ -79,6 +45,7 @@ const AppRouter = () => {
         </ProtectedRoute>
       ),
     },
+
     {
       path: '/master-data',
       element: (
@@ -87,8 +54,54 @@ const AppRouter = () => {
         </ProtectedRoute>
       ),
     },
+
+    {
+      path: '/end-of-day-sales',  // ✅ new route
+      element: (
+        <ProtectedRoute allowedRoles={['admin']}>
+          <EndOfDaySales />
+        </ProtectedRoute>
+      ),
+    },
+
+    // 🔐 Shared routes - for both admin and employee
+    {
+      path: '/attendance',
+      element: (
+        <ProtectedRoute allowedRoles={['admin', 'employee']}>
+          <Attendance />
+        </ProtectedRoute>
+      ),
+    },
+
+    {
+      path: '/billing',
+      element: (
+        <ProtectedRoute allowedRoles={['admin', 'employee']}>
+          <BillingCounter />
+        </ProtectedRoute>
+      ),
+    },
+
+    {
+      path: '/previous-orders',
+      element: (
+        <ProtectedRoute allowedRoles={['admin', 'employee']}>
+          <PreviousOrders />
+        </ProtectedRoute>
+      ),
+    },
+
+    {
+      path: '/held-orders',
+      element: (
+        <ProtectedRoute allowedRoles={['admin', 'employee']}>
+          <HeldOrders />
+        </ProtectedRoute>
+      ),
+    },
   ]);
-  
+
   return routes;
 };
 

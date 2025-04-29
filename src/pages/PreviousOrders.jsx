@@ -10,7 +10,7 @@ const PreviousOrders = () => {
   const [viewOrder, setViewOrder] = useState(null);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [ordersPerPage, setOrdersPerPage] = useState(10); // ✅ fixed
+  const [ordersPerPage, setOrdersPerPage] = useState(10);
   const [selectedDate, setSelectedDate] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [fromDate, setFromDate] = useState("");
@@ -27,11 +27,9 @@ const PreviousOrders = () => {
       const matchSearch =
         o.customer_name?.toLowerCase().includes(search.toLowerCase()) ||
         String(o.order_number).includes(search);
-
       const matchSelectedDate = selectedDate ? createdDate === selectedDate : true;
       const matchCustomRange =
         (!fromDate || createdDate >= fromDate) && (!toDate || createdDate <= toDate);
-
       return matchSearch && matchSelectedDate && matchCustomRange;
     });
 
@@ -57,20 +55,23 @@ const PreviousOrders = () => {
       const matchSelectedDate = selectedDate ? createdDate === selectedDate : true;
       const matchCustomRange =
         (!fromDate || createdDate >= fromDate) && (!toDate || createdDate <= toDate);
-
       return matchSearch && matchSelectedDate && matchCustomRange;
     }).length / ordersPerPage
   );
 
   const handlePrint = () => {
-    const win = window.open("", "", "width=600,height=600");
+    const win = window.open("", "", "width=300,height=600");
     win.document.write(`
       <html><head><title>Receipt</title>
       <style>
-        body { font-family: 'Courier New', Courier, monospace; padding: 20px; }
+        @media print {
+          body { width: 80mm; margin: 0; padding: 0; font-family: 'Courier New', Courier, monospace; font-size: 12px; }
+          h2, p, .receipt-header p, .receipt-summary p, th, td { text-align: center; }
+        }
+        body { font-family: 'Courier New', Courier, monospace; width: 80mm; padding: 10px; }
         .receipt-header, .receipt-summary, table { width: 100%; }
-        table { border-collapse: collapse; font-size: 13px; }
-        th, td { border-bottom: 1px dotted #ccc; padding: 4px; text-align: left; }
+        table { border-collapse: collapse; font-size: 12px; }
+        th, td { border-bottom: 1px dotted #ccc; padding: 4px; }
         h2 { text-align: center; }
       </style>
       </head><body>
@@ -190,11 +191,14 @@ const PreviousOrders = () => {
 
         {viewOrder && (
           <div className="receipt-modal" key={viewOrder.id}>
+            {/* Buttons OUTSIDE the printable area */}
+            <div className="modal-header-buttons" style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
+              <button className="print-btn" onClick={handlePrint}>🖨️ Print</button>
+              <button className="close-preview-btn" onClick={() => setViewOrder(null)}>✖</button>
+            </div>
+
+            {/* Only receipt inside ref */}
             <div className="bill-section" ref={printRef}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
-                <button className="print-btn" onClick={handlePrint}>🖨️ Print</button>
-                <button className="close-preview-btn" onClick={() => setViewOrder(null)}>✖</button>
-              </div>
               <div className="receipt-header">
                 <h2>Cozy Cup</h2>
                 <p>Food Truck Lane, Flavor Town</p>
