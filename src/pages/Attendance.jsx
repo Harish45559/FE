@@ -93,9 +93,9 @@ const Attendance = () => {
     try {
       const endpoint = actionType === 'clock_in' ? '/attendance/clock-in' : '/attendance/clock-out';
       const res = await api.post(endpoint, {
-        employee_id: selectedEmployee.id,
         pin,
       });
+      
 
       const clockedAt = res.data.clock_in || res.data.clock_out;
       const totalHours = res.data.total_work_hours || '—';
