@@ -94,6 +94,7 @@ const Attendance = () => {
       const endpoint = actionType === 'clock_in' ? '/attendance/clock-in' : '/attendance/clock-out';
       const res = await api.post(endpoint, {
         pin,
+        employeeId: selectedEmployee.id,
       });
       
 
