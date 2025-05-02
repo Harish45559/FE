@@ -13,6 +13,8 @@ const Attendance = () => {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [pin, setPin] = useState('');
   const [currentTime, setCurrentTime] = useState(DateTime.now().setZone('Europe/London'));
+  const [isLoading, setIsLoading] = useState(false);
+
   const actionTypeRef = useRef(null);
 
   useEffect(() => {
@@ -69,41 +71,46 @@ const Attendance = () => {
 
   const handleSubmit = async () => {
     const actionType = actionTypeRef.current;
+  
     if (!selectedEmployee || !actionType || pin.length !== 4) {
       toast.warning('Select employee, action, and enter 4-digit PIN');
       return;
     }
-
+  
+    if (isLoading) return;
+    setIsLoading(true);
+  
     if (
       actionType === 'clock_in' &&
       selectedEmployee.attendance_status === 'Clocked In'
     ) {
       toast.info('Employee is already clocked in');
+      setIsLoading(false);
       return;
     }
-
+  
     if (
       actionType === 'clock_out' &&
-      selectedEmployee.attendance_status === 'Clocked Out'
+      selectedEmployee.attendance_status !== 'Clocked In'
     ) {
-      toast.info('Employee is already clocked out');
+      toast.info('Employee is not clocked in');
+      setIsLoading(false);
       return;
     }
-
+  
     try {
       const endpoint = actionType === 'clock_in' ? '/attendance/clock-in' : '/attendance/clock-out';
       const res = await api.post(endpoint, {
         pin,
         employeeId: selectedEmployee.id,
       });
-      
-
+  
       const clockedAt = res.data.clock_in || res.data.clock_out;
       const totalHours = res.data.total_work_hours || '—';
       const timeFormatted = DateTime.fromISO(clockedAt).setZone('Europe/London').toFormat('dd/MM/yyyy HH:mm');
-
+  
       toast.success(`✅ ${actionType.replace('_', ' ')} successful at ${timeFormatted}. Worked: ${totalHours}`);
-
+  
       setPin('');
       setSelectedEmployee(null);
       actionTypeRef.current = null;
@@ -111,6 +118,8 @@ const Attendance = () => {
     } catch (err) {
       console.error('Attendance Error:', err);
       toast.error(err.response?.data?.error || 'Attendance failed');
+    } finally {
+      setIsLoading(false); // ✅ Always reset loading state
     }
   };
 
