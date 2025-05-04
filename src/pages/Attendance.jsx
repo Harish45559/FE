@@ -72,8 +72,13 @@ const Attendance = () => {
   const handleSubmit = async () => {
     const actionType = actionTypeRef.current;
   
-    if (!selectedEmployee || !actionType || pin.length !== 4) {
-      toast.warning('Select employee, action, and enter 4-digit PIN');
+    if (!selectedEmployee || !actionType) {
+      toast.warning('Select employee and action');
+      return;
+    }
+  
+    if (pin.length !== 4) {
+      toast.error("PIN must be 4 digits");
       return;
     }
   
@@ -100,13 +105,14 @@ const Attendance = () => {
   
     try {
       const endpoint = actionType === 'clock_in' ? '/attendance/clock-in' : '/attendance/clock-out';
+  
       const res = await api.post(endpoint, {
         pin,
         employeeId: selectedEmployee.id,
       });
-  
-      const clockedAt = res.data.clock_in || res.data.clock_out;
-      const totalHours = res.data.total_work_hours || '—';
+      
+      const clockedAt = res.data.attendance?.clock_in || res.data.attendance?.clock_out;
+      const totalHours = res.data.attendance?.total_work_hours || '—';
       const timeFormatted = DateTime.fromISO(clockedAt).setZone('Europe/London').toFormat('dd/MM/yyyy HH:mm');
   
       toast.success(`✅ ${actionType.replace('_', ' ')} successful at ${timeFormatted}. Worked: ${totalHours}`);
@@ -119,9 +125,10 @@ const Attendance = () => {
       console.error('Attendance Error:', err);
       toast.error(err.response?.data?.error || 'Attendance failed');
     } finally {
-      setIsLoading(false); // ✅ Always reset loading state
+      setIsLoading(false);
     }
   };
+  
 
   return (
     <DashboardLayout>
