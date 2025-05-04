@@ -80,3 +80,43 @@
     color: #1e293b;
   }
   
+  .sales-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: white;
+    border-radius: 8px;
+    overflow: hidden;
+    font-size: 0.95rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  }
+  
+  .sales-table thead {
+    background-color: #f97316;
+    color: white;
+  }
+  
+  .sales-table th,
+  .sales-table td {
+    padding: 12px 16px;
+    border: 1px solid #e2e8f0;
+    text-align: left;
+    white-space: nowrap;
+  }
+  
+  .sales-table tbody tr:nth-child(even) {
+    background-color: #f8fafc;
+  }
+  
+  .sales-table tbody tr:hover {
+    background-color: #fef3c7;
+  }
+  
+  .date-input {
+    border: 1px solid #cbd5e1;
+    padding: 10px;
+    border-radius: 6px;
+    outline: none;
+  }
+  
+
+  

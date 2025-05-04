@@ -120,6 +120,7 @@
 }
 
 /* Receipt Modal */
+/* Receipt Modal */
 .receipt-modal {
   position: fixed;
   top: 0;
@@ -130,7 +131,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 50;
+  z-index: 9999;
 }
 
 .bill-section {
@@ -141,60 +142,76 @@
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
   font-family: 'Courier New', Courier, monospace;
+  color: #000;
 }
 
 .receipt-header h2 {
   text-align: center;
   margin-bottom: 5px;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.receipt-header p {
+  font-size: 14px;
+  text-align: center;
+  margin: 2px 0;
 }
 
 .receipt-table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 10px;
-  margin-bottom: 10px;
+  margin-top: 12px;
+  margin-bottom: 12px;
+  font-size: 14px;
 }
 
 .receipt-table th,
 .receipt-table td {
-  border-bottom: 1px dotted #999;
   padding: 6px 4px;
-  font-size: 13px;
+  border-bottom: 1px solid #000;
+  font-weight: 600;
+  color: #000;
   text-align: left;
 }
 
 .receipt-summary p {
-  margin: 4px 0;
-  font-size: 13px;
+  margin: 6px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #000;
 }
 
 .grand-total {
-  font-size: 15px;
-  font-weight: 600;
-  margin-top: 10px;
+  font-size: 16px;
+  font-weight: 700;
+  margin-top: 12px;
+  text-align: left;
 }
 
 .server-name {
-  margin-top: 8px;
+  margin-top: 10px;
   font-style: italic;
   font-size: 13px;
-  color: #555;
+  color: #333;
+  text-align: left;
 }
 
 .print-btn,
 .close-preview-btn {
-  background-color: #6366f1;
+  background-color: #1f2937;
   color: white;
   border: none;
-  padding: 6px 10px;
-  border-radius: 4px;
+  padding: 8px 14px;
+  border-radius: 5px;
   cursor: pointer;
   font-size: 14px;
+  font-weight: 600;
 }
 
 .print-btn:hover,
 .close-preview-btn:hover {
-  background-color: #4f46e5;
+  background-color: #111827;
 }
