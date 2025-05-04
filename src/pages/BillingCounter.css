@@ -657,3 +657,92 @@
 
 
 
+@media print {
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+    width: auto !important;
+    overflow: hidden !important;
+  }
+
+  body * {
+    visibility: visible !important;
+    height: 0 !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .receipt-overlay,
+  .bill-section,
+  .bill-section * {
+    visibility: visible !important;
+    height: auto !important;
+    overflow: visible !important;
+    position: static !important;
+  }
+
+  .receipt-overlay {
+    position: absolute !important;
+    top: 0;
+    left: 0;
+    width: 100% !important;
+    height: auto !important;
+    background: white !important;
+  }
+
+  .bill-section {
+    width: 280px !important;
+    padding: 10px !important;
+    margin: 0 auto !important;
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    font-family: 'Courier New', monospace !important;
+    color: #000 !important;
+    background: #fff !important;
+  }
+
+  .receipt-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    table-layout: fixed; /* Ensures consistent column width */
+  }
+  
+  .receipt-table th:nth-child(1),
+  .receipt-table td:nth-child(1) {
+    width: 40%;
+    text-align: left;
+  }
+  
+  .receipt-table th:nth-child(2),
+  .receipt-table td:nth-child(2) {
+    width: 20%;
+    text-align: center;
+  }
+  
+  .receipt-table th:nth-child(3),
+  .receipt-table td:nth-child(3) {
+    width: 20%;
+    text-align: center;
+  }
+  
+  .receipt-table th:nth-child(4),
+  .receipt-table td:nth-child(4) {
+    width: 20%;
+    text-align: right;
+  }
+  
+
+  .receipt-summary p {
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    color: #000 !important;
+  }
+
+  @page {
+    size: 72mm auto;
+    margin: 0;
+  }
+}
