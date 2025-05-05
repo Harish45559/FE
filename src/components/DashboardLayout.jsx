@@ -27,6 +27,7 @@ const DashboardLayout = ({ children }) => {
               <li><NavLink to="/employees">👥 Employees</NavLink></li>
               <li><NavLink to="/reports">📈 Reports</NavLink></li>
               <li><NavLink to="/master-data">🗂️ Master Data</NavLink></li>
+              <Link to="/end-of-day-sales" className="sidebar-link"> 📊 End of Day Sales </Link>
             </>
           )}
 
@@ -34,11 +35,6 @@ const DashboardLayout = ({ children }) => {
           <li><NavLink to="/attendance">⏰ Attendance</NavLink></li>
           <li><NavLink to="/billing">💵 Billing Counter</NavLink></li>
           <li><NavLink to="/previous-orders">📜 Previous Orders</NavLink></li>
-          <Link to="/end-of-day-sales" className="sidebar-link">
-  📊 End of Day Sales
-</Link>
-
-
           <li><NavLink to="/held-orders">⏳ Held Orders</NavLink></li>
 
           {/* Logout */}
