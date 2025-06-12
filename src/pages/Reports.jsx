@@ -153,6 +153,7 @@ const Reports = () => {
             <th>Employee</th>
             <th>Date</th>
             <th onClick={() => handleSort('clock_in_uk')}>First Clock In</th>
+            <th onClick={() => handleSort('clock_out_uk')}>Last Clock Out</th>
             <th onClick={() => handleSort('total_work_hours')}>Total Hours</th>
             <th>Action</th>
           </tr>
@@ -165,6 +166,7 @@ const Reports = () => {
                   <td>{r.employee ? `${r.employee.first_name} ${r.employee.last_name}` : '—'}</td>
                   <td>{r.date || '—'}</td>
                   <td>{r.clock_in_uk || '—'}</td>
+                  <td>{r.clock_out_uk || '—'}</td>
                   <td>{r.total_work_hours ?? '—'}</td>
                   <td>
                     <button className="delete-btn" onClick={() => handleDelete(r.id)}>
