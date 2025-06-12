@@ -151,8 +151,7 @@ const Reports = () => {
             <thead>
               <tr>
                 <th>Employee</th>
-                <th onClick={() => handleSort('clock_in_uk')}>Date</th>
-
+                <th onClick={() => handleSort('clock_in_uk')}>Clock In</th>
                 <th onClick={() => handleSort('clock_out_uk')}>Clock Out</th>
                 <th onClick={() => handleSort('total_work_hours')}>Total Hours</th>
                 <th>Action</th>
@@ -167,8 +166,7 @@ const Reports = () => {
                         ? `${r.employee.first_name} ${r.employee.last_name}`
                         : '—'}
                     </td>
-                   <td>{r.clock_in_uk || '—'}</td>
-
+                    <td>{r.clock_in_uk || '—'}</td>
                     <td>{r.clock_out_uk || '—'}</td>
                     <td>{r.total_work_hours ?? '—'}</td>
                     <td>
