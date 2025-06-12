@@ -13,6 +13,8 @@ import ForgotPassword from './pages/ForgotPassword';
 import ProtectedRoute from './components/ProtectedRoute';
 import EndOfDaySales from './pages/EndOfDaySales'; // ✅ new import
 
+
+
 const AppRouter = () => {
   const routes = useRoutes([
     { path: '/', element: <Login /> },
