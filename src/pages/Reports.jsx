@@ -14,24 +14,27 @@ const Reports = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState('clock_in_uk');
   const [sortDirection, setSortDirection] = useState('asc');
+  const [viewMode, setViewMode] = useState('detailed'); // 'detailed' or 'summary'
 
   const ITEMS_PER_PAGE = 10;
 
   useEffect(() => {
-    const fetchEmployees = async () => {
-      try {
-        const res = await api.get('/employees');
-        setEmployees(Array.isArray(res.data) ? res.data : []);
-      } catch (err) {
-        console.error('Failed to load employees:', err);
-      }
-    };
     fetchEmployees();
   }, []);
 
+  const fetchEmployees = async () => {
+    try {
+      const res = await api.get('/employees');
+      setEmployees(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      console.error('Failed to load employees:', err);
+    }
+  };
+
   const fetchReports = async () => {
     try {
-      const res = await api.get('/reports/reports', {
+      const endpoint = viewMode === 'summary' ? '/reports/summary' : '/reports/reports';
+      const res = await api.get(endpoint, {
         params: {
           employee_id: selectedEmployee !== 'all' ? selectedEmployee : undefined,
           from: fromDate ? fromDate.toISOString() : undefined,
@@ -50,9 +53,7 @@ const Reports = () => {
     return data.sort((a, b) => {
       const valA = a[sortField] || '';
       const valB = b[sortField] || '';
-      if (sortDirection === 'asc') {
-        return valA > valB ? 1 : -1;
-      }
+      if (sortDirection === 'asc') return valA > valB ? 1 : -1;
       return valA < valB ? 1 : -1;
     });
   };
@@ -111,10 +112,7 @@ const Reports = () => {
     <DashboardLayout>
       <div className="report-container">
         <div className="filter-section">
-          <select
-            value={selectedEmployee}
-            onChange={(e) => setSelectedEmployee(e.target.value)}
-          >
+          <select value={selectedEmployee} onChange={(e) => setSelectedEmployee(e.target.value)}>
             <option value="all">All Employees</option>
             {employees.map((emp) => (
               <option key={emp.id} value={emp.id}>
@@ -136,8 +134,9 @@ const Reports = () => {
             className="date-picker"
             dateFormat="yyyy-MM-dd"
           />
-          <button className="search-btn" onClick={fetchReports}>
-            🔍 Search
+          <button className="search-btn" onClick={fetchReports}>🔍 Search</button>
+          <button className="toggle-btn" onClick={() => setViewMode(viewMode === 'detailed' ? 'summary' : 'detailed')}>
+            View: {viewMode === 'detailed' ? 'Switch to Summary' : 'Switch to Detailed'}
           </button>
         </div>
 
@@ -148,36 +147,55 @@ const Reports = () => {
 
         <div className="report-table">
           <table>
-       <thead>
-  <tr>
-    <th>Employee</th>
-    <th onClick={() => handleSort('date')}>Date</th>
-    <th onClick={() => handleSort('clock_in_uk')}>Clock In</th>
-    <th onClick={() => handleSort('clock_out_uk')}>Clock Out</th>
-    <th onClick={() => handleSort('total_work_hours')}>Total Hours</th>
-    <th>Action</th>
-  </tr>
-</thead>
-
-
+            <thead>
+              {viewMode === 'detailed' ? (
+                <tr>
+                  <th>Employee</th>
+                  <th>Date</th>
+                  <th onClick={() => handleSort('clock_in_uk')}>Clock In</th>
+                  <th onClick={() => handleSort('clock_out_uk')}>Clock Out</th>
+                  <th onClick={() => handleSort('total_work_hours')}>Total Hours</th>
+                  <th>Action</th>
+                </tr>
+              ) : (
+                <tr>
+                  <th>Employee</th>
+                  <th>Date</th>
+                  <th>First In</th>
+                  <th>Last Out</th>
+                  <th>Total Hours</th>
+                  <th>Break Time</th>
+                </tr>
+              )}
+            </thead>
             <tbody>
               {paginatedReports().length > 0 ? (
                 paginatedReports().map((r) => (
-                 <tr key={r.id}>
-  <td>{r.employee ? `${r.employee.first_name} ${r.employee.last_name}` : '—'}</td>
-  <td>{r.date || '—'}</td>
-  <td>{r.clock_in_uk || '—'}</td>
-  <td>{r.clock_out_uk || '—'}</td>
-  <td>{r.total_work_hours ?? '—'}</td>
-  <td>
-    <button className="delete-btn" onClick={() => handleDelete(r.id)}>🗑️</button>
-  </td>
-</tr>
-
+                  <tr key={r.id}>
+                    <td>{r.employee ? `${r.employee.first_name} ${r.employee.last_name}` : '—'}</td>
+                    <td>{r.date || '—'}</td>
+                    {viewMode === 'detailed' ? (
+                      <>
+                        <td>{r.clock_in_uk || '—'}</td>
+                        <td>{r.clock_out_uk || '—'}</td>
+                        <td>{r.total_work_hours ?? '—'}</td>
+                        <td>
+                          <button className="delete-btn" onClick={() => handleDelete(r.id)}>🗑️</button>
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td>{r.first_clock_in || '—'}</td>
+                        <td>{r.last_clock_out || '—'}</td>
+                        <td>{r.total_work_hours ?? '—'}</td>
+                        <td>{r.break_time ?? '—'}</td>
+                      </>
+                    )}
+                  </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="5" style={{ textAlign: 'center' }}>
+                  <td colSpan={viewMode === 'detailed' ? 6 : 6} style={{ textAlign: 'center' }}>
                     No records found
                   </td>
                 </tr>
