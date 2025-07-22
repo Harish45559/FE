@@ -40,10 +40,15 @@ const EndOfDaySales = () => {
         to = today;
       }
 
+      const params = (filterMode === 'summary') ? {} : {
+        fromDate: from,
+        toDate: to,
+      };
+
       const [summaryRes, topItemsRes, totalSalesRes] = await Promise.all([
-        api.get(`/sales/summary?fromDate=${from}&toDate=${to}`),
-        api.get('/sales/topselling'),
-        api.get(`/sales/totalsales?fromDate=${from}&toDate=${to}`)
+        api.get('/sales/summary', { params }),
+        api.get('/sales/topselling', { params }),
+        api.get('/sales/totalsales', { params })
       ]);
 
       setSummary(summaryRes.data);
@@ -58,7 +63,7 @@ const EndOfDaySales = () => {
     try {
       const [summaryRes, topItemsRes, totalSalesRes] = await Promise.all([
         api.get(`/sales/summary?fromDate=${fromDate}&toDate=${toDate}`),
-        api.get('/sales/topselling'),
+        api.get(`/sales/topselling?fromDate=${fromDate}&toDate=${toDate}`),
         api.get(`/sales/totalsales?fromDate=${fromDate}&toDate=${toDate}`)
       ]);
 
@@ -98,9 +103,9 @@ const EndOfDaySales = () => {
         {/* Filter Options */}
         {showFilters && (
           <div className="filters-bar">
-            <button onClick={() => setFilterMode('today')} className="filter-btn">Today</button>
-            <button onClick={() => setFilterMode('weekly')} className="filter-btn">Weekly</button>
-            <button onClick={() => setFilterMode('monthly')} className="filter-btn">Monthly</button>
+            <button onClick={() => { setFilterMode('today'); setTab('summary'); }} className="filter-btn">Today</button>
+            <button onClick={() => { setFilterMode('weekly'); setTab('summary'); }} className="filter-btn">Weekly</button>
+            <button onClick={() => { setFilterMode('monthly'); setTab('summary'); }} className="filter-btn">Monthly</button>
 
             <input
               type="date"
@@ -134,7 +139,7 @@ const EndOfDaySales = () => {
 
         {/* Tabs */}
         <div className="tab-bar">
-          <button onClick={() => setTab('summary')} className={tab === 'summary' ? 'tab-btn active' : 'tab-btn'}>Summary</button>
+          <button onClick={() => { setTab('summary'); setFilterMode('summary'); }} className={tab === 'summary' ? 'tab-btn active' : 'tab-btn'}>Summary</button>
           <button onClick={() => setTab('top')} className={tab === 'top' ? 'tab-btn active' : 'tab-btn'}>Top Selling Items</button>
           <button onClick={() => setTab('graphs')} className={tab === 'graphs' ? 'tab-btn active' : 'tab-btn'}>Graphs</button>
           <button onClick={() => setTab('total')} className={tab === 'total' ? 'tab-btn active' : 'tab-btn'}>Total Sales</button>
@@ -164,7 +169,7 @@ const EndOfDaySales = () => {
                   topItems.map((item, index) => (
                     <tr key={index}>
                       <td>{item.name}</td>
-                      <td>{item.qty || item.quantity || 0}</td>
+                      <td>{item.quantity || 0}</td>
                     </tr>
                   ))
                 ) : (

@@ -18,16 +18,17 @@ const Attendance = () => {
   const actionTypeRef = useRef(null);
 
   useEffect(() => {
-    fetchEmployees();
-    const interval = setInterval(fetchEmployees, 30000);
-    const clockInterval = setInterval(() => {
-      setCurrentTime(DateTime.now().setZone('Europe/London'));
-    }, 1000);
-    return () => {
-      clearInterval(interval);
-      clearInterval(clockInterval);
-    };
-  }, []);
+  fetchEmployees(); // Run once on mount only
+
+  const clockInterval = setInterval(() => {
+    setCurrentTime(DateTime.now().setZone('Europe/London'));
+  }, 1000);
+
+  return () => {
+    clearInterval(clockInterval);
+  };
+}, []);
+
 
   const fetchEmployees = async () => {
     try {
@@ -115,7 +116,7 @@ const Attendance = () => {
       const totalHours = res.data.attendance?.total_work_hours || '—';
       const timeFormatted = DateTime.fromISO(clockedAt).setZone('Europe/London').toFormat('dd/MM/yyyy HH:mm');
   
-      toast.success(`✅ ${actionType.replace('_', ' ')} successful at ${timeFormatted}. Worked: ${totalHours}`);
+      toast.success(` ${actionType.replace('_', ' ')} successful at ${timeFormatted}. Worked: ${totalHours}`);
   
       setPin('');
       setSelectedEmployee(null);

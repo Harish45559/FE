@@ -5,13 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "start": "serve -s dist -l $PORT",
+    "start": "serve -s dist -p 3000",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
+    "@tippyjs/react": "^4.2.6",
     "axios": "^1.8.4",
     "bcryptjs": "^3.0.2",
     "chart.js": "^4.4.8",
