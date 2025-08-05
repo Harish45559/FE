@@ -58,7 +58,7 @@ const AppRouter = () => {
     },
 
     {
-      path: '/end-of-day-sales',  // ✅ new route
+      path: '/end-of-day-sales',
       element: (
         <ProtectedRoute allowedRoles={['admin']}>
           <EndOfDaySales />
@@ -75,7 +75,6 @@ const AppRouter = () => {
         </ProtectedRoute>
       ),
     },
-
     {
       path: '/billing',
       element: (
@@ -84,7 +83,6 @@ const AppRouter = () => {
         </ProtectedRoute>
       ),
     },
-
     {
       path: '/previous-orders',
       element: (
@@ -93,7 +91,6 @@ const AppRouter = () => {
         </ProtectedRoute>
       ),
     },
-
     {
       path: '/held-orders',
       element: (
@@ -101,7 +98,7 @@ const AppRouter = () => {
           <HeldOrders />
         </ProtectedRoute>
       ),
-    },
+    }
   ]);
 
   return routes;
