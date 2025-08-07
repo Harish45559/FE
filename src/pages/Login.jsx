@@ -11,31 +11,33 @@ const Login = () => {
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    try {
-      const res = await api.post('/auth/login', form); // ✅ Corrected path
+const handleLogin = async (e) => {
+  e.preventDefault();
+  try {
+    const res = api.post('/auth/login', form); // ✅ CORRECT
 
-      // Save token + full user object
-      localStorage.setItem('token', res.data.token);
-      localStorage.setItem('user', JSON.stringify({
-        username: form.username,
-        role: res.data.role,
-        token: res.data.token,
-      }));
 
-      // Redirect based on role
-      if (res.data.role === 'admin') {
-        navigate('/dashboard');
-      } else if (res.data.role === 'employee') {
-        navigate('/attendance');
-      } else {
-        setError('Unknown role');
-      }
-    } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
+    // Save token + full user object
+    localStorage.setItem('token', res.data.token);
+    localStorage.setItem('user', JSON.stringify({
+      username: form.username,
+      role: res.data.role,
+      token: res.data.token,
+    }));
+
+    // Redirect based on role
+    if (res.data.role === 'admin') {
+      navigate('/dashboard');
+    } else if (res.data.role === 'employee') {
+      navigate('/attendance');
+    } else {
+      setError('Unknown role');
     }
-  };
+  } catch (err) {
+    setError(err.response?.data?.message || 'Login failed');
+  }
+};
+
 
   return (
     <div className="login-page">
