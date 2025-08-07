@@ -1,3 +1,4 @@
+// Login.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
@@ -14,34 +15,40 @@ const Login = () => {
 const handleLogin = async (e) => {
   e.preventDefault();
   try {
-  const res = await api.post('/auth/login', form);
-
-
-
-    // Add token expiration handling
-    const userData = {
-      username: form.username,
-      role: res.data.role,
-      token: res.data.token,
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
-    };
-
-    localStorage.setItem('token', res.data.token);
-    localStorage.setItem('user', JSON.stringify(userData));
-
-    // Redirect based on role
-    if (res.data.role === 'admin') {
-      navigate('/dashboard');
-    } else if (res.data.role === 'employee') {
-      navigate('/attendance');
-    } else {
-      setError('Unknown role');
-    }
-  } catch (err) {
-    console.error('Login error:', err);
-    setError(err.response?.data?.message || 'Login failed');
+    const res = await api.post('/auth/login', form);
+    // Add any remaining logic here (e.g., storing token, redirection, etc.)
+  } catch (error) {
+    console.error("Login failed", error);
   }
 };
+
+
+      // 🔍 Debug the response
+      console.log('Login response:', res.data);
+
+      const userData = {
+        username: form.username,
+        role: res.data.role,
+        token: res.data.token,
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+      };
+
+      localStorage.setItem('token', res.data.token);
+      localStorage.setItem('user', JSON.stringify(userData));
+
+      // Redirect based on role
+      if (res.data.role === 'admin') {
+        navigate('/dashboard');
+      } else if (res.data.role === 'employee') {
+        navigate('/attendance');
+      } else {
+        setError('Unknown role');
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      setError(err.response?.data?.message || 'Login failed');
+    }
+  };
 
   return (
     <div className="login-page">

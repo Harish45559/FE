@@ -1,5 +1,5 @@
-import React from 'react';
-import { Link } from 'react-router-dom'; // ✅ Add this
+// DashboardLayout.jsx
+import React, { useEffect, useState } from 'react';
 import { useNavigate, NavLink } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -7,7 +7,19 @@ import './DashboardLayout.css';
 
 const DashboardLayout = ({ children }) => {
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem('user'));
+
+  // Use state to ensure updates after login
+  const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('user')));
+
+  // Sync user data from localStorage every 1 second
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const updatedUser = JSON.parse(localStorage.getItem('user'));
+      setUser(updatedUser);
+    }, 1000);
+
+    return () => clearInterval(interval); // cleanup
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -27,11 +39,11 @@ const DashboardLayout = ({ children }) => {
               <li><NavLink to="/employees">👥 Employees</NavLink></li>
               <li><NavLink to="/reports">📈 Reports</NavLink></li>
               <li><NavLink to="/master-data">🗂️ Master Data</NavLink></li>
-              <Link to="/end-of-day-sales" className="sidebar-link"> 📊 End of Day Sales </Link>
+              <li><NavLink to="/end-of-day-sales">📊 End of Day Sales</NavLink></li>
             </>
           )}
 
-          {/* Shared for both admin and employee */}
+          {/* Shared routes */}
           <li><NavLink to="/attendance">⏰ Attendance</NavLink></li>
           <li><NavLink to="/billing">💵 Billing Counter</NavLink></li>
           <li><NavLink to="/previous-orders">📜 Previous Orders</NavLink></li>
@@ -44,23 +56,21 @@ const DashboardLayout = ({ children }) => {
             </button>
           </li>
         </ul>
-        
-        {/* ✅ Show logged in employee or admin at bottom */}
+
+        {/* Logged in user info */}
         <div className="user-info">
-  {user?.role === 'admin' ? (
-    '👑 Admin Logged In'
-  ) : user?.first_name ? (
-    `👤 Logged in as ${user.first_name} ${user.last_name || ''}`
-  ) : user?.username ? (
-    `👤 Logged in as ${user.username}`
-  ) : user?.id ? (
-    `👤 Logged in as User ${user.id}`
-  ) : (
-    '👤 Employee Logged In'
-  )}
-</div>
-
-
+          {user?.role === 'admin' ? (
+            '👑 Admin Logged In'
+          ) : user?.first_name ? (
+            `👤 Logged in as ${user.first_name} ${user.last_name || ''}`
+          ) : user?.username ? (
+            `👤 Logged in as ${user.username}`
+          ) : user?.id ? (
+            `👤 Logged in as User ${user.id}`
+          ) : (
+            '👤 Employee Logged In'
+          )}
+        </div>
       </aside>
 
       <main className="main-content">
