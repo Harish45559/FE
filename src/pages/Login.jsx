@@ -12,10 +12,16 @@ const Login = () => {
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    try {
-      const res = await api.post('/auth/login', form);
+const handleLogin = async (e) => {
+  e.preventDefault();
+  try {
+    const res = await api.post('/auth/login', form);
+    // Add any remaining logic here (e.g., storing token, redirection, etc.)
+  } catch (error) {
+    console.error("Login failed", error);
+  }
+};
+
 
       // 🔍 Debug the response
       console.log('Login response:', res.data);
