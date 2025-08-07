@@ -1,46 +1,29 @@
-// Login.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import './login.css';
+import './Login.css';
 
 const Login = () => {
-  const navigate = useNavigate();
-  const [form, setForm] = useState({ username: '', password: '' });
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const navigate = useNavigate();
 
-  const handleChange = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError('');
 
-const handleLogin = async (e) => {
-  e.preventDefault();
-  try {
-    const res = await api.post('/auth/login', form);
-    // Add any remaining logic here (e.g., storing token, redirection, etc.)
-  } catch (error) {
-    console.error("Login failed", error);
-  }
-};
+    try {
+      const response = await api.post('/auth/login', { username, password });
+      const { token, role } = response.data;
 
+      localStorage.setItem('token', token);
+      localStorage.setItem('role', role);
 
-      // 🔍 Debug the response
-      console.log('Login response:', res.data);
-
-      const userData = {
-        username: form.username,
-        role: res.data.role,
-        token: res.data.token,
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
-      };
-
-      localStorage.setItem('token', res.data.token);
-      localStorage.setItem('user', JSON.stringify(userData));
-
-      // Redirect based on role
-      if (res.data.role === 'admin') {
-        navigate('/dashboard');
-      } else if (res.data.role === 'employee') {
-        navigate('/attendance');
+      if (role === 'employee') {
+        navigate('/employee');
+      } else if (role === 'admin') {
+        navigate('/admin');
       } else {
         setError('Unknown role');
       }
@@ -51,36 +34,30 @@ const handleLogin = async (e) => {
   };
 
   return (
-    <div className="login-page">
-      <div className="login-left">
-        <div className="login-box">
-          <h2>Login</h2>
-          {error && <div className="error">{error}</div>}
-          <form onSubmit={handleLogin}>
-            <input
-              type="text"
-              name="username"
-              placeholder="Username"
-              onChange={handleChange}
-              required
-            />
-            <input
-              type="password"
-              name="password"
-              placeholder="Password"
-              onChange={handleChange}
-              required
-            />
-            <button type="submit">Login</button>
-          </form>
-          <p className="forgot-password-link">
-            <a href="/forgot-password">Forgot Password?</a>
-          </p>
+    <div className="login-container">
+      <form className="login-form" onSubmit={handleLogin}>
+        <h2>Login</h2>
+        {error && <p className="error-message">{error}</p>}
+        <div className="form-group">
+          <label>Username:</label>
+          <input
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+          />
         </div>
-      </div>
-      <div className="login-right">
-        <img src="download.png" alt="Logo" />
-      </div>
+        <div className="form-group">
+          <label>Password:</label>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+        <button type="submit">Login</button>
+      </form>
     </div>
   );
 };
