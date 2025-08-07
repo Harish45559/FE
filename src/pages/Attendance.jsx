@@ -30,38 +30,41 @@ const Attendance = () => {
 }, []);
 
 
-  const fetchEmployees = async () => {
-    try {
-      const [empRes, statusRes] = await Promise.all([
-        api.get('/employees'),
-        api.get('/attendance/status'),
-      ]);
-  
-      const statusMap = statusRes.data.reduce((map, emp) => {
-        map[emp.id] = emp.status;
-        return map;
-      }, {});
-  
-      const updated = empRes.data.map(emp => {
-        const rawStatus = statusMap[emp.id];
-        let attendanceStatus = 'Not Clocked In';
-  
-        if (rawStatus === 'Clocked In') attendanceStatus = 'Clocked In';
-        else if (rawStatus === 'Clocked Out') attendanceStatus = 'Clocked Out';
-  
-        return {
-          ...emp,
-          attendance_status: attendanceStatus,
-        };
-      });
-  
-      setAllEmployees(updated);
-      setEmployees(updated);
-    } catch (err) {
-      toast.error('Failed to fetch employees or status');
-      console.error(err);
-    }
-  };
+const fetchEmployees = async () => {
+  try {
+    const [empRes, statusRes] = await Promise.all([
+      api.get('/employees'),
+      api.get('/attendance/status'),
+    ]);
+
+    const statusMap = Array.isArray(statusRes.data)
+      ? statusRes.data.reduce((map, emp) => {
+          map[emp.id] = emp.status;
+          return map;
+        }, {})
+      : {};
+
+    const updated = empRes.data.map(emp => {
+      const rawStatus = statusMap[emp.id];
+      let attendanceStatus = 'Not Clocked In';
+
+      if (rawStatus === 'Clocked In') attendanceStatus = 'Clocked In';
+      else if (rawStatus === 'Clocked Out') attendanceStatus = 'Clocked Out';
+
+      return {
+        ...emp,
+        attendance_status: attendanceStatus,
+      };
+    });
+
+    setAllEmployees(updated);
+    setEmployees(updated);
+  } catch (err) {
+    toast.error('Failed to fetch employees or status');
+    console.error('Fetch Employees Error:', err);
+  }
+};
+
   
 
   const handleNumberClick = (num) => {
