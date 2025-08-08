@@ -13,30 +13,34 @@ const Login = () => {
 
 const handleLogin = async (e) => {
   e.preventDefault();
+  setError('');
+
   try {
-    const res = api.post('/auth/login', form); // ✅ CORRECT
+    const res = await api.post('/auth/login', form); // <-- await!
 
+    const { token, role, username } = res.data || {};
+    if (!token || !role) {
+      setError('Login failed: invalid server response');
+      return;
+    }
 
-    // Save token + full user object
-    localStorage.setItem('token', res.data.token);
-    localStorage.setItem('user', JSON.stringify({
-      username: form.username,
-      role: res.data.role,
-      token: res.data.token,
-    }));
+    // Save token + user
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify({ username, role, token }));
 
-    // Redirect based on role
-    if (res.data.role === 'admin') {
+    // Route by role
+    if (role === 'admin') {
       navigate('/dashboard');
-    } else if (res.data.role === 'employee') {
+    } else if (role === 'employee') {
       navigate('/attendance');
     } else {
       setError('Unknown role');
     }
   } catch (err) {
-    setError(err.response?.data?.message || 'Login failed');
+    setError(err?.response?.data?.message || 'Login failed');
   }
 };
+
 
 
   return (

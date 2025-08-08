@@ -80,7 +80,8 @@ const MasterData = () => {
         name,
         price: parseFloat(price),
         is_veg: veg,
-        categoryId,
+        // If your backend expects a number, ensure it's a number:
+        categoryId: Number(categoryId),
       });
       setNewItem({ name: '', price: '', categoryId: '', veg: true });
       fetchData();
@@ -116,7 +117,7 @@ const MasterData = () => {
         name,
         price: parseFloat(price),
         is_veg: veg,
-        categoryId,
+        categoryId: Number(categoryId),
       });
       setEditingItemId(null);
       fetchData();
@@ -133,15 +134,18 @@ const MasterData = () => {
         {/* CATEGORIES */}
         <div className="category-panel">
           <h3>Categories</h3>
-          <input
+
+          {/* ✅ Form wraps input + button so submit fires */}
+          <form onSubmit={handleCategorySubmit} style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+            <input
               value={newCategory}
               onChange={(e) => setNewCategory(e.target.value)}
               placeholder="New Category"
               required
             />
             <button type="submit">Add</button>
+          </form>
 
-            
           <ul>
             {categories.map((cat) => (
               <li key={cat.id}>
@@ -152,10 +156,10 @@ const MasterData = () => {
                       onChange={(e) => setEditingCategoryName(e.target.value)}
                     />
                     <div className="actions">
-                      <button onClick={() => handleSaveCategory(cat.id)}>
+                      <button type="button" onClick={() => handleSaveCategory(cat.id)}>
                         <svg width="16" height="16" fill="green" viewBox="0 0 24 24"><path d="M20.3 5.71L9 17l-5.3-5.3L5.41 10 9 13.59 18.89 3.7z" /></svg>
                       </button>
-                      <button onClick={() => setEditingCategoryId(null)}>
+                      <button type="button" onClick={() => setEditingCategoryId(null)}>
                         <svg width="16" height="16" fill="gray" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12" /></svg>
                       </button>
                     </div>
@@ -164,10 +168,10 @@ const MasterData = () => {
                   <>
                     {cat.name}
                     <div className="actions">
-                      <button onClick={() => handleEditCategory(cat)}>
+                      <button type="button" onClick={() => handleEditCategory(cat)}>
                         <svg width="16" height="16" fill="blue" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" /></svg>
                       </button>
-                      <button onClick={() => handleDeleteCategory(cat.id)}>
+                      <button type="button" onClick={() => handleDeleteCategory(cat.id)}>
                         <svg width="16" height="16" fill="red" viewBox="0 0 24 24"><path d="M16 9v10H8V9h8m-1.5-6h-5l-1 1H5v2h14V4h-4.5l-1-1z" /></svg>
                       </button>
                     </div>
@@ -176,15 +180,12 @@ const MasterData = () => {
               </li>
             ))}
           </ul>
-          <form onSubmit={handleCategorySubmit}>
-            
-          </form>
         </div>
 
         {/* MENU ITEMS */}
         <div className="menu-panel">
           <h3>Menu Items</h3>
-          <form onSubmit={handleItemSubmit}>
+          <form onSubmit={handleItemSubmit} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
             <input
               value={newItem.name}
               onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
@@ -233,20 +234,34 @@ const MasterData = () => {
                 <tr key={item.id}>
                   {editingItemId === item.id ? (
                     <>
-                      <td><input value={editingItem.name} onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })} /></td>
-                      <td><input value={editingItem.price} onChange={(e) => setEditingItem({ ...editingItem, price: e.target.value })} /></td>
                       <td>
-                        <select value={editingItem.categoryId} onChange={(e) => setEditingItem({ ...editingItem, categoryId: e.target.value })}>
+                        <input
+                          value={editingItem.name}
+                          onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="number"
+                          value={editingItem.price}
+                          onChange={(e) => setEditingItem({ ...editingItem, price: e.target.value })}
+                        />
+                      </td>
+                      <td>
+                        <select
+                          value={editingItem.categoryId}
+                          onChange={(e) => setEditingItem({ ...editingItem, categoryId: e.target.value })}
+                        >
                           {categories.map(cat => (
                             <option key={cat.id} value={cat.id}>{cat.name}</option>
                           ))}
                         </select>
                       </td>
                       <td className="actions">
-                        <button onClick={() => handleSaveItem(item.id)}>
+                        <button type="button" onClick={() => handleSaveItem(item.id)}>
                           <svg width="16" height="16" fill="green" viewBox="0 0 24 24"><path d="M20.3 5.71L9 17l-5.3-5.3L5.41 10 9 13.59 18.89 3.7z" /></svg>
                         </button>
-                        <button onClick={() => setEditingItemId(null)}>
+                        <button type="button" onClick={() => setEditingItemId(null)}>
                           <svg width="16" height="16" fill="gray" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12" /></svg>
                         </button>
                       </td>
@@ -268,10 +283,10 @@ const MasterData = () => {
                       <td>£{item.price}</td>
                       <td>{item.category?.name}</td>
                       <td className="actions">
-                        <button onClick={() => handleEditItem(item)}>
+                        <button type="button" onClick={() => handleEditItem(item)}>
                           <svg width="16" height="16" fill="blue" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" /></svg>
                         </button>
-                        <button onClick={() => handleDeleteItem(item.id)}>
+                        <button type="button" onClick={() => handleDeleteItem(item.id)}>
                           <svg width="16" height="16" fill="red" viewBox="0 0 24 24"><path d="M16 9v10H8V9h8m-1.5-6h-5l-1 1H5v2h14V4h-4.5l-1-1z" /></svg>
                         </button>
                       </td>
