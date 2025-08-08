@@ -157,3 +157,40 @@
   color: #007bff;
   text-decoration: underline;
 }
+
+
+/* hover card */
+.hover-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  padding: 10px 12px;
+  width: 280px;
+}
+
+.hover-card-title {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.hover-card-body {
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.hover-card-row {
+  display: grid;
+  grid-template-columns: 70px 70px 1fr;
+  gap: 6px;
+  font-size: 13px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  margin-bottom: 6px;
+  background: #f9fafb;
+}
+
+.hover-card-row.is-break { background: #fff7ed; }
+.hover-card-row .type { text-transform: capitalize; font-weight: 600; }
+.hover-card-row .out { text-align: right; }
+

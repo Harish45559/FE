@@ -7,7 +7,6 @@ import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import imageMapping from "./imageMapping";
 
-
 const BillingCounter = () => {
   const printRef = useRef();
   const user = JSON.parse(localStorage.getItem('user'));
@@ -34,27 +33,20 @@ const BillingCounter = () => {
   const [discountPercent, setDiscountPercent] = useState(0);
   const [userRole, setUserRole] = useState('');
 
-  
-
   useEffect(() => {
     const storedTillStatus = localStorage.getItem('isTillOpen');
-    if (storedTillStatus === 'true') {
-      setIsTillOpen(true);
-    }
-  
+    if (storedTillStatus === 'true') setIsTillOpen(true);
+
     const storedTillUser = localStorage.getItem('tillOpenedBy');
-    if (storedTillUser) {
-      setTillOpenedBy(storedTillUser);
-    }
+    if (storedTillUser) setTillOpenedBy(storedTillUser);
 
     const storedRole = localStorage.getItem('userRole');
-if (storedRole) setUserRole(storedRole);
+    if (storedRole) setUserRole(storedRole);
 
-  
     fetchMenu();
     fetchCategories();
     fetchLastOrderNumber();
-  
+
     const resumed = localStorage.getItem('resumedOrder');
     if (resumed) {
       const order = JSON.parse(resumed);
@@ -64,13 +56,16 @@ if (storedRole) setUserRole(storedRole);
       localStorage.removeItem('resumedOrder');
     }
   }, []);
-  
 
   const fetchMenu = async () => {
     const res = await api.get('/menu');
     const normalized = res.data.map(item => ({
       ...item,
-      veg: item.veg === true || item.veg === 'true' || item.veg === 1 || String(item.veg).toLowerCase() === 'true',
+      veg:
+        item.veg === true ||
+        item.veg === 'true' ||
+        item.veg === 1 ||
+        String(item.veg).toLowerCase() === 'true',
       category: typeof item.category === 'object' ? item.category.name : item.category
     }));
     setMenuItems(normalized);
@@ -99,17 +94,8 @@ if (storedRole) setUserRole(storedRole);
   const clearCurrentOrder = () => {
     setSelectedItems([]);
     setCustomerName('');
-    setDiscountPercent(0); // 🔁 Reset discount input
+    setDiscountPercent(0);
   };
-  
-
-  {isTillOpen && tillOpenedBy && (
-    <div className="till-user">
-      🧑‍💼 Opened by: <strong>{tillOpenedBy}</strong>
-    </div>
-  )}
-  
-
 
   const handleAddItem = (item) => {
     const index = selectedItems.findIndex(i => i.id === item.id);
@@ -128,14 +114,14 @@ if (storedRole) setUserRole(storedRole);
     updated.splice(index, 1);
     setSelectedItems(updated);
   };
+
   const getTotal = () => selectedItems.reduce((sum, i) => sum + i.total, 0);
   const getIncludedTax = () => getTotal() * (5 / 105);
   const getIncludedService = () => getTotal() * (5 / 105);
-  
-  // 💸 Discount Calculations
+
   const getDiscountAmount = () => (getTotal() * discountPercent) / 100;
   const getGrandTotal = () => getTotal() - getDiscountAmount();
-  
+
   const getDateTime = () => DateTime.now().setZone('Europe/London').toFormat('dd/MM/yyyy HH:mm:ss');
 
   const startNewOrder = () => {
@@ -148,7 +134,10 @@ if (storedRole) setUserRole(storedRole);
   };
 
   const handlePlaceOrder = async () => {
-    if (selectedItems.length === 0) return alert('Add items first.');
+    if (!isTillOpen) return toast.error('Open the till first.');
+    if (!selectedItems.length) return toast.error('Add items first.');
+    if (!paymentMethod) return toast.error('Select a payment method.');
+
     const payload = {
       customer_name: customerName,
       server_name: serverName,
@@ -175,14 +164,16 @@ if (storedRole) setUserRole(storedRole);
       setShowReceipt(true);
     } catch (err) {
       console.error('Order placement failed:', err);
-      alert('Failed to place order');
+      toast.error('Failed to place order');
     }
   };
 
   const holdCurrentOrder = () => {
-    if (selectedItems.length === 0) return alert('No items to hold');
+    if (selectedItems.length === 0) return toast.info('No items to hold');
     const existing = JSON.parse(localStorage.getItem('heldOrders')) || [];
-    const nextDisplayNumber = existing.length ? Math.max(...existing.map(o => parseInt(o.displayNumber?.replace('H', '') || 0))) + 1 : 1001;
+    const nextDisplayNumber = existing.length
+      ? Math.max(...existing.map(o => parseInt(o.displayNumber?.replace('H', '') || 0))) + 1
+      : 1001;
     const heldOrder = {
       id: Date.now(),
       customer: customerName,
@@ -219,7 +210,6 @@ if (storedRole) setUserRole(storedRole);
           toast.info('Till closed.');
           setTillOpenedBy('');
           localStorage.removeItem('tillOpenedBy');
-
         }
         setShowAuthModal(false);
         setAuthUsername('');
@@ -228,20 +218,17 @@ if (storedRole) setUserRole(storedRole);
         toast.error('Invalid credentials');
       }
     } catch (err) {
-      console.error('Order placement failed:', err);
-      alert('Failed to place order');
+      console.error('Till action failed:', err);
+      toast.error('Failed to authenticate');
     }
-    
   };
 
-  
-
+  const placeDisabled = !isTillOpen || !paymentMethod || selectedItems.length === 0;
 
   return (
     <DashboardLayout>
-
-            {/* Auth Modal */}
-            {showAuthModal && (
+      {/* Auth Modal */}
+      {showAuthModal && (
         <div className="auth-modal-overlay">
           <div className="auth-modal">
             <h3>{tillActionType === 'open' ? 'Open Till' : 'Close Till'} - Authentication</h3>
@@ -254,153 +241,125 @@ if (storedRole) setUserRole(storedRole);
           </div>
         </div>
       )}
-      <>
-        <div className="billing-wrapper">
-          <div className="menu-left">
-            <div className="billing-header">
-              <h2>Billing Counter</h2>
-             
-              <div className="filters">
-                <button onClick={() => setCategoryFilter('all')} className={categoryFilter === 'all' ? 'active' : ''}>All</button>
-                {categories.map(cat => (
-                  <button key={cat} onClick={() => setCategoryFilter(cat)} className={categoryFilter === cat ? 'active' : ''}>{cat}</button>
-                ))}
-                <select value={vegFilter} onChange={e => setVegFilter(e.target.value)}>
-                  <option value="all">All</option>
-                  <option value="veg">Veg</option>
-                  <option value="nonveg">Non-Veg</option>
-                </select>
-              </div>
 
+      <div className="billing-wrapper">
+        {/* LEFT */}
+        <div className="menu-left">
+          <div className="billing-header">
+            <h2>Billing Counter</h2>
 
-              <div className="menu-search-bar"> 
-                <input
-                  type="text"
-                  placeholder="Search menu items..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
+            <div className="filters">
+              <button onClick={() => setCategoryFilter('all')} className={categoryFilter === 'all' ? 'active' : ''}>All</button>
+              {categories.map(cat => (
+                <button key={cat} onClick={() => setCategoryFilter(cat)} className={categoryFilter === cat ? 'active' : ''}>{cat}</button>
+              ))}
+              <select value={vegFilter} onChange={e => setVegFilter(e.target.value)}>
+                <option value="all">All</option>
+                <option value="veg">Veg</option>
+                <option value="nonveg">Non-Veg</option>
+              </select>
             </div>
 
-            <div className="menu-grid">
-  {menuItems.filter(item =>
-    (categoryFilter === 'all' || item.category === categoryFilter) &&
-    (
-      vegFilter === 'all' ||
-      (vegFilter === 'veg' && item.veg) ||
-      (vegFilter === 'nonveg' && !item.veg)
-    ) &&
-    (item.name.toLowerCase().includes(searchQuery.toLowerCase()))
-  ).map(item => (
-    <div key={item.id} className="menu-card" onClick={() => handleAddItem(item)}>
-      <img 
-        src={imageMapping[item.name] || "/images/default-food.jpg"} 
-        alt={item.name} 
-        className="menu-item-image" 
-      />
-      <h4>{item.name}</h4>
-      <p>£{item.price}</p>
-      <div className="veg-status">
-        <span className={`dot ${item.veg ? 'veg' : 'non-veg'}`}></span>
-        <span>{item.veg ? 'Veg' : 'Non-Veg'}</span>
-      </div>
-      <small className="category-label">{item.category}</small>
-    </div>
-  ))}
-</div>
-
+            <div className="menu-search-bar">
+              <input
+                type="text"
+                placeholder="Search menu items..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
           </div>
 
-            
-            <div className="summary-right">
-
-            {isTillOpen && tillOpenedBy && (
-              <div className="till-user">
-                🧑‍💼 Opened by: <strong>{tillOpenedBy}</strong>
+          <div className="menu-grid">
+            {menuItems.filter(item =>
+              (categoryFilter === 'all' || item.category === categoryFilter) &&
+              (
+                vegFilter === 'all' ||
+                (vegFilter === 'veg' && item.veg) ||
+                (vegFilter === 'nonveg' && !item.veg)
+              ) &&
+              (item.name.toLowerCase().includes(searchQuery.toLowerCase()))
+            ).map(item => (
+              <div key={item.id} className="menu-card" onClick={() => handleAddItem(item)}>
+                <img
+                  src={imageMapping[item.name] || "/images/default-food.jpg"}
+                  alt={item.name}
+                  className="menu-item-image"
+                />
+                <h4>{item.name}</h4>
+                <p>£{item.price}</p>
+                <div className="veg-status">
+                  <span className={`dot ${item.veg ? 'veg' : 'non-veg'}`}></span>
+                  <span>{item.veg ? 'Veg' : 'Non-Veg'}</span>
+                </div>
+                <small className="category-label">{item.category}</small>
               </div>
+            ))}
+          </div>
+        </div>
+
+        {/* RIGHT */}
+        <div className="summary-right">
+          {isTillOpen && tillOpenedBy && (
+            <div className="till-user">
+              🧑‍💼 Opened by: <strong>{tillOpenedBy}</strong>
+            </div>
+          )}
+
+          <div className="order-panel">
+            <h3 className="order-title">
+              Current Order{' '}
+              {(orderNumber || nextTempOrderNumber) && (
+                <span style={{ fontSize: '14px', color: '#888' }}>
+                  # {orderNumber || nextTempOrderNumber}
+                </span>
+              )}
+            </h3>
+
+            {isTillOpen ? (
+              <div className="till-banner open">🟢 Till is Open</div>
+            ) : (
+              <div className="till-banner closed">🔴 Till is Closed</div>
             )}
 
-            <div className="order-panel">       
-              <h3 className="order-title">
-                Current Order{' '}
-                {(orderNumber || nextTempOrderNumber) && (
-                  <span style={{ fontSize: '14px', color: '#888' }}>
-                    # {orderNumber || nextTempOrderNumber}
-                  </span>
-                )}
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+              <button
+                onClick={() => { setTillActionType('open'); setShowAuthModal(true); }}
+                className="order-btn"
+                style={{ backgroundColor: '#10b981', color: '#fff' }}
+              >🟢 Open Till</button>
 
-                  {isTillOpen ? (
-                    <div className="till-banner open">
-                      🟢 Till is Open
-                    </div>
-                  ) : (
-                    <div className="till-banner closed">
-                      🔴 Till is Closed
-                    </div>
-                  )}
+              <button
+                onClick={() => { setTillActionType('close'); setShowAuthModal(true); }}
+                className="order-btn"
+                style={{ backgroundColor: '#ef4444', color: '#fff' }}
+              >🔴 Close Till</button>
+            </div>
 
+            <div className="order-type-selector">
+              <label><strong>Order Type:</strong></label>
+              <select value={orderType} onChange={e => setOrderType(e.target.value)}>
+                <option value="Eat In">Eat In</option>
+                <option value="Take Away">Take Away</option>
+              </select>
+            </div>
 
+            <input
+              type="text"
+              placeholder="Customer Name"
+              value={customerName}
+              onChange={e => setCustomerName(e.target.value)}
+              className="customer-input"
+            />
 
-
-                <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-                <button
-  onClick={() => {
-    setTillActionType('open');
-    setShowAuthModal(true);
-  }}
-  className="order-btn"
-  style={{ backgroundColor: '#10b981', color: '#fff' }}
->
-  🟢 Open Till
-</button>
-
-<button
-  onClick={() => {
-    setTillActionType('close');
-    setShowAuthModal(true);
-  }}
-  className="order-btn"
-  style={{ backgroundColor: '#ef4444', color: '#fff' }}
->
-  🔴 Close Till
-</button>
-
-                </div>
-
-
-                <div className="order-type-selector">
-                <label><strong>Order Type:</strong></label>
-                <select value={orderType} onChange={e => setOrderType(e.target.value)}>
-                  <option value="Eat In">Eat In</option>
-                  <option value="Take Away">Take Away</option>
-                </select>
-                </div>
-              </h3>
-
-              <input
-  type="text"
-  placeholder="Customer Name"
-  value={customerName}
-  onChange={e => setCustomerName(e.target.value)}
-  style={{
-    width: '100%',
-    padding: '12px 16px',
-    fontSize: '16px',
-    border: '2px solid #e0e0e0',
-    borderRadius: '12px',
-    backgroundColor: '#f9f9f9',
-    marginBottom: '12px'
-  }}
-/>
-
-
+            {/* ===== Scroll area: items + summary ===== */}
+            <div className="order-scroll">
               <div className="order-items">
                 {selectedItems.map((item, index) => (
                   <div key={index} className="order-item">
                     <div className="item-info">
-  <span><strong>{index + 1}.</strong> {item.name} £{item.price}</span>
-</div>
+                      <span><strong>{index + 1}.</strong> {item.name} £{item.price}</span>
+                    </div>
 
                     <div className="item-controls">
                       <button onClick={() => {
@@ -425,131 +384,140 @@ if (storedRole) setUserRole(storedRole);
               </div>
 
               <div className="order-summary">
-  <div className="line"><span>Subtotal</span><span>£{getTotal().toFixed(2)}</span></div>
-  <div className="line"><span>VAT (5%)</span><span>£{getIncludedTax().toFixed(2)}</span></div>
-  <div className="line"><span>Service (5%)</span><span>£{getIncludedService().toFixed(2)}</span></div>
+                <div className="line"><span>Subtotal</span><span>£{getTotal().toFixed(2)}</span></div>
+                <div className="line"><span>VAT (5%)</span><span>£{getIncludedTax().toFixed(2)}</span></div>
+                <div className="line"><span>Service (5%)</span><span>£{getIncludedService().toFixed(2)}</span></div>
 
-  {discountPercent > 0 && (
-    <div className="line">
-      <span>Discount ({discountPercent}%)</span>
-      <span>-£{getDiscountAmount().toFixed(2)}</span>
-    </div>
-  )}
+                {discountPercent > 0 && (
+                  <div className="line">
+                    <span>Discount ({discountPercent}%)</span>
+                    <span>-£{getDiscountAmount().toFixed(2)}</span>
+                  </div>
+                )}
 
-  <div className="line total"><strong>Total</strong><strong>£{getGrandTotal().toFixed(2)}</strong></div>
-</div>
+                <div className="line total"><strong>Total</strong><strong>£{getGrandTotal().toFixed(2)}</strong></div>
+              </div>
+            </div>
 
-              <div className="order-buttons">
-              <div className="order-row" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-  {isTillOpen && userRole === 'admin' && (
-    <>
-      <input
-        type="number"
-        value={discountPercent === 0 ? '' : discountPercent}
-        onChange={(e) => setDiscountPercent(Math.max(0, Math.min(100, Number(e.target.value))))}
-        placeholder="0–100%"
-        className="discount-input"
-      />
-      <button className="action-btn btn-apply" onClick={() => toast.success(`Discount ${discountPercent}% applied`)}>
-        🎁 Apply
-      </button>
-    </>
-  )}
-  <button className="action-btn btn-place" onClick={handlePlaceOrder} disabled={!isTillOpen}>
-    ✅ Place Order
-  </button>
-  <button className="action-btn btn-hold" onClick={holdCurrentOrder} disabled={!isTillOpen}>
-    ⏱ Hold Order
-  </button>
-  <button className="action-btn btn-clear" onClick={clearCurrentOrder} disabled={!isTillOpen}>
-    ❌
-  </button>
-</div>
+            {/* ===== Buttons OUTSIDE the scroller ===== */}
+            <div className="order-buttons action-groups">
+              <div className="payment-row">
+                <button
+                  type="button"
+                  className={`pos-btn btn-pay btn-cash ${paymentMethod === 'Cash' ? 'is-selected' : ''}`}
+                  onClick={() => setPaymentMethod('Cash')}
+                  aria-pressed={paymentMethod === 'Cash'}
+                  disabled={!isTillOpen}
+                >
+                  <span className="icon">💵</span> Cash
+                </button>
 
+                <button
+                  type="button"
+                  className={`pos-btn btn-pay btn-card ${paymentMethod === 'Card' ? 'is-selected' : ''}`}
+                  onClick={() => setPaymentMethod('Card')}
+                  aria-pressed={paymentMethod === 'Card'}
+                  disabled={!isTillOpen}
+                >
+                  <span className="icon">💳</span> Card
+                </button>
+              </div>
 
+              <div className="confirm-row">
+                <button
+                  type="button"
+                  className={`pos-btn btn-place ${placeDisabled ? 'is-waiting' : ''}`}
+                  onClick={handlePlaceOrder}
+                  disabled={placeDisabled}
+                >
+                  <span className="icon">✅</span> Place Order
+                </button>
 
-               
+                <button
+                  type="button"
+                  className="pos-btn btn-hold"
+                  onClick={holdCurrentOrder}
+                  disabled={!isTillOpen}
+                >
+                  <span className="icon">⏱</span> Hold Order
+                </button>
 
-                <div className="payment-row">
-                  <button className="order-btn btn-cash" onClick={() => setPaymentMethod('Cash')}>💵 Cash</button>
-                  <button className="order-btn btn-card" onClick={() => setPaymentMethod('Card')}>💳 Card</button>
-                </div>
+                <button
+                  type="button"
+                  className="pos-btn btn-clear"
+                  onClick={clearCurrentOrder}
+                  title="Clear order"
+                  disabled={!isTillOpen}
+                >
+                  ❌
+                </button>
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        {showReceipt && (
-          <div className="receipt-overlay">
-            <div className="bill-section" ref={printRef}>
+      {showReceipt && (
+        <div className="receipt-overlay">
+          <div className="bill-section" ref={printRef}>
             <div className="receipt-header-actions" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-  <button className="print-btn" onClick={() => window.print()} style={{ alignSelf: 'flex-start' }}>
-    🖨️ print
-  </button>
-  <button className="close-preview-btn" onClick={startNewOrder} style={{ alignSelf: 'flex-end' }}>
-    ✖
-  </button>
-</div>
+              <button className="print-btn" onClick={() => window.print()} style={{ alignSelf: 'flex-start' }}>🖨️ print</button>
+              <button className="close-preview-btn" onClick={startNewOrder} style={{ alignSelf: 'flex-end' }}>✖</button>
+            </div>
 
+            <div className="receipt-header">
+              <h2>Mirchi Mafiya</h2>
+              <p>Cumberland Street, LU1 3BW, Luton</p>
+              <p>Phone: +447440086046</p>
+              <p>dtsretaillimited@gmail.com</p>
+              <p>Order Type: {orderType}</p>
+              <p><strong>Customer:</strong> {customerName || 'N/A'}</p>
+              <p><strong>Order No:</strong> #{orderNumber || '—'}</p>
+              <p><strong>Paid By:</strong> {paymentMethod}</p>
+              <hr />
+              <p>Date: {orderDate || '—'}</p>
+              <hr />
+            </div>
 
-              {/* Header */}
-              <div className="receipt-header">
-                <h2>Cozy Cup</h2>
-                <p>Food Truck Lane, Flavor Town</p>
-                <p>Phone: +91-9876543210</p>
-                <p>www.cozycup.example.com</p>
-                <p>Order Type: {orderType}</p>
-                <p><strong>Customer:</strong> {customerName || 'N/A'}</p>
-                <p><strong>Order No:</strong> #{orderNumber || '—'}</p>
-                <p><strong>Paid By:</strong> {paymentMethod}</p>
-                <hr />
-                <p>Date: {orderDate || '—'}</p>
-                <hr />
-              </div>
-
-              <table className="receipt-table">
-                <thead>
-                  <tr>
-                    <th>Product</th>
-                    <th style={{ textAlign: 'right' }}>Price</th>
-                    <th style={{ textAlign: 'right' }}>Qty</th>
-                    <th style={{ textAlign: 'right' }}>Total</th>
+            <table className="receipt-table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th style={{ textAlign: 'right' }}>Price</th>
+                  <th style={{ textAlign: 'right' }}>Qty</th>
+                  <th style={{ textAlign: 'right' }}>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {selectedItems.map((item, index) => (
+                  <tr key={index}>
+                    <td>{item.name}</td>
+                    <td style={{ textAlign: 'right' }}>£{item.price.toFixed(2)}</td>
+                    <td style={{ textAlign: 'right' }}>{item.qty}</td>
+                    <td style={{ textAlign: 'right' }}>£{item.total.toFixed(2)}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {selectedItems.map((item, index) => (
-                    <tr key={index}>
-                      <td>{item.name}</td>
-                      <td style={{ textAlign: 'right' }}>£{item.price.toFixed(2)}</td>
-                      <td style={{ textAlign: 'right' }}>{item.qty}</td>
-                      <td style={{ textAlign: 'right' }}>£{item.total.toFixed(2)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                ))}
+              </tbody>
+            </table>
 
-              <div className="receipt-summary">
-                <p><strong>Total Qty:</strong> {selectedItems.reduce((sum, item) => sum + item.qty, 0)}</p>
-                <p><strong>Sub Total:</strong> £ {getTotal().toFixed(2)}</p>
-                <p><strong>Paid By:</strong> {paymentMethod}</p>
-                <p className="includes-label">Includes:</p>
-                <p>VAT (5%): £{getIncludedTax().toFixed(2)}</p>
-                <p>Service Charge (5%): £{getIncludedService().toFixed(2)}</p>
-                <hr />
-                {discountPercent > 0 && (
-  <p><strong>Discount ({discountPercent}%):</strong> -£{getDiscountAmount().toFixed(2)}</p>
-)}
-<p className="grand-total"><strong>Grand Total:</strong> £ {getGrandTotal().toFixed(2)}</p>
-
-                <p className="server-name">Staff:{tillOpenedBy && `(${tillOpenedBy})`}
-</p>
-
-                <hr />
-              </div>
+            <div className="receipt-summary">
+              <p><strong>Total Qty:</strong> {selectedItems.reduce((sum, item) => sum + item.qty, 0)}</p>
+              <p><strong>Sub Total:</strong> £ {getTotal().toFixed(2)}</p>
+              <p><strong>Paid By:</strong> {paymentMethod}</p>
+              <p className="includes-label">Includes:</p>
+              <p>VAT (5%): £{getIncludedTax().toFixed(2)}</p>
+              <p>Service Charge (5%): £{getIncludedService().toFixed(2)}</p>
+              <hr />
+              {discountPercent > 0 && (
+                <p><strong>Discount ({discountPercent}%):</strong> -£{getDiscountAmount().toFixed(2)}</p>
+              )}
+              <p className="grand-total"><strong>Grand Total:</strong> £ {getGrandTotal().toFixed(2)}</p>
+              <p className="server-name">Staff:{tillOpenedBy && `(${tillOpenedBy})`}</p>
+              <hr />
             </div>
           </div>
-        )}
-      </>
+        </div>
+      )}
     </DashboardLayout>
   );
 };
