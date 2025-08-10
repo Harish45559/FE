@@ -81,7 +81,7 @@ export default function Reports() {
         params: { employee_id: employeeId, date: iso }
       });
       setHoverData(res.data?.sessions || []);
-    } catch (e) {
+    } catch (err) {
       setHoverData([{ type: 'error', duration: '—' }]);
     } finally {
       setHoverLoading(false);
