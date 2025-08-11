@@ -16,9 +16,8 @@ export default defineConfig({
     port: process.env.PORT || 5173,
     origin: `https://${renderHost}`
   },
-  // ✅ Add this:
-  build: {
-    outDir: '../server/server/client/dist',  // put build inside the server
-    emptyOutDir: true
-  }
+build: {
+  outDir: 'dist',
+  emptyOutDir: true
+}
 });
