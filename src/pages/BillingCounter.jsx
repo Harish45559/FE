@@ -282,7 +282,7 @@ const BillingCounter = () => {
             ).map(item => (
               <div key={item.id} className="menu-card" onClick={() => handleAddItem(item)}>
                 <img
-                  src={imageMapping[item.name] || "/images/default-food.jpg"}
+                  src={imageMapping[item.name]  }
                   alt={item.name}
                   className="menu-item-image"
                 />
