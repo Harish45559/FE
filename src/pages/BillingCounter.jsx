@@ -7,6 +7,19 @@ import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import imageMapping from "./imageMapping";
 
+// 🔎 Coerce various backend values to a real boolean for "veg"
+const toVegBool = (raw) => {
+  if (raw === true) return true;
+  if (raw === false) return false;
+  if (raw == null) return false;
+  if (typeof raw === 'number') return raw === 1;     // 1 => veg, 0 => non-veg
+  const s = String(raw).trim().toLowerCase();
+  // Accept common variants
+  if (['true', '1', 'yes', 'y', 'veg', 'v'].includes(s)) return true;
+  if (['false', '0', 'no', 'n', 'non-veg', 'nonveg', 'nv'].includes(s)) return false;
+  return false;
+};
+
 const BillingCounter = () => {
   const printRef = useRef();
   const user = JSON.parse(localStorage.getItem('user'));
@@ -58,22 +71,54 @@ const BillingCounter = () => {
   }, []);
 
   const fetchMenu = async () => {
-    const res = await api.get('/menu');
-    const normalized = res.data.map(item => ({
-      ...item,
-      veg:
-        item.veg === true ||
-        item.veg === 'true' ||
-        item.veg === 1 ||
-        String(item.veg).toLowerCase() === 'true',
-      category: typeof item.category === 'object' ? item.category.name : item.category
-    }));
-    setMenuItems(normalized);
+    try {
+      const res = await api.get('/menu');
+      const normalized = (Array.isArray(res.data) ? res.data : []).map(item => {
+        // Try common field names that might contain veg info
+        const rawVeg =
+          item.veg ??
+          item.isVeg ??
+          item.is_veg ??
+          item.type ??            // e.g., "Veg" / "Non-Veg"
+          item.category_type;     // any custom field you might have
+
+        // normalize category to a display string
+        const categoryName =
+          typeof item.category === 'object' && item.category
+            ? (item.category.name ?? item.category.title ?? String(item.category))
+            : item.category;
+
+        // Ensure price is a number for safe math
+        const priceNum = typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0;
+
+        return {
+          ...item,
+          price: priceNum,
+          veg: toVegBool(rawVeg),
+          category: categoryName
+        };
+      });
+
+      // (Optional) One-time debug to verify normalization
+      // console.table(normalized.map(i => ({ name: i.name, veg: i.veg, category: i.category, price: i.price })));
+
+      setMenuItems(normalized);
+    } catch (err) {
+      console.error('Failed to fetch menu:', err);
+      toast.error('Failed to load menu');
+    }
   };
 
   const fetchCategories = async () => {
-    const res = await api.get('/categories');
-    setCategories(res.data.map(c => c.name));
+    try {
+      const res = await api.get('/categories');
+      const names = (Array.isArray(res.data) ? res.data : []).map(c => c.name ?? c.title ?? String(c));
+      setCategories(names);
+    } catch (err) {
+      console.error('Failed to fetch categories:', err);
+      // Not critical enough to toast every time, but you can if you want:
+      // toast.error('Failed to load categories');
+    }
   };
 
   const fetchLastOrderNumber = async () => {
@@ -272,13 +317,13 @@ const BillingCounter = () => {
 
           <div className="menu-grid">
             {menuItems.filter(item =>
-              (categoryFilter === 'all' || item.category === categoryFilter) &&
+              (categoryFilter === 'all' || (item.category ?? '').toString() === categoryFilter) &&
               (
                 vegFilter === 'all' ||
                 (vegFilter === 'veg' && item.veg) ||
                 (vegFilter === 'nonveg' && !item.veg)
               ) &&
-              (item.name.toLowerCase().includes(searchQuery.toLowerCase()))
+              (item.name?.toLowerCase().includes(searchQuery.toLowerCase()))
             ).map(item => (
               <div key={item.id} className="menu-card" onClick={() => handleAddItem(item)}>
                 <img

@@ -1,202 +1,272 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import api from '../services/api';
 import './Reports.css';
 
-/* ---------- Helpers ---------- */
+/* ========================= Helpers ========================= */
 
-// Parse "dd-MM-yyyy" -> timestamp (for sorting)
-function parseDDMMYYYY(str) {
-  if (!str || typeof str !== 'string') return 0;
-  const [dd, mm, yyyy] = str.split('-').map(Number);
+// safe string
+const safe = (v) => (v == null ? '' : String(v));
+
+// parse dd-MM-yyyy to ts for sorting
+const dateToKey = (dmy) => {
+  if (!dmy) return 0;
+  const [dd, mm, yyyy] = dmy.split('-').map(Number);
   if (!yyyy || !mm || !dd) return 0;
-  return new Date(yyyy, mm - 1, dd, 0, 0, 0, 0).getTime();
-}
+  return new Date(yyyy, mm - 1, dd).getTime();
+};
 
-// "HH:MM" -> minutes
-function toMinutesFromHColonM(val) {
-  if (!val || typeof val !== 'string' || !val.includes(':')) return null;
-  const [h, m] = val.split(':').map(Number);
-  if (Number.isNaN(h) || Number.isNaN(m)) return null;
-  return h * 60 + m;
-}
+// Parse a time string into minutes since midnight.
+const timeToMin = (s) => {
+  if (!s) return null;
+  const str = String(s).trim();
 
-// "7h 30m" / "7h" / "30m" -> minutes
-function toMinutesFromHSpaceM(val) {
-  if (!val || typeof val !== 'string') return null;
-  const hMatch = /(\d+)\s*h/i.exec(val);
-  const mMatch = /(\d+)\s*m/i.exec(val);
-  const h = hMatch ? Number(hMatch[1]) : 0;
-  const m = mMatch ? Number(mMatch[1]) : 0;
-  if (Number.isNaN(h) || Number.isNaN(m)) return null;
-  return h * 60 + m;
-}
+  // AM/PM format
+  const ampm = /(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([ap]\.?m\.?)/i.exec(str);
+  if (ampm) {
+    let h = parseInt(ampm[1], 10);
+    const m = parseInt(ampm[2] || '0', 10);
+    const mer = ampm[4].toLowerCase();
+    if (mer.startsWith('p') && h !== 12) h += 12;
+    if (mer.startsWith('a') && h === 12) h = 0;
+    return h * 60 + m;
+  }
 
-// Try both; fall back to 0
-function toMinutesFlexible(val) {
-  return toMinutesFromHColonM(val) ?? toMinutesFromHSpaceM(val) ?? 0;
-}
+  // 24h format
+  const hhmm = /(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec(str);
+  if (hhmm) {
+    const h = parseInt(hhmm[1], 10);
+    const m = parseInt(hhmm[2], 10);
+    if (Number.isNaN(h) || Number.isNaN(m)) return null;
+    return h * 60 + m;
+  }
 
-// dd-MM-yyyy -> yyyy-MM-dd
-function ddmmyyyyToISO(dmy) {
-  const [dd, mm, yyyy] = (dmy || '').split('-');
-  if (!yyyy || !mm || !dd) return null;
-  return `${yyyy}-${mm}-${dd}`;
-}
+  return null;
+};
+
+// "xh ym" / "HH:MM" -> minutes
+const durationToMin = (val) => {
+  if (!val) return 0;
+  const str = String(val).trim();
+  if (str.includes(':')) {
+    const [h, m] = str.split(':').map(Number);
+    return (Number(h) || 0) * 60 + (Number(m) || 0);
+  }
+  const h = (/(\d+)\s*h/i.exec(str)?.[1]) || 0;
+  const m = (/(\d+)\s*m/i.exec(str)?.[1]) || 0;
+  return Number(h) * 60 + Number(m);
+};
+
+// minutes -> "HH:MM"
+const minToHHMM = (mins) => {
+  const m = Math.max(0, Math.round(mins || 0));
+  const h = Math.floor(m / 60);
+  const r = m % 60;
+  return `${String(h).padStart(2, '0')}:${String(r).padStart(2, '0')}`;
+};
 
 const ITEMS_PER_PAGE = 10;
+
+/* ========================= Component ========================= */
 
 export default function Reports() {
   const [employees, setEmployees] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState('all');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
-  const [reports, setReports] = useState([]);
+  const [rawRows, setRawRows] = useState([]);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState('date');
-  const [sortDirection, setSortDirection] = useState('asc');
+  const [sortDir, setSortDir] = useState('asc');
 
-  // Hover card
   const [hoverOpen, setHoverOpen] = useState(false);
   const [hoverPos, setHoverPos] = useState({ x: 0, y: 0 });
-  const [hoverLoading, setHoverLoading] = useState(false);
-  const [hoverData, setHoverData] = useState([]);
+  const [hoverSessions, setHoverSessions] = useState([]);
   const hoverTimerRef = useRef(null);
 
-  const cancelCloseHover = () => {
-    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
-  };
-  const scheduleCloseHover = () => {
-    hoverTimerRef.current = setTimeout(() => setHoverOpen(false), 150);
-  };
-
-  async function fetchDayDetails(employeeId, dmy, x, y) {
-    const iso = ddmmyyyyToISO(dmy);
-    if (!iso) return;
-    setHoverPos({ x, y });
-    setHoverOpen(true);
-    setHoverLoading(true);
-    try {
-      const res = await api.get('/reports/detailed-sessions', {
-        params: { employee_id: employeeId, date: iso }
-      });
-      setHoverData(res.data?.sessions || []);
-    } catch (err) {
-      setHoverData([{ type: 'error', duration: '—' }]);
-    } finally {
-      setHoverLoading(false);
-    }
-  }
-
+  /* -------- Load employees -------- */
   useEffect(() => {
     (async () => {
       try {
         const res = await api.get('/employees');
         setEmployees(Array.isArray(res.data) ? res.data : []);
-      } catch (err) {
-        console.error('Failed to load employees:', err);
+      } catch (e) {
+        console.error('Failed to load employees:', e);
       }
     })();
   }, []);
 
-  useEffect(() => {
-    fetchReports();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
+  /* -------- Load reports (raw) -------- */
   const fetchReports = async () => {
     try {
       const res = await api.get('/reports', {
         params: {
           employee_id: selectedEmployee !== 'all' ? selectedEmployee : undefined,
-          from: fromDate ? new Date(fromDate).toISOString() : undefined,
-          to: toDate ? new Date(toDate).toISOString() : undefined
+          from: fromDate || undefined,
+          to: toDate || undefined
         }
       });
-      const incoming = Array.isArray(res.data) ? res.data : [];
-      setReports(sortData(incoming));
+      setRawRows(Array.isArray(res.data) ? res.data : []);
       setCurrentPage(1);
-    } catch (err) {
-      console.error('Failed to fetch reports:', err);
+    } catch (e) {
+      console.error('Failed to fetch reports:', e);
+      setRawRows([]);
     }
   };
 
-  const sortData = (data) => {
-    const arr = [...data];
+  useEffect(() => {
+    fetchReports();
+  }, []);
+
+  /* -------- Group & Sum -------- */
+  const grouped = useMemo(() => {
+    const map = new Map();
+
+    for (const r of rawRows) {
+      const emp = r.employee || {};
+      const empId = emp.id ?? emp.employee_id ?? safe(emp.code);
+      const empName = `${safe(emp.first_name)} ${safe(emp.last_name)}`.trim() || '—';
+      const date = r.date || r.day || r.attendance_date;
+      if (!empId || !date) continue;
+
+      const key = `${empId}__${date}`;
+      if (!map.has(key)) {
+        map.set(key, {
+          employeeId: empId,
+          employeeName: empName,
+          date,
+          firstInMin: null,
+          lastOutMin: null,
+          workTotalMin: 0,
+          breakTotalMin: 0,
+          sessions: []
+        });
+      }
+      const g = map.get(key);
+
+      const typeStr = safe(r.type).toLowerCase();
+      const clockIn =
+        r.clock_in ?? r.in_time ?? r.check_in ?? r.start_time ?? r.start ?? r.clock_in_uk;
+      const clockOut =
+        r.clock_out ?? r.out_time ?? r.check_out ?? r.end_time ?? r.end ?? r.clock_out_uk;
+
+      const inMin = timeToMin(clockIn);
+      const outMin = timeToMin(clockOut);
+
+      if (inMin != null) g.firstInMin = g.firstInMin == null ? inMin : Math.min(g.firstInMin, inMin);
+      if (outMin != null) g.lastOutMin = g.lastOutMin == null ? outMin : Math.max(g.lastOutMin, outMin);
+
+      let durMin = durationToMin(r.duration);
+      if (!durMin && inMin != null && outMin != null && outMin >= inMin) {
+        durMin = outMin - inMin;
+      }
+
+      if (typeStr === 'break') g.breakTotalMin += durMin;
+      else g.workTotalMin += durMin;
+
+      g.sessions.push({
+        type: typeStr === 'break' ? 'Break' : 'Work',
+        in: clockIn || '',
+        out: clockOut || '',
+        duration: minToHHMM(durMin)
+      });
+    }
+
+    return Array.from(map.values()).map((g) => {
+      // derive break time if no explicit data
+      const derivedBreakMin =
+        g.firstInMin != null && g.lastOutMin != null
+          ? Math.max(0, (g.lastOutMin - g.firstInMin) - g.workTotalMin)
+          : 0;
+      const totalBreakMin = g.breakTotalMin > 0 ? g.breakTotalMin : derivedBreakMin;
+
+      return {
+        ...g,
+        firstIn:
+          g.firstInMin != null
+            ? `${String(Math.floor(g.firstInMin / 60)).padStart(2, '0')}:${String(g.firstInMin % 60).padStart(2, '0')}`
+            : '—',
+        lastOut:
+          g.lastOutMin != null
+            ? `${String(Math.floor(g.lastOutMin / 60)).padStart(2, '0')}:${String(g.lastOutMin % 60).padStart(2, '0')}`
+            : '—',
+        workTotal: minToHHMM(g.workTotalMin),
+        breakTotal: minToHHMM(totalBreakMin)
+      };
+    });
+  }, [rawRows]);
+
+  /* -------- Sorting & Paging -------- */
+  const sorted = useMemo(() => {
+    const arr = [...grouped];
+    const dir = sortDir === 'asc' ? 1 : -1;
     arr.sort((a, b) => {
-      const dir = sortDirection === 'asc' ? 1 : -1;
-
-      if (sortField === 'total_work_hours') {
-        const aMin = toMinutesFlexible(a.total_work_hours);
-        const bMin = toMinutesFlexible(b.total_work_hours);
-        return (aMin - bMin) * dir;
+      switch (sortField) {
+        case 'employee':
+          return safe(a.employeeName).localeCompare(safe(b.employeeName)) * dir;
+        case 'total':
+          return (a.workTotalMin - b.workTotalMin) * dir;
+        case 'firstIn':
+          return ((a.firstInMin ?? 1e9) - (b.firstInMin ?? 1e9)) * dir;
+        case 'lastOut':
+          return ((a.lastOutMin ?? -1e9) - (b.lastOutMin ?? -1e9)) * dir;
+        case 'break':
+          return (a.breakTotalMin - b.breakTotalMin) * dir;
+        case 'date':
+        default:
+          return (dateToKey(a.date) - dateToKey(b.date)) * dir;
       }
-
-      if (sortField === 'date') {
-        const aT = parseDDMMYYYY(a.date);
-        const bT = parseDDMMYYYY(b.date);
-        return (aT - bT) * dir;
-      }
-
-      const valA = (a?.[sortField] ?? '').toString();
-      const valB = (b?.[sortField] ?? '').toString();
-      if (valA === valB) return 0;
-      return valA > valB ? 1 * dir : -1 * dir;
     });
     return arr;
-  };
+  }, [grouped, sortField, sortDir]);
 
-  const handleSort = (field) => {
-    if (field === sortField) {
-      setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'));
-      setReports((prev) => sortData(prev));
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-      setReports((prev) => sortData(prev));
-    }
-  };
-
-  const paginatedReports = () => {
-    const sorted = sortData(reports);
+  const totalPages = Math.max(1, Math.ceil(sorted.length / ITEMS_PER_PAGE));
+  const pageRows = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     return sorted.slice(start, start + ITEMS_PER_PAGE);
-  };
+  }, [sorted, currentPage]);
 
-  const totalPages = Math.ceil(reports.length / ITEMS_PER_PAGE) || 1;
-
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this entry?')) return;
-    try {
-      await api.delete(`/reports/${id}`);
-      fetchReports();
-    } catch {
-      alert('Failed to delete entry');
+  const onSort = (field) => {
+    if (field === sortField) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    else {
+      setSortField(field);
+      setSortDir('asc');
     }
   };
 
+  /* -------- Hover helpers -------- */
+  const cancelClose = () => {
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+  };
+  const scheduleClose = () => {
+    hoverTimerRef.current = setTimeout(() => setHoverOpen(false), 120);
+  };
+
+  /* -------- Export -------- */
   const handleDownload = async (type) => {
     const params = new URLSearchParams({
       employee_id: selectedEmployee !== 'all' ? selectedEmployee : '',
       from: fromDate || '',
-      to: toDate || '',
+      to: toDate || ''
     });
     try {
       const res = await api.get(`/reports/export/${type}?${params.toString()}`, {
-        responseType: 'blob',
+        responseType: 'blob'
       });
       const blob = new Blob([res.data], {
-        type: type === 'csv' ? 'text/csv' : 'application/pdf',
+        type: type === 'csv' ? 'text/csv' : 'application/pdf'
       });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = `attendance_report.${type}`;
-      link.click();
-    } catch {
-      alert(`Failed to download ${type.toUpperCase()} file`);
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `attendance_report.${type}`;
+      a.click();
+    } catch (e) {
+      alert(`Failed to download ${type.toUpperCase()}`);
     }
   };
 
+  /* ========================= Render ========================= */
   return (
     <DashboardLayout>
       <div className="report-container">
@@ -213,25 +283,10 @@ export default function Reports() {
             ))}
           </select>
 
-          <input
-            type="date"
-            className="date-picker"
-            value={fromDate}
-            onChange={(e) => setFromDate(e.target.value)}
-            placeholder="From Date"
-          />
+          <input type="date" className="date-picker" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
+          <input type="date" className="date-picker" value={toDate} onChange={(e) => setToDate(e.target.value)} />
 
-          <input
-            type="date"
-            className="date-picker"
-            value={toDate}
-            onChange={(e) => setToDate(e.target.value)}
-            placeholder="To Date"
-          />
-
-          <button className="apply-filter-btn" onClick={fetchReports}>
-            Apply Filters
-          </button>
+          <button className="apply-filter-btn" onClick={fetchReports}>Apply Filters</button>
 
           <div className="export-buttons">
             <button onClick={() => handleDownload('csv')}>Export CSV</button>
@@ -243,53 +298,38 @@ export default function Reports() {
           <table className="report-table">
             <thead>
               <tr>
-                <th>Employee Name</th>
-                <th onClick={() => handleSort('date')} style={{ cursor: 'pointer' }}>
-                  Date {sortField === 'date' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
-                </th>
-                <th onClick={() => handleSort('clock_in_uk')} style={{ cursor: 'pointer' }}>
-                  Clock In {sortField === 'clock_in_uk' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
-                </th>
-                <th onClick={() => handleSort('clock_out_uk')} style={{ cursor: 'pointer' }}>
-                  Clock Out {sortField === 'clock_out_uk' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
-                </th>
-                <th onClick={() => handleSort('total_work_hours')} style={{ cursor: 'pointer' }}>
-                  Hours Worked {sortField === 'total_work_hours' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
-                </th>
-                <th>Actions</th>
+                <th onClick={() => onSort('employee')} style={{ cursor: 'pointer' }}>Employee</th>
+                <th onClick={() => onSort('date')} style={{ cursor: 'pointer' }}>Date</th>
+                <th onClick={() => onSort('firstIn')} style={{ cursor: 'pointer' }}>First In</th>
+                <th onClick={() => onSort('lastOut')} style={{ cursor: 'pointer' }}>Last Out</th>
+                <th onClick={() => onSort('total')} style={{ cursor: 'pointer' }}>Hours Worked (Sum)</th>
+                <th onClick={() => onSort('break')} style={{ cursor: 'pointer' }}>Break Time</th>
               </tr>
             </thead>
 
             <tbody>
-              {paginatedReports().length === 0 ? (
+              {pageRows.length === 0 ? (
                 <tr>
-                  <td colSpan="6" style={{ textAlign: 'center' }}>No records found</td>
+                  <td colSpan="6" style={{ textAlign: 'center' }}>No records</td>
                 </tr>
               ) : (
-                paginatedReports().map((r) => (
+                pageRows.map((r) => (
                   <tr
-                    key={r.id}
+                    key={`${r.employeeId}-${r.date}`}
                     onMouseEnter={(e) => {
-                      cancelCloseHover();
-                      const x = e.clientX + 10;
-                      const y = e.clientY + 10;
-                      const empId = r.employee?.id;
-                      if (empId && r.date) fetchDayDetails(empId, r.date, x, y);
+                      cancelClose();
+                      setHoverSessions(r.sessions);
+                      setHoverPos({ x: e.clientX + 10, y: e.clientY + 10 });
+                      setHoverOpen(true);
                     }}
-                    onMouseLeave={scheduleCloseHover}
-                    style={{ cursor: 'default' }}
-                    title="Hover to see day details"
+                    onMouseLeave={scheduleClose}
                   >
-                    <td>{r.employee ? `${r.employee.first_name} ${r.employee.last_name}` : '—'}</td>
-                    <td>{r.date ?? '—'}</td>
-                    <td>{r.clock_in_uk ?? '—'}</td>
-                    <td>{r.clock_out_uk ?? '—'}</td>
-                    <td>{r.total_work_hours ?? '—'}</td>
-                    <td>
-                      <button className="delete-btn" onClick={() => handleDelete(r.id)} title="Delete this entry">
-                        Delete
-                      </button>
-                    </td>
+                    <td>{r.employeeName}</td>
+                    <td>{r.date}</td>
+                    <td>{r.firstIn}</td>
+                    <td>{r.lastOut}</td>
+                    <td>{r.workTotal}</td>
+                    <td>{r.breakTotal}</td>
                   </tr>
                 ))
               )}
@@ -297,47 +337,34 @@ export default function Reports() {
           </table>
 
           <div className="pagination">
-            <button disabled={currentPage === 1} onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}>
-              Prev
-            </button>
+            <button disabled={currentPage === 1} onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}>Prev</button>
             <span>Page {currentPage} of {totalPages}</span>
-            <button
-              disabled={currentPage >= totalPages}
-              onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-            >
-              Next
-            </button>
+            <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}>Next</button>
           </div>
         </div>
       </div>
 
       {hoverOpen && (
         <div
-          onMouseEnter={cancelCloseHover}
-          onMouseLeave={scheduleCloseHover}
           className="hover-card"
           style={{ position: 'fixed', left: hoverPos.x, top: hoverPos.y, zIndex: 9999 }}
+          onMouseEnter={cancelClose}
+          onMouseLeave={scheduleClose}
         >
           <div className="hover-card-title">Day details</div>
-          {hoverLoading ? (
-            <div className="hover-card-row">Loading…</div>
-          ) : hoverData.length === 0 ? (
-            <div className="hover-card-row">No completed sessions</div>
-          ) : (
-            <div className="hover-card-body">
-              {hoverData.map((row, i) => (
-                <div key={i} className={`hover-card-row ${row.type === 'break' ? 'is-break' : 'is-work'}`}>
-                  <div className="col type">{row.type}</div>
-                  <div className="col in">
-                    {row.type === 'break' ? (row.break_time || '') : (row.clock_in || '')}
-                  </div>
-                  <div className="col out">
-                    {row.type === 'break' ? row.duration : `${row.clock_out || ''} • ${row.duration}`}
-                  </div>
+          <div className="hover-card-body">
+            {hoverSessions.length === 0 ? (
+              <div className="hover-card-row">No sessions</div>
+            ) : (
+              hoverSessions.map((s, i) => (
+                <div key={i} className={`hover-card-row ${s.type === 'Break' ? 'is-break' : 'is-work'}`}>
+                  <div className="col type">{s.type}</div>
+                  <div className="col in">{s.in}</div>
+                  <div className="col out">{s.out ? `${s.out} • ${s.duration}` : s.duration}</div>
                 </div>
-              ))}
-            </div>
-          )}
+              ))
+            )}
+          </div>
         </div>
       )}
     </DashboardLayout>

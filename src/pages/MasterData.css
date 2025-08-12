@@ -183,3 +183,234 @@ h2 {
 .veg-toggle span.nonveg {
   color: red;
 }
+
+.master-data-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 20px;
+  gap: 20px;
+  background-color: #f5f7fa;
+}
+
+h2 {
+  width: 100%;
+  font-size: 24px;
+  font-weight: bold;
+  color: #2c3e50;
+  margin-bottom: 10px;
+}
+
+/* CATEGORY PANEL */
+.category-panel {
+  width: 25%;
+  min-width: 250px;
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.category-panel h3 {
+  margin-bottom: 16px;
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+}
+
+.category-panel ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.category-panel li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.category-panel input {
+  width: calc(100% - 80px);
+  padding: 6px 10px;
+  margin-right: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.category-panel form {
+  display: flex;
+  margin-top: 12px;
+}
+
+.category-panel button {
+  padding: 6px 12px;
+  background-color: #007bff;
+  border: none;
+  color: white;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.category-panel .actions {
+  display: flex;
+  gap: 8px;
+}
+
+.category-panel .actions button {
+  background: #f4f4f4;
+  border: 1px solid #ccc;
+  padding: 5px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.category-panel .actions button:hover {
+  background-color: #e2e2e2;
+}
+
+/* MENU PANEL */
+.menu-panel {
+  flex: 1;
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.menu-panel h3 {
+  margin-bottom: 16px;
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+}
+
+.menu-panel form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+  align-items: center;
+}
+
+.menu-panel form input,
+.menu-panel form select {
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.menu-panel form button {
+  padding: 8px 16px;
+  background-color: #007bff;
+  color: white;
+  font-weight: bold;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.menu-panel table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.menu-panel th,
+.menu-panel td {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+  font-size: 14px;
+}
+
+.menu-panel td.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.menu-panel td.actions button {
+  padding: 5px 8px;
+  border: 1px solid #ccc;
+  background-color: #f4f4f4;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.menu-panel td.actions button:hover {
+  background-color: #e2e2e2;
+}
+
+@media (max-width: 768px) {
+  .master-data-wrapper {
+    flex-direction: column;
+  }
+  .category-panel,
+  .menu-panel {
+    width: 100%;
+  }
+}
+
+/* veg badge */
+.veg-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: bold;
+}
+
+.veg-toggle span.veg {
+  color: green;
+}
+
+.veg-toggle span.nonveg {
+  color: red;
+}
+
+/* 🔎 Filters */
+.menu-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 10px;
+  background: #fafbfc;
+  border: 1px solid #eee;
+  border-radius: 8px;
+}
+
+.menu-filters .row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.menu-filters input,
+.menu-filters select {
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.menu-filters .grow {
+  flex: 1 1 240px;
+}
+
+.menu-filters .secondary {
+  background: #f4f4f4;
+  border: 1px solid #ccc;
+  color: #333;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.menu-filters .results-count {
+  margin-left: auto;
+  color: #555;
+  font-size: 14px;
+}
