@@ -7,14 +7,13 @@ import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import imageMapping from "./imageMapping";
 
-// 🔎 Coerce various backend values to a real boolean for "veg"
+// 🔎 Normalize backend veg values
 const toVegBool = (raw) => {
   if (raw === true) return true;
   if (raw === false) return false;
   if (raw == null) return false;
-  if (typeof raw === 'number') return raw === 1;     // 1 => veg, 0 => non-veg
+  if (typeof raw === 'number') return raw === 1;
   const s = String(raw).trim().toLowerCase();
-  // Accept common variants
   if (['true', '1', 'yes', 'y', 'veg', 'v'].includes(s)) return true;
   if (['false', '0', 'no', 'n', 'non-veg', 'nonveg', 'nv'].includes(s)) return false;
   return false;
@@ -74,33 +73,18 @@ const BillingCounter = () => {
     try {
       const res = await api.get('/menu');
       const normalized = (Array.isArray(res.data) ? res.data : []).map(item => {
-        // Try common field names that might contain veg info
         const rawVeg =
-          item.veg ??
-          item.isVeg ??
-          item.is_veg ??
-          item.type ??            // e.g., "Veg" / "Non-Veg"
-          item.category_type;     // any custom field you might have
+          item.veg ?? item.isVeg ?? item.is_veg ?? item.type ?? item.category_type;
 
-        // normalize category to a display string
         const categoryName =
           typeof item.category === 'object' && item.category
             ? (item.category.name ?? item.category.title ?? String(item.category))
             : item.category;
 
-        // Ensure price is a number for safe math
         const priceNum = typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0;
 
-        return {
-          ...item,
-          price: priceNum,
-          veg: toVegBool(rawVeg),
-          category: categoryName
-        };
+        return { ...item, price: priceNum, veg: toVegBool(rawVeg), category: categoryName };
       });
-
-      // (Optional) One-time debug to verify normalization
-      // console.table(normalized.map(i => ({ name: i.name, veg: i.veg, category: i.category, price: i.price })));
 
       setMenuItems(normalized);
     } catch (err) {
@@ -116,8 +100,6 @@ const BillingCounter = () => {
       setCategories(names);
     } catch (err) {
       console.error('Failed to fetch categories:', err);
-      // Not critical enough to toast every time, but you can if you want:
-      // toast.error('Failed to load categories');
     }
   };
 
@@ -165,7 +147,7 @@ const BillingCounter = () => {
   const getIncludedService = () => getTotal() * (5 / 105);
 
   const getDiscountAmount = () => (getTotal() * discountPercent) / 100;
-  const getGrandTotal = () => getTotal() - getDiscountAmount();
+  const getGrandTotal = () => Math.max(0, getTotal() - getDiscountAmount());
 
   const getDateTime = () => DateTime.now().setZone('Europe/London').toFormat('dd/MM/yyyy HH:mm:ss');
 
@@ -207,6 +189,11 @@ const BillingCounter = () => {
       setOrderNumber(res.data.order.order_number);
       setOrderDate(res.data.order.date);
       setShowReceipt(true);
+
+      // Auto-print once modal is rendered
+      setTimeout(() => {
+        window.print();
+      }, 300);
     } catch (err) {
       console.error('Order placement failed:', err);
       toast.error('Failed to place order');
@@ -235,10 +222,7 @@ const BillingCounter = () => {
 
   const confirmTillAction = async () => {
     try {
-      const res = await api.post('/auth/login', {
-        username: authUsername,
-        password: authPassword
-      });
+      const res = await api.post('/auth/login', { username: authUsername, password: authPassword });
       if (res.status === 200 && res.data.token) {
         const role = res.data.role || 'staff';
         setUserRole(role);
@@ -397,6 +381,24 @@ const BillingCounter = () => {
               className="customer-input"
             />
 
+            {/* Discount field for admin */}
+           {userRole === 'admin' && (
+  <div className="discount-row">
+    <label><strong>Discount %:</strong></label>
+    <select
+      value={discountPercent}
+      onChange={(e) => setDiscountPercent(Number(e.target.value))}
+    >
+      <option value={0}>No Discount</option>
+      <option value={5}>5%</option>
+      <option value={10}>10%</option>
+      <option value={15}>15%</option>
+      <option value={20}>20%</option>
+    </select>
+  </div>
+)}
+
+
             {/* ===== Scroll area: items + summary ===== */}
             <div className="order-scroll">
               <div className="order-items">
@@ -506,6 +508,7 @@ const BillingCounter = () => {
         <div className="receipt-overlay">
           <div className="bill-section" ref={printRef}>
             <div className="receipt-header-actions" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+              {/* Manual print is optional now since we auto-print. Keep for reprint if needed. */}
               <button className="print-btn" onClick={() => window.print()} style={{ alignSelf: 'flex-start' }}>🖨️ print</button>
               <button className="close-preview-btn" onClick={startNewOrder} style={{ alignSelf: 'flex-end' }}>✖</button>
             </div>
@@ -548,15 +551,14 @@ const BillingCounter = () => {
             <div className="receipt-summary">
               <p><strong>Total Qty:</strong> {selectedItems.reduce((sum, item) => sum + item.qty, 0)}</p>
               <p><strong>Sub Total:</strong> £ {getTotal().toFixed(2)}</p>
-              <p><strong>Paid By:</strong> {paymentMethod}</p>
-              <p className="includes-label">Includes:</p>
-              <p>VAT (5%): £{getIncludedTax().toFixed(2)}</p>
-              <p>Service Charge (5%): £{getIncludedService().toFixed(2)}</p>
-              <hr />
               {discountPercent > 0 && (
                 <p><strong>Discount ({discountPercent}%):</strong> -£{getDiscountAmount().toFixed(2)}</p>
               )}
               <p className="grand-total"><strong>Grand Total:</strong> £ {getGrandTotal().toFixed(2)}</p>
+
+              <p className="includes-label">Includes:</p>
+              <p>VAT (5%): £{getIncludedTax().toFixed(2)}</p>
+              <p>Service Charge (5%): £{getIncludedService().toFixed(2)}</p>
               <p className="server-name">Staff:{tillOpenedBy && `(${tillOpenedBy})`}</p>
               <hr />
             </div>

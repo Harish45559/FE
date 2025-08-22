@@ -2,12 +2,19 @@
 .billing-wrapper {
   display: flex;
   flex-direction: row;
+  flex-wrap: nowrap;           /* keep columns on one row unless small screens */
   gap: 1.5rem;
   padding: 1rem;
   background: #f9fafb;
   height: 100vh;
+  min-height: 100vh;
   overflow: hidden;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Ensure columns can shrink instead of forcing wrap */
+.menu-left, .summary-right {
+  min-width: 0;
 }
 
 /* === Left Section (Menu) === */
@@ -124,6 +131,25 @@
 .till-banner.open   { background:#d1fae5; color:#065f46; border-color:#10b981; }
 .till-banner.closed { background:#fee2e2; color:#991b1b; border-color:#ef4444; }
 .till-user { font-size: 14px; color:#4b5563; margin-bottom: 8px; }
+
+/* ===== Admin Discount Row ===== */
+.discount-row select {
+  width: 120px;
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  background: #fff;
+}
+
+.discount-row input {
+  width: 90px;
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  background: #fff;
+}
 
 /* ===== The scroller that holds items + summary ===== */
 .order-scroll {
@@ -243,12 +269,29 @@
 .auth-modal input { width: 100%; padding: 10px; margin: 10px 0; }
 .auth-buttons { display: flex; justify-content: space-between; }
 
-/* ===== Responsive: stack panels when space is tight ===== */
-@media (max-width: 1400px) {
+/* ===== Responsive: improved breakpoints ===== */
+
+/* Tablet/Laptop compressed two-column (keep side-by-side) */
+@media (max-width: 1280px) and (min-width: 1101px) {
+  .menu-left  { width: 58%; }
+  .summary-right { width: 42%; }
+
+  .billing-wrapper { gap: 1rem; }
+  .menu-left { padding-right: 0.75rem; }
+  .summary-right { padding: 0.75rem; }
+  .order-items { padding: 8px; }
+  .order-summary .line { font-size: 13px; }
+  .pos-btn { padding: 12px 14px; font-size: 15px; }
+}
+
+/* Stack only on ≤1100px (tablet portrait and below) */
+@media (max-width: 1100px) {
   .billing-wrapper { flex-direction: column; height: auto; }
   .menu-left, .summary-right { width: 100%; }
   .summary-right { height: auto; }
 }
+
+/* Phones */
 @media (max-width: 900px) {
   .payment-row, .confirm-row { grid-template-columns: 1fr; }
   .btn-clear { width: 100%; aspect-ratio: auto; padding: 12px 16px; }
@@ -313,7 +356,7 @@
     position: absolute !important;
     top: 0 !important;
     left: 0 !important;
-    width: 72mm !important;          /* printable width for 80mm roll */
+    width: 80mm !important;          /* printable width for 80mm roll */
     margin: 0 !important;
     padding: 10px !important;
     background: #fff !important;
@@ -349,7 +392,7 @@
   }
 
   /* Page setup for thermal roll */
-  @page { size: 72mm auto; margin: 0; }
+  @page { size: 80mm auto; margin: 0; }
 
   /* Remove page background/overflow */
   html, body {

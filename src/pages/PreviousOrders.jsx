@@ -1,111 +1,98 @@
-import React, { useEffect, useRef, useState } from "react";
-import api from "../services/api";
+import React, { useEffect, useMemo, useState } from "react";
 import DashboardLayout from "../components/DashboardLayout";
-import { DateTime } from "luxon";
+import api from "../services/api";
 import "./PreviousOrders.css";
 
-const PreviousOrders = () => {
-  const [orders, setOrders] = useState([]);
-  const [filteredOrders, setFilteredOrders] = useState([]);
-  const [viewOrder, setViewOrder] = useState(null);
-  const [search, setSearch] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [ordersPerPage, setOrdersPerPage] = useState(10);
-  const [selectedDate, setSelectedDate] = useState("");
-  const [showFilters, setShowFilters] = useState(false);
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
-  const printRef = useRef();
+const PAGE_SIZES = [10, 20, 50];
 
+const PreviousOrders = () => {
+  // Table data
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  // Filters
+  const [search, setSearch] = useState("");
+  const [date, setDate] = useState("");
+
+  // Pagination
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
+
+  // Receipt modal
+  const [showReceipt, setShowReceipt] = useState(false);
+  const [activeOrder, setActiveOrder] = useState(null);
+
+  // Fetch all orders once (client-side filter/paginate)
   useEffect(() => {
+    const fetchOrders = async () => {
+      setLoading(true);
+      try {
+        const res = await api.get("/orders/all");
+        const list = Array.isArray(res.data) ? res.data : (res.data?.orders ?? []);
+        const norm = list.map((o) => ({
+          id: o.id ?? o._id ?? o.order_number,
+          order_number: o.order_number ?? o.orderNo ?? o.orderId ?? "—",
+          customer_name: o.customer_name ?? o.customer ?? "N/A",
+          server_name: o.server_name ?? o.server ?? "",
+          // Expect each item: {name, price, qty, total}
+          items: Array.isArray(o.items) ? o.items : [],
+          payment_method: o.payment_method ?? o.payment ?? "Cash",
+          discount_percent: Number(o.discount_percent ?? o.discountPercent ?? 0),
+          discount_amount: Number(o.discount_amount ?? o.discountAmount ?? 0),
+          total_amount: Number(o.total_amount ?? o.subtotal ?? 0),
+          final_amount: Number(o.final_amount ?? o.grand_total ?? o.total ?? 0),
+          date: o.date ?? o.created_at ?? o.createdAt ?? "",
+        }));
+        setOrders(norm.reverse()); // most recent first
+      } catch (e) {
+        console.error("Failed to load orders", e);
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchOrders();
   }, []);
 
-  useEffect(() => {
-    const filtered = orders.filter((o) => {
-      const createdDate = DateTime.fromISO(o.created_at, { zone: "utc" }).setZone("Europe/London").toISODate();
-      const matchSearch =
-        o.customer_name?.toLowerCase().includes(search.toLowerCase()) ||
-        String(o.order_number).includes(search);
-      const matchSelectedDate = selectedDate ? createdDate === selectedDate : true;
-      const matchCustomRange =
-        (!fromDate || createdDate >= fromDate) && (!toDate || createdDate <= toDate);
-      return matchSearch && matchSelectedDate && matchCustomRange;
+  // Derived table after filters
+  const filtered = useMemo(() => {
+    const needle = search.trim().toLowerCase();
+    return orders.filter((o) => {
+      const matchesSearch =
+        !needle ||
+        String(o.order_number).toLowerCase().includes(needle) ||
+        String(o.customer_name).toLowerCase().includes(needle) ||
+        String(o.payment_method).toLowerCase().includes(needle);
+      const matchesDate =
+        !date || (o.date && String(o.date).slice(0, 10) === date);
+      return matchesSearch && matchesDate;
     });
+  }, [orders, search, date]);
 
-    const startIndex = (currentPage - 1) * ordersPerPage;
-    setFilteredOrders(filtered.slice(startIndex, startIndex + ordersPerPage));
-  }, [orders, search, currentPage, selectedDate, fromDate, toDate, ordersPerPage]);
+  const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const pageData = filtered.slice((page - 1) * pageSize, page * pageSize);
 
-  const fetchOrders = async () => {
-    try {
-      const res = await api.get("/orders/all");
-      setOrders(res.data);
-    } catch (err) {
-      console.error("Failed to fetch orders", err);
-    }
+  // Helpers for receipt math (no ?? mixed with ||)
+  const calcSubtotal = (ord) =>
+    (ord?.items ?? []).reduce(
+      (s, it) => s + Number(it.total ?? ((it.price ?? 0) * (it.qty ?? 0))),
+      0
+    );
+
+  const calcIncluded = (amount, percent) => (Number(amount) * percent) / (100 + percent);
+
+  // Open/close receipt
+  const openReceipt = (ord) => {
+    setActiveOrder(ord);
+    setShowReceipt(true);
+  };
+  const closeReceipt = () => {
+    setShowReceipt(false);
+    setActiveOrder(null);
   };
 
-  const totalPages = Math.ceil(
-    orders.filter((o) => {
-      const createdDate = DateTime.fromISO(o.created_at, { zone: "utc" }).setZone("Europe/London").toISODate();
-      const matchSearch =
-        o.customer_name?.toLowerCase().includes(search.toLowerCase()) ||
-        String(o.order_number).includes(search);
-      const matchSelectedDate = selectedDate ? createdDate === selectedDate : true;
-      const matchCustomRange =
-        (!fromDate || createdDate >= fromDate) && (!toDate || createdDate <= toDate);
-      return matchSearch && matchSelectedDate && matchCustomRange;
-    }).length / ordersPerPage
-  );
-
+  // Print uses CSS @media print to show only .bill-section
   const handlePrint = () => {
-    const win = window.open("", "", "width=300,height=600");
-    win.document.write(`
-      <html><head><title>Receipt</title>
-      <style>
-        @media print {
-          body { width: 80mm; margin: 0; padding: 0; font-family: 'Courier New', Courier, monospace; font-size: 12px; }
-          h2, p, .receipt-header p, .receipt-summary p, th, td { text-align: center; }
-        }
-        body { font-family: 'Courier New', Courier, monospace; width: 80mm; padding: 10px; }
-        .receipt-header, .receipt-summary, table { width: 100%; }
-        table { border-collapse: collapse; font-size: 12px; }
-        th, td { border-bottom: 1px dotted #ccc; padding: 4px; }
-        h2 { text-align: center; }
-      </style>
-      </head><body>
-    `);
-    win.document.write(printRef.current.innerHTML);
-    win.document.write("</body></html>");
-    win.document.close();
-    win.print();
-  };
-
-  const clearSearch = () => {
-    setSearch("");
-    setSelectedDate("");
-    setFromDate("");
-    setToDate("");
-    setCurrentPage(1);
-  };
-
-  const handleToday = () => {
-    const today = DateTime.now().setZone("Europe/London").toISODate();
-    setSelectedDate(today);
-    setFromDate("");
-    setToDate("");
-    setCurrentPage(1);
-  };
-
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this order?")) return;
-    try {
-      await api.delete(`/orders/${id}`);
-      fetchOrders();
-    } catch {
-      alert("Failed to delete order");
-    }
+    window.print();
   };
 
   return (
@@ -113,141 +100,245 @@ const PreviousOrders = () => {
       <div className="previous-orders">
         <div className="header">
           <h2>Previous Orders</h2>
+
           <div className="controls">
-            <button className="clear-btn" onClick={() => setShowFilters(!showFilters)}>Filters</button>
-            {showFilters && (
-              <>
-                <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="date-picker" />
-                <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="date-picker" />
-              </>
-            )}
             <input
+              className="search-box"
               type="text"
-              placeholder="Search by name/order no"
+              placeholder="Search by customer, order no., or payment…"
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
-                setCurrentPage(1);
+                setPage(1);
               }}
-              className="search-box"
             />
-            <button onClick={handleToday} className="clear-btn">Today</button>
-            <button onClick={clearSearch} className="clear-btn">Clear</button>
+            <input
+              className="date-picker"
+              type="date"
+              value={date}
+              onChange={(e) => {
+                setDate(e.target.value);
+                setPage(1);
+              }}
+            />
+            <button
+              className="clear-btn"
+              onClick={() => {
+                setSearch("");
+                setDate("");
+                setPage(1);
+              }}
+            >
+              Clear
+            </button>
           </div>
         </div>
 
-        <table className="orders-table">
-          <thead>
-            <tr>
-              <th>#Order</th>
-              <th>Customer</th>
-              <th>Type</th>
-              <th>Date</th>
-              <th>Total</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredOrders.map((order) => (
-              <tr key={order.id}>
-                <td>#{order.order_number}</td>
-                <td>{order.customer_name}</td>
-                <td>{order.order_type}</td>
-                <td>{order.date}</td>
-                <td>£{order.total_amount?.toFixed(2)}</td>
-                <td>
-                  <button className="view-btn" onClick={() => setViewOrder(order)}>👁️</button>
-                  <button className="view-btn" style={{ color: "red" }} onClick={() => handleDelete(order.id)}>🗑️</button>
-                </td>
+        <div style={{ overflowX: "auto" }}>
+          <table className="orders-table">
+            <thead>
+              <tr>
+                <th>Order #</th>
+                <th>Date/Time</th>
+                <th>Customer</th>
+                <th>Items</th>
+                <th>Paid By</th>
+                <th>Total (£)</th>
+                <th>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={7}>Loading…</td>
+                </tr>
+              ) : pageData.length === 0 ? (
+                <tr>
+                  <td colSpan={7}>No orders found.</td>
+                </tr>
+              ) : (
+                pageData.map((o) => (
+                  <tr key={o.id}>
+                    <td>#{o.order_number}</td>
+                    <td>{o.date ? String(o.date) : "—"}</td>
+                    <td>{o.customer_name}</td>
+                    <td>{o.items?.length ?? 0}</td>
+                    <td>{o.payment_method}</td>
+                    <td>{(o.final_amount || calcSubtotal(o)).toFixed(2)}</td>
+                    <td>
+                      <button
+                        className="view-btn"
+                        title="View / Print Receipt"
+                        onClick={() => openReceipt(o)}
+                      >
+                        🧾
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
 
         <div className="pagination">
-          <div className="pagination-left">
-            Result {(currentPage - 1) * ordersPerPage + 1}–{Math.min(currentPage * ordersPerPage, orders.length)} of {orders.length}
-          </div>
-          <div className="pagination-center">
-            {[...Array(totalPages)].map((_, i) => (
-              <button key={i} onClick={() => setCurrentPage(i + 1)} className={currentPage === i + 1 ? "active" : ""}>
-                {i + 1}
-              </button>
-            ))}
-          </div>
           <div>
-            <select
-              className="page-size-select"
-              value={ordersPerPage}
-              onChange={(e) => setOrdersPerPage(Number(e.target.value))}
+            <label>
+              Page size:&nbsp;
+              <select
+                className="page-size-select"
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setPage(1);
+                }}
+              >
+                {PAGE_SIZES.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          <div className="pagination-center">
+            <button onClick={() => setPage(1)} disabled={page === 1}>
+              ⏮
+            </button>
+            <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>
+              ◀
+            </button>
+            <span style={{ margin: "0 6px" }}>
+              Page {page} / {pageCount}
+            </span>
+            <button
+              onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+              disabled={page === pageCount}
             >
-              <option value={5}>5</option>
-              <option value={10}>10</option>
-              <option value={20}>20</option>
-              <option value={50}>50</option>
-            </select>
+              ▶
+            </button>
+            <button onClick={() => setPage(pageCount)} disabled={page === pageCount}>
+              ⏭
+            </button>
+          </div>
+
+          <div />
+        </div>
+      </div>
+
+      {/* ===== Receipt Modal (same layout vibe as Billing Counter) ===== */}
+      {showReceipt && activeOrder && (
+        <div className="receipt-modal" role="dialog" aria-modal="true">
+          <div className="bill-section">
+            {/* header actions (hidden on print) */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginBottom: 10,
+              }}
+            >
+              <button className="print-btn" onClick={handlePrint}>
+                🖨️ Print
+              </button>
+              <button className="close-preview-btn" onClick={closeReceipt}>
+                ✖
+              </button>
+            </div>
+
+            {/* Receipt header (copy of Billing Counter info) */}
+            <div className="receipt-header">
+              <h2>Mirchi Mafiya</h2>
+              <p>Cumberland Street, LU1 3BW, Luton</p>
+              <p>Phone: +447440086046</p>
+              <p>dtsretaillimited@gmail.com</p>
+              <p>
+                <strong>Order No:</strong> #{activeOrder.order_number}
+              </p>
+              <p>
+                <strong>Customer:</strong> {activeOrder.customer_name || "N/A"}
+              </p>
+              <p>
+                <strong>Paid By:</strong> {activeOrder.payment_method}
+              </p>
+              <hr />
+              <p>Date: {activeOrder.date || "—"}</p>
+              <hr />
+            </div>
+
+            {/* Items */}
+            <table className="receipt-table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th style={{ textAlign: "right" }}>Price</th>
+                  <th style={{ textAlign: "right" }}>Qty</th>
+                  <th style={{ textAlign: "right" }}>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(activeOrder.items || []).map((it, idx) => {
+                  const price = Number(it.price ?? 0);
+                  const qty = Number(it.qty ?? 0);
+                  const total = Number(it.total ?? (price * qty));
+                  return (
+                    <tr key={idx}>
+                      <td>{it.name}</td>
+                      <td style={{ textAlign: "right" }}>£{price.toFixed(2)}</td>
+                      <td style={{ textAlign: "right" }}>{qty}</td>
+                      <td style={{ textAlign: "right" }}>£{total.toFixed(2)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+
+            {/* Summary */}
+            {(() => {
+              const subtotal = activeOrder.total_amount || calcSubtotal(activeOrder);
+              const discountPct = Number(activeOrder.discount_percent || 0);
+              const discountAmt =
+                activeOrder.discount_amount ||
+                (discountPct > 0 ? (subtotal * discountPct) / 100 : 0);
+              const grand = activeOrder.final_amount || Math.max(0, subtotal - discountAmt);
+
+              // Example “includes” if VAT/Service are included in prices (5% each)
+              const vatIncluded = calcIncluded(grand, 5);
+              const svcIncluded = calcIncluded(grand, 5);
+
+              const totalQty = (activeOrder.items || []).reduce((s, it) => s + Number(it.qty ?? 0), 0);
+
+              return (
+                <div className="receipt-summary">
+                  <p>
+                    <strong>Total Qty:</strong> {totalQty}
+                  </p>
+                  <p>
+                    <strong>Sub Total:</strong> £ {subtotal.toFixed(2)}
+                  </p>
+                  {discountPct > 0 && (
+                    <p>
+                      <strong>Discount ({discountPct}%):</strong> -£{discountAmt.toFixed(2)}
+                    </p>
+                  )}
+                  <p className="grand-total">
+                    <strong>Grand Total:</strong> £ {grand.toFixed(2)}
+                  </p>
+
+                  <p className="includes-label">Includes:</p>
+                  <p>VAT (5%): £{vatIncluded.toFixed(2)}</p>
+                  <p>Service Charge (5%): £{svcIncluded.toFixed(2)}</p>
+                  <p className="server-name">
+                    Staff: {activeOrder.server_name ? `(${activeOrder.server_name})` : ""}
+                  </p>
+                  <hr />
+                </div>
+              );
+            })()}
           </div>
         </div>
-
-        {viewOrder && (
-          <div className="receipt-modal" key={viewOrder.id}>
-            {/* Buttons OUTSIDE the printable area */}
-            <div className="modal-header-buttons" style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
-              <button className="print-btn" onClick={handlePrint}>🖨️ Print</button>
-              <button className="close-preview-btn" onClick={() => setViewOrder(null)}>✖</button>
-            </div>
-
-            {/* Only receipt inside ref */}
-            <div className="bill-section" ref={printRef}>
-              <div className="receipt-header">
-                <h2>Cozy Cup</h2>
-                <p>Food Truck Lane, Flavor Town</p>
-                <p>Phone: +91-9876543210</p>
-                <p>www.cozycup.example.com</p>
-                <p>Order Type: {viewOrder.order_type}</p>
-                <p><strong>Customer:</strong> {viewOrder.customer_name || "N/A"}</p>
-                <p><strong>Order No:</strong> #{viewOrder.order_number}</p>
-                <p>Date: {viewOrder.date}</p>
-                <hr />
-              </div>
-
-              <table className="receipt-table">
-                <thead>
-                  <tr>
-                    <th>Product</th>
-                    <th>Price</th>
-                    <th>Qty</th>
-                    <th>Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {viewOrder.items.map((item, idx) => (
-                    <tr key={idx}>
-                      <td>{item.name}</td>
-                      <td>£{item.price}</td>
-                      <td>{item.qty}</td>
-                      <td>£{item.total}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-
-              <div className="receipt-summary">
-                <p><strong>Total Qty:</strong> {viewOrder.items.reduce((sum, i) => sum + i.qty, 0)}</p>
-                <p><strong>Sub Total:</strong> £{viewOrder.total_amount?.toFixed(2)}</p>
-                <p>VAT (5%): £{(viewOrder.total_amount * 5 / 105).toFixed(2)}</p>
-                <p>Service (5%): £{(viewOrder.total_amount * 5 / 105).toFixed(2)}</p>
-                {viewOrder.discount_percent > 0 && (
-                  <p><strong>Discount ({viewOrder.discount_percent}%):</strong> -£{viewOrder.discount_amount?.toFixed(2)}</p>
-                )}
-                <hr />
-                <p className="grand-total"><strong>Grand Total:</strong> £{viewOrder.final_amount?.toFixed(2)}</p>
-                <p className="server-name">Staff: {viewOrder.server_name}</p>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+      )}
     </DashboardLayout>
   );
 };
