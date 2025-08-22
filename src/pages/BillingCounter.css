@@ -255,7 +255,7 @@
   .menu-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
 }
 
-/* ===== Receipt (kept from your file; trimmed a bit) ===== */
+/* ===== Receipt (overlay & defaults for screen) ===== */
 .receipt-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,.4);
   display: flex; justify-content: center; align-items: center; z-index: 9999;
@@ -274,16 +274,6 @@
 .receipt-table { width:100%; font-size:.85rem; border-collapse: collapse; margin-top:1rem; }
 .receipt-table th, .receipt-table td { padding:6px 4px; text-align:left; border-bottom:1px dashed #ccc; }
 .receipt-summary p { margin:4px 0; }
-
-/* Print */
-@media print {
-  html, body { margin:0 !important; padding:0 !important; height:auto !important; width:auto !important; overflow:hidden !important; }
-  .receipt-overlay, .bill-section, .bill-section * { visibility: visible !important; position: static !important; }
-  .receipt-overlay { position: absolute !important; top:0; left:0; width:100% !important; height:auto !important; background:#fff !important; }
-  .bill-section { width: 280px !important; padding: 10px !important; margin: 0 auto !important; font-size: 15px !important; font-weight: 700 !important; color:#000 !important; background:#fff !important; }
-  @page { size: 72mm auto; margin:0; }
-}
-
 
 /* Make the inner panel a proper flex column */
 .order-panel{
@@ -305,3 +295,69 @@
   flex: 0 0 auto;
 }
 
+/* ===== PRINT: show only the receipt; tighter table spacing ===== */
+@media print {
+  /* Hide everything by default */
+  body * { visibility: hidden !important; }
+
+  /* Show only the receipt overlay subtree */
+  .receipt-overlay, .receipt-overlay * { visibility: visible !important; }
+
+  /* Place the receipt cleanly for a ticket printer */
+  .receipt-overlay {
+    position: absolute !important;
+    inset: 0 !important;
+    background: #fff !important;
+  }
+  .bill-section {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 72mm !important;          /* printable width for 80mm roll */
+    margin: 0 !important;
+    padding: 10px !important;
+    background: #fff !important;
+    color: #000 !important;
+    box-shadow: none !important;
+    border: 0 !important;
+    font-family: 'Courier New', Courier, monospace !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+  }
+
+  /* Do not print control buttons */
+  .receipt-header-actions,
+  .print-btn,
+  .close-preview-btn { display: none !important; }
+
+  /* Tighter table & summary ONLY on print */
+  .receipt-table th,
+  .receipt-table td {
+    padding: 2px 4px !important;
+    line-height: 1.1 !important;
+    border-bottom: 1px dashed #000 !important; /* darker for print clarity */
+  }
+  .receipt-table td {
+    font-size: 13px !important;
+    font-weight: 500 !important;
+  }
+  .receipt-summary p {
+    margin: 2px 0 !important;
+    line-height: 1.2 !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+  }
+
+  /* Page setup for thermal roll */
+  @page { size: 72mm auto; margin: 0; }
+
+  /* Remove page background/overflow */
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: auto !important;
+    height: auto !important;
+    overflow: hidden !important;
+    background: #fff !important;
+  }
+}
