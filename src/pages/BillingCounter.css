@@ -2,7 +2,7 @@
 .billing-wrapper {
   display: flex;
   flex-direction: row;
-  flex-wrap: nowrap;           /* keep columns on one row unless small screens */
+  flex-wrap: nowrap;
   gap: 1.5rem;
   padding: 1rem;
   background: #f9fafb;
@@ -12,10 +12,7 @@
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* Ensure columns can shrink instead of forcing wrap */
-.menu-left, .summary-right {
-  min-width: 0;
-}
+.menu-left, .summary-right { min-width: 0; }
 
 /* === Left Section (Menu) === */
 .menu-left {
@@ -24,61 +21,32 @@
   padding-right: 1rem;
 }
 
-.billing-header h2 {
-  font-size: 1.8rem;
-  font-weight: bold;
-  margin-bottom: 0.5rem;
-}
+.billing-header h2 { font-size: 1.8rem; font-weight: bold; margin-bottom: 0.5rem; }
 
 .filters, .order-type-selector {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-bottom: 12px;
+  display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px;
 }
 
 .filters button {
-  background: #e5e7eb;
-  border: none;
-  padding: 6px 14px;
-  border-radius: 16px;
-  cursor: pointer;
-  font-size: 0.9rem;
+  background: #e5e7eb; border: none; padding: 6px 14px; border-radius: 16px; cursor: pointer; font-size: 0.9rem;
 }
 .filters button.active { background: #3b82f6; color: #fff; }
 
 .menu-search-bar input {
-  width: 100%;
-  padding: 10px 14px;
-  font-size: 14px;
-  border-radius: 10px;
-  border: 1px solid #d1d5db;
-  margin-bottom: 12px;
+  width: 100%; padding: 10px 14px; font-size: 14px; border-radius: 10px; border: 1px solid #d1d5db; margin-bottom: 12px;
 }
 
 .menu-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 1rem;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem;
 }
 
 .menu-card {
-  background: white;
-  padding: 10px;
-  border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-  cursor: pointer;
-  transition: 0.2s ease;
+  background: white; padding: 10px; border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06); cursor: pointer; transition: 0.2s ease;
 }
 .menu-card:hover { transform: scale(1.02); }
 
-.menu-item-image {
-  width: 100%;
-  height: 120px;
-  object-fit: cover;
-  border-radius: 8px;
-  margin-bottom: 8px;
-}
+.menu-item-image { width: 100%; height: 120px; object-fit: cover; border-radius: 8px; margin-bottom: 8px; }
 
 .veg-status { display: flex; gap: 8px; align-items: center; margin-top: 6px; font-size: 0.85rem; }
 .dot { width: 10px; height: 10px; border-radius: 50%; }
@@ -94,152 +62,79 @@
   box-shadow: 0 2px 10px rgba(0,0,0,0.05);
   display: flex;
   flex-direction: column;
-
-  /* Critical for 100% zoom behavior */
-  height: calc(100vh - 2rem); /* wrapper has 1rem top+bottom padding */
+  height: calc(100vh - 2rem);
   min-height: 0;
   overflow: hidden;
 }
 
+.order-panel { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+
 .order-title { font-size: 1.3rem; margin-bottom: 10px; }
 
 .customer-input {
-  width: 100%;
-  padding: 12px 16px;
-  font-size: 15px;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 12px;
-  margin-bottom: 12px;
-  background-color: #f9fafb;
+  width: 100%; padding: 12px 16px; font-size: 15px;
+  border: 1.5px solid #e5e7eb; border-radius: 12px; margin-bottom: 12px; background-color: #f9fafb;
 }
 .customer-input:focus {
-  border-color: #3b82f6;
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(59,130,246,.2);
+  border-color: #3b82f6; outline: none; box-shadow: 0 0 0 3px rgba(59,130,246,.2);
 }
 
-/* Banner */
 .till-banner {
-  padding: 8px 14px;
-  border-radius: 8px;
-  font-weight: bold;
-  text-align: center;
-  margin-bottom: 12px;
-  font-size: 15px;
-  border: 1px solid;
+  padding: 8px 14px; border-radius: 8px; font-weight: bold; text-align: center; margin-bottom: 12px; font-size: 15px; border: 1px solid;
 }
 .till-banner.open   { background:#d1fae5; color:#065f46; border-color:#10b981; }
 .till-banner.closed { background:#fee2e2; color:#991b1b; border-color:#ef4444; }
 .till-user { font-size: 14px; color:#4b5563; margin-bottom: 8px; }
 
-/* ===== Admin Discount Row ===== */
-.discount-row select {
-  width: 120px;
-  padding: 8px 10px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 14px;
-  background: #fff;
+.discount-row select, .discount-row input {
+  padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; background: #fff;
 }
+.discount-row select { width: 120px; }
+.discount-row input { width: 90px; }
 
-.discount-row input {
-  width: 90px;
-  padding: 8px 10px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 14px;
-  background: #fff;
-}
+/* ===== Scroll area ===== */
+.order-scroll { flex: 1 1 auto; min-height: 0; overflow: auto; padding-right: 4px; }
 
-/* ===== The scroller that holds items + summary ===== */
-.order-scroll {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: auto;       /* scrolls inside right panel */
-  padding-right: 4px;   /* room for scrollbar */
-}
-
-/* Items list */
 .order-items {
-  max-height: none !important;  /* override older caps */
-  background-color: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 10px;
-  margin-bottom: 12px;
+  background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 10px; margin-bottom: 12px;
 }
 
-.order-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-  font-size: 0.95rem;
-}
+.order-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 0.95rem; }
 .item-controls { display: flex; align-items: center; gap: 6px; }
 .item-controls button {
-  background-color: #e5e7eb;
-  border: none;
-  border-radius: 6px;
-  padding: 4px 8px;
-  cursor: pointer;
-  font-size: 0.9rem;
+  background-color: #e5e7eb; border: none; border-radius: 6px; padding: 4px 8px; cursor: pointer; font-size: 0.9rem;
 }
-.item-remove {
-  color: #dc2626;
-  font-weight: 700;
-  font-size: 1rem;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-}
+.item-remove { color: #dc2626; font-weight: 700; font-size: 1rem; background: transparent; border: none; cursor: pointer; }
 
-/* Summary */
-.order-summary .line {
-  display: flex; justify-content: space-between;
-  padding: 4px 0; font-size: 14px; color:#374151;
-}
+.order-summary .line { display: flex; justify-content: space-between; padding: 4px 0; font-size: 14px; color:#374151; }
 .order-summary .line.total { font-weight: 700; font-size: 16px; }
 
-/* ===== Buttons live OUTSIDE the scroller ===== */
+.order-buttons.action-groups { flex: 0 0 auto; }
+
+/* ===== Footer / Buttons ===== */
 .action-groups {
   display: flex; flex-direction: column; gap: 14px;
-  padding-top: 10px;
-  border-top: 1px solid #eef2f7;
-  box-shadow: 0 -6px 12px rgba(0,0,0,.04);
-  background: #fff;
+  padding-top: 10px; border-top: 1px solid #eef2f7;
+  box-shadow: 0 -6px 12px rgba(0,0,0,.04); background: #fff;
 }
 
-.payment-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
+.payment-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.confirm-row { display: grid; grid-template-columns: 1fr 1fr 56px; gap: 12px; }
 
-.confirm-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr 56px;
-  gap: 12px;
-}
-
-/* Button base */
 .pos-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 10px;
   padding: 14px 16px; border: 0; border-radius: 14px;
-  font-size: 16px; font-weight: 700; letter-spacing: .2px;
-  cursor: pointer; user-select: none; width: 100%;
-  transition: transform .06s ease, box-shadow .2s ease, background .2s ease, color .2s ease, opacity .2s ease;
+  font-size: 16px; font-weight: 700; cursor: pointer; user-select: none; width: 100%;
+  transition: transform .06s ease, box-shadow .2s ease, background .2s ease;
   box-shadow: 0 2px 6px rgba(0,0,0,.08);
 }
 .pos-btn:active { transform: translateY(1px); }
 .pos-btn:disabled { opacity:.55; cursor:not-allowed; box-shadow:none; }
 
-/* Payment */
 .btn-pay { background:#f3f4f6; color:#111827; box-shadow: inset 0 0 0 2px #e5e7eb; }
 .btn-pay:hover { background:#eef0f3; }
 .btn-pay.is-selected { background:#fff; box-shadow: inset 0 0 0 2px #2563eb, 0 4px 10px rgba(37,99,235,.18); }
 
-/* Actions */
 .btn-place { background:#10b981; color:#fff; }
 .btn-place:hover { background:#0ea772; }
 .btn-place.is-waiting { filter: grayscale(.35); opacity:.65; cursor:not-allowed; }
@@ -249,56 +144,42 @@
 
 .btn-clear {
   background:#f3f4f6; color:#b91c1c; font-weight:800;
-  width:56px; padding:0; aspect-ratio:1/1;
-  box-shadow: inset 0 0 0 2px #e5e7eb;
+  width:56px; padding:0; aspect-ratio:1/1; box-shadow: inset 0 0 0 2px #e5e7eb;
 }
 .btn-clear:hover { background:#fee2e2; }
 
 .pos-btn .icon { font-size:18px; line-height:0; }
 .pos-btn:focus-visible { outline:0; box-shadow:0 0 0 3px rgba(37,99,235,.35), 0 2px 6px rgba(0,0,0,.08); }
 
-/* Auth modal */
+/* Auth Modal */
 .auth-modal-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,.4);
   display: flex; align-items: center; justify-content: center; z-index: 1000;
 }
 .auth-modal {
-  background: #fff; padding: 20px; border-radius: 10px; width: 300px;
-  box-shadow: 0 0 10px rgba(0,0,0,.3);
+  background: #fff; padding: 20px; border-radius: 10px; width: 300px; box-shadow: 0 0 10px rgba(0,0,0,.3);
 }
 .auth-modal input { width: 100%; padding: 10px; margin: 10px 0; }
 .auth-buttons { display: flex; justify-content: space-between; }
 
-/* ===== Responsive: improved breakpoints ===== */
-
-/* Tablet/Laptop compressed two-column (keep side-by-side) */
+/* ===== Responsive ===== */
 @media (max-width: 1280px) and (min-width: 1101px) {
   .menu-left  { width: 58%; }
   .summary-right { width: 42%; }
-
   .billing-wrapper { gap: 1rem; }
-  .menu-left { padding-right: 0.75rem; }
-  .summary-right { padding: 0.75rem; }
-  .order-items { padding: 8px; }
-  .order-summary .line { font-size: 13px; }
-  .pos-btn { padding: 12px 14px; font-size: 15px; }
 }
-
-/* Stack only on ≤1100px (tablet portrait and below) */
 @media (max-width: 1100px) {
   .billing-wrapper { flex-direction: column; height: auto; }
   .menu-left, .summary-right { width: 100%; }
   .summary-right { height: auto; }
 }
-
-/* Phones */
 @media (max-width: 900px) {
   .payment-row, .confirm-row { grid-template-columns: 1fr; }
   .btn-clear { width: 100%; aspect-ratio: auto; padding: 12px 16px; }
   .menu-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
 }
 
-/* ===== Receipt (overlay & defaults for screen) ===== */
+/* ===== Receipt Overlay (screen) ===== */
 .receipt-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,.4);
   display: flex; justify-content: center; align-items: center; z-index: 9999;
@@ -318,89 +199,49 @@
 .receipt-table th, .receipt-table td { padding:6px 4px; text-align:left; border-bottom:1px dashed #ccc; }
 .receipt-summary p { margin:4px 0; }
 
-/* Make the inner panel a proper flex column */
-.order-panel{
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0; /* critical so children can shrink/scroll */
-}
-
-/* The scroll area (items + summary) must flex, not expand the panel */
-.order-scroll{
-  flex: 1 1 auto;
-  min-height: 0;      /* prevents pushing the footer down */
-  overflow: auto;
-}
-
-/* Footer (payment + actions) should not flex */
-.order-buttons.action-groups{
-  flex: 0 0 auto;
-}
-
-/* ===== PRINT: show only the receipt; tighter table spacing ===== */
+/* === PRINT FIX: show only receipt === */
 @media print {
-  /* Hide everything by default */
-  body * { visibility: hidden !important; }
+  /* Hide everything */
+  body * { display: none !important; }
 
-  /* Show only the receipt overlay subtree */
-  .receipt-overlay, .receipt-overlay * { visibility: visible !important; }
+  /* Show only receipt overlay */
+  .receipt-overlay, .receipt-overlay * {
+    display: block !important;
+    visibility: visible !important;
+  }
 
-  /* Place the receipt cleanly for a ticket printer */
   .receipt-overlay {
-    position: absolute !important;
-    inset: 0 !important;
+    position: static !important;
     background: #fff !important;
-  }
-  .bill-section {
-    position: absolute !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 80mm !important;          /* printable width for 80mm roll */
-    margin: 0 !important;
-    padding: 10px !important;
-    background: #fff !important;
-    color: #000 !important;
-    box-shadow: none !important;
-    border: 0 !important;
-    font-family: 'Courier New', Courier, monospace !important;
-    font-size: 14px !important;
-    font-weight: 700 !important;
-  }
-
-  /* Do not print control buttons */
-  .receipt-header-actions,
-  .print-btn,
-  .close-preview-btn { display: none !important; }
-
-  /* Tighter table & summary ONLY on print */
-  .receipt-table th,
-  .receipt-table td {
-    padding: 2px 4px !important;
-    line-height: 1.1 !important;
-    border-bottom: 1px dashed #000 !important; /* darker for print clarity */
-  }
-  .receipt-table td {
-    font-size: 13px !important;
-    font-weight: 500 !important;
-  }
-  .receipt-summary p {
-    margin: 2px 0 !important;
-    line-height: 1.2 !important;
-    font-size: 13px !important;
-    font-weight: 600 !important;
-  }
-
-  /* Page setup for thermal roll */
-  @page { size: 80mm auto; margin: 0; }
-
-  /* Remove page background/overflow */
-  html, body {
     margin: 0 !important;
     padding: 0 !important;
     width: auto !important;
     height: auto !important;
-    overflow: hidden !important;
-    background: #fff !important;
+  }
+
+  .bill-section {
+    width: 72mm !important;
+    max-width: 72mm !important;
+    margin: 0 auto !important;
+    padding: 10px !important;
+    box-shadow: none !important;
+    border: 0 !important;
+    page-break-inside: avoid !important;
+  }
+
+  .receipt-table th, .receipt-table td {
+    padding: 2px 4px !important;
+    line-height: 1.1 !important;
+    border-bottom: 1px dashed #000 !important;
+  }
+  .receipt-summary p { margin: 2px 0 !important; font-size: 13px !important; }
+
+  .print-btn, .close-preview-btn { display: none !important; }
+
+  @page { size: 72mm auto; margin: 0; }
+
+  html, body {
+    margin: 0 !important; padding: 0 !important;
+    width: 72mm !important; background: #fff !important;
   }
 }

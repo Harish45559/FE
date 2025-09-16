@@ -190,10 +190,19 @@ const BillingCounter = () => {
       setOrderDate(res.data.order.date);
       setShowReceipt(true);
 
+      // --- Auto-print and auto-close after printing ---
+      // Set handler BEFORE print to be extra safe
+      window.onafterprint = () => {
+        // clear handler to avoid future unwanted calls
+        window.onafterprint = null;
+        startNewOrder();
+      };
+
       // Auto-print once modal is rendered
       setTimeout(() => {
         window.print();
       }, 300);
+      // --- end auto-print/close ---
     } catch (err) {
       console.error('Order placement failed:', err);
       toast.error('Failed to place order');
@@ -382,22 +391,21 @@ const BillingCounter = () => {
             />
 
             {/* Discount field for admin */}
-           {userRole === 'admin' && (
-  <div className="discount-row">
-    <label><strong>Discount %:</strong></label>
-    <select
-      value={discountPercent}
-      onChange={(e) => setDiscountPercent(Number(e.target.value))}
-    >
-      <option value={0}>No Discount</option>
-      <option value={5}>5%</option>
-      <option value={10}>10%</option>
-      <option value={15}>15%</option>
-      <option value={20}>20%</option>
-    </select>
-  </div>
-)}
-
+            {userRole === 'admin' && (
+              <div className="discount-row">
+                <label><strong>Discount %:</strong></label>
+                <select
+                  value={discountPercent}
+                  onChange={(e) => setDiscountPercent(Number(e.target.value))}
+                >
+                  <option value={0}>No Discount</option>
+                  <option value={5}>5%</option>
+                  <option value={10}>10%</option>
+                  <option value={15}>15%</option>
+                  <option value={20}>20%</option>
+                </select>
+              </div>
+            )}
 
             {/* ===== Scroll area: items + summary ===== */}
             <div className="order-scroll">

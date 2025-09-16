@@ -104,7 +104,7 @@
   font-size: 14px;
 }
 
-/* ===== Receipt modal (screen) ===== */
+/* ===== Receipt modal (portal at <body>) ===== */
 .receipt-modal {
   position: fixed;
   inset: 0;
@@ -112,10 +112,10 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 9999;
+  z-index: 2147483647; /* top */
 }
 
-/* Printable ticket box (same vibe as Billing Counter) */
+/* Printable ticket box (screen) */
 .bill-section {
   background-color: #fff;
   padding: 20px;
@@ -180,33 +180,43 @@
 .print-btn:hover,
 .close-preview-btn:hover { background-color: #111827; }
 
-/* ===== PRINT: only print the receipt (same behavior as Billing Counter) ===== */
+/* ===== PRINT: hide everything except receipt (portal makes this safe) ===== */
 @media print {
-  /* Hide everything by default */
-  body * { visibility: hidden !important; }
+  /* Hide entire app shell */
+  body > *:not(.receipt-modal) { display: none !important; }
 
-  /* Show only receipt content */
-  .bill-section,
-  .bill-section * { visibility: visible !important; }
-
-  /* Place ticket at page top; white background */
-  .bill-section {
-    position: absolute !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 80mm !important;      /* 80mm roll printable width */
+  /* Force the modal to behave like a normal page block */
+  .receipt-modal {
+    display: block !important;
+    position: static !important;
+    background: #fff !important;
+    inset: auto !important;
+    width: auto !important;
+    height: auto !important;
+    padding: 0 !important;
     margin: 0 !important;
+  }
+
+  /* Match common POS80 drivers (72mm printable area).
+     If your driver has “80mm continuous roll”, it will still work. */
+  .bill-section {
+    width: 72mm !important;
+    max-width: 72mm !important;
+    margin: 0 auto !important;
     padding: 10px !important;
     background: #fff !important;
     color: #000 !important;
     box-shadow: none !important;
     border: 0 !important;
-    font-family: 'Courier New', Courier, monospace !important;
-    font-size: 14px !important;
-    font-weight: 700 !important;
+
+    page-break-before: avoid !important;
+    page-break-after: avoid !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    overflow: visible !important;
   }
 
-  /* Tighten spacing for print */
+  /* Tight print spacing */
   .receipt-table th,
   .receipt-table td {
     padding: 2px 4px !important;
@@ -214,21 +224,26 @@
     border-bottom: 1px dashed #000 !important;
     text-align: left !important;
   }
-  .receipt-table td { font-size: 13px !important; font-weight: 500 !important; }
-  .receipt-summary p { margin: 2px 0 !important; line-height: 1.2 !important; font-size: 13px !important; }
+  .receipt-summary p {
+    margin: 2px 0 !important;
+    line-height: 1.2 !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+  }
 
-  /* Hide buttons */
+  /* Hide buttons on paper */
   .print-btn, .close-preview-btn { display: none !important; }
 
   /* Page setup */
-  @page { size: 80mm auto; margin: 0; }
+  @page { size: 72mm auto; margin: 0; }
 
   html, body {
     margin: 0 !important;
     padding: 0 !important;
-    width: auto !important;
+    width: 72mm !important;
     height: auto !important;
     overflow: hidden !important;
     background: #fff !important;
+    -webkit-print-color-adjust: exact !important;
   }
 }

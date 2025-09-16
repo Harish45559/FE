@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import api from '../services/api';
@@ -18,54 +17,51 @@ const Attendance = () => {
   const actionTypeRef = useRef(null);
 
   useEffect(() => {
-  fetchEmployees(); // Run once on mount only
+    fetchEmployees(); // Run once on mount only
 
-  const clockInterval = setInterval(() => {
-    setCurrentTime(DateTime.now().setZone('Europe/London'));
-  }, 1000);
+    const clockInterval = setInterval(() => {
+      setCurrentTime(DateTime.now().setZone('Europe/London'));
+    }, 1000);
 
-  return () => {
-    clearInterval(clockInterval);
+    return () => {
+      clearInterval(clockInterval);
+    };
+  }, []);
+
+  const fetchEmployees = async () => {
+    try {
+      const [empRes, statusRes] = await Promise.all([
+        api.get('/employees'),
+        api.get('/attendance/status'),
+      ]);
+
+      const statusMap = Array.isArray(statusRes.data)
+        ? statusRes.data.reduce((map, emp) => {
+            map[emp.id] = emp.status;
+            return map;
+          }, {})
+        : {};
+
+      const updated = empRes.data.map(emp => {
+        const rawStatus = statusMap[emp.id];
+        let attendanceStatus = 'Not Clocked In';
+
+        if (rawStatus === 'Clocked In') attendanceStatus = 'Clocked In';
+        else if (rawStatus === 'Clocked Out') attendanceStatus = 'Clocked Out';
+
+        return {
+          ...emp,
+          attendance_status: attendanceStatus,
+        };
+      });
+
+      setAllEmployees(updated);
+      setEmployees(updated);
+    } catch (err) {
+      toast.error('Failed to fetch employees or status');
+      console.error('Fetch Employees Error:', err);
+    }
   };
-}, []);
-
-
-const fetchEmployees = async () => {
-  try {
-    const [empRes, statusRes] = await Promise.all([
-      api.get('/employees'),
-      api.get('/attendance/status'),
-    ]);
-
-    const statusMap = Array.isArray(statusRes.data)
-      ? statusRes.data.reduce((map, emp) => {
-          map[emp.id] = emp.status;
-          return map;
-        }, {})
-      : {};
-
-    const updated = empRes.data.map(emp => {
-      const rawStatus = statusMap[emp.id];
-      let attendanceStatus = 'Not Clocked In';
-
-      if (rawStatus === 'Clocked In') attendanceStatus = 'Clocked In';
-      else if (rawStatus === 'Clocked Out') attendanceStatus = 'Clocked Out';
-
-      return {
-        ...emp,
-        attendance_status: attendanceStatus,
-      };
-    });
-
-    setAllEmployees(updated);
-    setEmployees(updated);
-  } catch (err) {
-    toast.error('Failed to fetch employees or status');
-    console.error('Fetch Employees Error:', err);
-  }
-};
-
-  
 
   const handleNumberClick = (num) => {
     if (pin.length < 4) setPin(prev => prev + num);
@@ -75,20 +71,20 @@ const fetchEmployees = async () => {
 
   const handleSubmit = async () => {
     const actionType = actionTypeRef.current;
-  
+
     if (!selectedEmployee || !actionType) {
       toast.warning('Select employee and action');
       return;
     }
-  
+
     if (pin.length !== 4) {
-      toast.error("PIN must be 4 digits");
+      toast.error('PIN must be 4 digits');
       return;
     }
-  
+
     if (isLoading) return;
     setIsLoading(true);
-  
+
     if (
       actionType === 'clock_in' &&
       selectedEmployee.attendance_status === 'Clocked In'
@@ -97,7 +93,7 @@ const fetchEmployees = async () => {
       setIsLoading(false);
       return;
     }
-  
+
     if (
       actionType === 'clock_out' &&
       selectedEmployee.attendance_status !== 'Clocked In'
@@ -106,21 +102,27 @@ const fetchEmployees = async () => {
       setIsLoading(false);
       return;
     }
-  
+
     try {
-      const endpoint = actionType === 'clock_in' ? '/attendance/clock-in' : '/attendance/clock-out';
-  
+      const endpoint =
+        actionType === 'clock_in' ? '/attendance/clock-in' : '/attendance/clock-out';
+
       const res = await api.post(endpoint, {
         pin,
         employeeId: selectedEmployee.id,
       });
-      
-      const clockedAt = res.data.attendance?.clock_in || res.data.attendance?.clock_out;
+
+      const clockedAt =
+        res.data.attendance?.clock_in || res.data.attendance?.clock_out;
       const totalHours = res.data.attendance?.total_work_hours || '—';
-      const timeFormatted = DateTime.fromISO(clockedAt).setZone('Europe/London').toFormat('dd/MM/yyyy HH:mm');
-  
-      toast.success(` ${actionType.replace('_', ' ')} successful at ${timeFormatted}. Worked: ${totalHours}`);
-  
+      const timeFormatted = DateTime.fromISO(clockedAt)
+        .setZone('Europe/London')
+        .toFormat('dd/MM/yyyy HH:mm');
+
+      toast.success(
+        ` ${actionType.replace('_', ' ')} successful at ${timeFormatted}. Worked: ${totalHours}`
+      );
+
       setPin('');
       setSelectedEmployee(null);
       actionTypeRef.current = null;
@@ -132,7 +134,6 @@ const fetchEmployees = async () => {
       setIsLoading(false);
     }
   };
-  
 
   return (
     <DashboardLayout>
@@ -149,7 +150,7 @@ const fetchEmployees = async () => {
                 return;
               }
               const filtered = allEmployees.filter(
-                emp =>
+                (emp) =>
                   emp.first_name.toLowerCase().includes(query) ||
                   emp.last_name.toLowerCase().includes(query) ||
                   emp.id.toString().includes(query)
@@ -158,8 +159,10 @@ const fetchEmployees = async () => {
             }}
           />
           <div className="employee-grid">
-            {employees.map(emp => {
-              const initials = `${emp.first_name?.charAt(0) || ''}${emp.last_name?.charAt(0) || ''}`;
+            {employees.map((emp) => {
+              const initials = `${emp.first_name?.charAt(0) || ''}${
+                emp.last_name?.charAt(0) || ''
+              }`;
               const status = emp.attendance_status;
               let borderClass = 'border-gray';
               if (status === 'Clocked In') borderClass = 'border-green';
@@ -167,15 +170,25 @@ const fetchEmployees = async () => {
               return (
                 <div
                   key={emp.id}
-                  className={`employee-card ${selectedEmployee?.id === emp.id ? 'selected' : ''} ${borderClass}`}
+                  className={`employee-card ${
+                    selectedEmployee?.id === emp.id ? 'selected' : ''
+                  } ${borderClass}`}
                   onClick={() => setSelectedEmployee(emp)}
                 >
                   <div className="avatar-circle">{initials}</div>
-                  <strong>{emp.first_name} {emp.last_name}</strong>
+                  <strong>
+                    {emp.first_name} {emp.last_name}
+                  </strong>
                   <div className="status-text">
-                    {status === 'Clocked In' && <span style={{ color: 'green' }}>🟢 Clocked In</span>}
-                    {status === 'Clocked Out' && <span style={{ color: 'red' }}>🔴 Clocked Out</span>}
-                    {(!status || status === 'Not Clocked In') && <span style={{ color: 'gray' }}>⚪ Not Clocked In</span>}
+                    {status === 'Clocked In' && (
+                      <span style={{ color: 'green' }}>🟢 Clocked In</span>
+                    )}
+                    {status === 'Clocked Out' && (
+                      <span style={{ color: 'red' }}>🔴 Clocked Out</span>
+                    )}
+                    {(!status || status === 'Not Clocked In') && (
+                      <span style={{ color: 'gray' }}>⚪ Not Clocked In</span>
+                    )}
                   </div>
                 </div>
               );
@@ -196,7 +209,7 @@ const fetchEmployees = async () => {
           )}
 
           <div className="pin-display-box">
-            {[0, 1, 2, 3].map(i => (
+            {[0, 1, 2, 3].map((i) => (
               <div className="pin-digit-box" key={i}>
                 {pin[i] ? '•' : ''}
               </div>
@@ -204,12 +217,27 @@ const fetchEmployees = async () => {
           </div>
 
           <div className="numbers-grid">
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => (
-              <button key={n} className="keypad-btn" onClick={() => handleNumberClick(n.toString())}>{n}</button>
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
+              <button
+                key={n}
+                className="keypad-btn"
+                onClick={() => handleNumberClick(n.toString())}
+              >
+                {n}
+              </button>
             ))}
-            <button className="keypad-btn" onClick={handleClear}>C</button>
-            <button className="keypad-btn" onClick={() => handleNumberClick('0')}>0</button>
-            <button className="keypad-btn" onClick={handleBackspace}>×</button>
+            <button className="keypad-btn" onClick={handleClear}>
+              C
+            </button>
+            <button
+              className="keypad-btn"
+              onClick={() => handleNumberClick('0')}
+            >
+              0
+            </button>
+            <button className="keypad-btn" onClick={handleBackspace}>
+              ×
+            </button>
           </div>
 
           <div className="action-buttons">

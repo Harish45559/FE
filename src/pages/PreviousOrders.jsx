@@ -1,9 +1,29 @@
 import React, { useEffect, useMemo, useState } from "react";
+import ReactDOM from "react-dom";
 import DashboardLayout from "../components/DashboardLayout";
 import api from "../services/api";
 import "./PreviousOrders.css";
 
 const PAGE_SIZES = [10, 20, 50];
+
+/* ------- Receipt Portal (renders at document.body) ------- */
+const ReceiptPortal = ({ children }) => {
+  const [el] = useState(() => {
+    const d = document.createElement("div");
+    d.className = "receipt-modal"; // keep this class for print CSS
+    return d;
+  });
+
+  useEffect(() => {
+    document.body.appendChild(el);
+    return () => {
+      try { document.body.removeChild(el); } catch {}
+    };
+  }, [el]);
+
+  return ReactDOM.createPortal(children, el);
+};
+/* --------------------------------------------------------- */
 
 const PreviousOrders = () => {
   // Table data
@@ -34,7 +54,6 @@ const PreviousOrders = () => {
           order_number: o.order_number ?? o.orderNo ?? o.orderId ?? "—",
           customer_name: o.customer_name ?? o.customer ?? "N/A",
           server_name: o.server_name ?? o.server ?? "",
-          // Expect each item: {name, price, qty, total}
           items: Array.isArray(o.items) ? o.items : [],
           payment_method: o.payment_method ?? o.payment ?? "Cash",
           discount_percent: Number(o.discount_percent ?? o.discountPercent ?? 0),
@@ -71,7 +90,7 @@ const PreviousOrders = () => {
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
   const pageData = filtered.slice((page - 1) * pageSize, page * pageSize);
 
-  // Helpers for receipt math (no ?? mixed with ||)
+  // Helpers for receipt math
   const calcSubtotal = (ord) =>
     (ord?.items ?? []).reduce(
       (s, it) => s + Number(it.total ?? ((it.price ?? 0) * (it.qty ?? 0))),
@@ -80,18 +99,29 @@ const PreviousOrders = () => {
 
   const calcIncluded = (amount, percent) => (Number(amount) * percent) / (100 + percent);
 
-  // Open/close receipt
+  // Open receipt & auto-print
   const openReceipt = (ord) => {
     setActiveOrder(ord);
     setShowReceipt(true);
-  };
-  const closeReceipt = () => {
-    setShowReceipt(false);
-    setActiveOrder(null);
+
+    // install handler BEFORE printing → auto-close after print (or cancel)
+    window.onafterprint = () => {
+      window.onafterprint = null;
+      setShowReceipt(false);
+      setActiveOrder(null);
+    };
+
+    // wait for portal to mount, then print
+    setTimeout(() => window.print(), 200);
   };
 
-  // Print uses CSS @media print to show only .bill-section
+  // Manual reprint
   const handlePrint = () => {
+    window.onafterprint = () => {
+      window.onafterprint = null;
+      setShowReceipt(false);
+      setActiveOrder(null);
+    };
     window.print();
   };
 
@@ -107,27 +137,17 @@ const PreviousOrders = () => {
               type="text"
               placeholder="Search by customer, order no., or payment…"
               value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             />
             <input
               className="date-picker"
               type="date"
               value={date}
-              onChange={(e) => {
-                setDate(e.target.value);
-                setPage(1);
-              }}
+              onChange={(e) => { setDate(e.target.value); setPage(1); }}
             />
             <button
               className="clear-btn"
-              onClick={() => {
-                setSearch("");
-                setDate("");
-                setPage(1);
-              }}
+              onClick={() => { setSearch(""); setDate(""); setPage(1); }}
             >
               Clear
             </button>
@@ -149,13 +169,9 @@ const PreviousOrders = () => {
             </thead>
             <tbody>
               {loading ? (
-                <tr>
-                  <td colSpan={7}>Loading…</td>
-                </tr>
+                <tr><td colSpan={7}>Loading…</td></tr>
               ) : pageData.length === 0 ? (
-                <tr>
-                  <td colSpan={7}>No orders found.</td>
-                </tr>
+                <tr><td colSpan={7}>No orders found.</td></tr>
               ) : (
                 pageData.map((o) => (
                   <tr key={o.id}>
@@ -188,86 +204,49 @@ const PreviousOrders = () => {
               <select
                 className="page-size-select"
                 value={pageSize}
-                onChange={(e) => {
-                  setPageSize(Number(e.target.value));
-                  setPage(1);
-                }}
+                onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
               >
-                {PAGE_SIZES.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
+                {PAGE_SIZES.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </label>
           </div>
 
           <div className="pagination-center">
-            <button onClick={() => setPage(1)} disabled={page === 1}>
-              ⏮
-            </button>
-            <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>
-              ◀
-            </button>
+            <button onClick={() => setPage(1)} disabled={page === 1}>⏮</button>
+            <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>◀</button>
             <span style={{ margin: "0 6px" }}>
               Page {page} / {pageCount}
             </span>
-            <button
-              onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
-              disabled={page === pageCount}
-            >
-              ▶
-            </button>
-            <button onClick={() => setPage(pageCount)} disabled={page === pageCount}>
-              ⏭
-            </button>
+            <button onClick={() => setPage((p) => Math.min(pageCount, p + 1))} disabled={page === pageCount}>▶</button>
+            <button onClick={() => setPage(pageCount)} disabled={page === pageCount}>⏭</button>
           </div>
 
           <div />
         </div>
       </div>
 
-      {/* ===== Receipt Modal (same layout vibe as Billing Counter) ===== */}
+      {/* ===== Receipt via PORTAL to <body> ===== */}
       {showReceipt && activeOrder && (
-        <div className="receipt-modal" role="dialog" aria-modal="true">
+        <ReceiptPortal>
           <div className="bill-section">
-            {/* header actions (hidden on print) */}
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                marginBottom: 10,
-              }}
-            >
-              <button className="print-btn" onClick={handlePrint}>
-                🖨️ Print
-              </button>
-              <button className="close-preview-btn" onClick={closeReceipt}>
-                ✖
-              </button>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
+              <button className="print-btn" onClick={handlePrint}>🖨️ Print</button>
+              <button className="close-preview-btn" onClick={() => { setShowReceipt(false); setActiveOrder(null); }}>✖</button>
             </div>
 
-            {/* Receipt header (copy of Billing Counter info) */}
             <div className="receipt-header">
               <h2>Mirchi Mafiya</h2>
               <p>Cumberland Street, LU1 3BW, Luton</p>
               <p>Phone: +447440086046</p>
               <p>dtsretaillimited@gmail.com</p>
-              <p>
-                <strong>Order No:</strong> #{activeOrder.order_number}
-              </p>
-              <p>
-                <strong>Customer:</strong> {activeOrder.customer_name || "N/A"}
-              </p>
-              <p>
-                <strong>Paid By:</strong> {activeOrder.payment_method}
-              </p>
+              <p><strong>Order No:</strong> #{activeOrder.order_number}</p>
+              <p><strong>Customer:</strong> {activeOrder.customer_name || "N/A"}</p>
+              <p><strong>Paid By:</strong> {activeOrder.payment_method}</p>
               <hr />
               <p>Date: {activeOrder.date || "—"}</p>
               <hr />
             </div>
 
-            {/* Items */}
             <table className="receipt-table">
               <thead>
                 <tr>
@@ -294,7 +273,6 @@ const PreviousOrders = () => {
               </tbody>
             </table>
 
-            {/* Summary */}
             {(() => {
               const subtotal = activeOrder.total_amount || calcSubtotal(activeOrder);
               const discountPct = Number(activeOrder.discount_percent || 0);
@@ -302,42 +280,28 @@ const PreviousOrders = () => {
                 activeOrder.discount_amount ||
                 (discountPct > 0 ? (subtotal * discountPct) / 100 : 0);
               const grand = activeOrder.final_amount || Math.max(0, subtotal - discountAmt);
-
-              // Example “includes” if VAT/Service are included in prices (5% each)
               const vatIncluded = calcIncluded(grand, 5);
               const svcIncluded = calcIncluded(grand, 5);
-
               const totalQty = (activeOrder.items || []).reduce((s, it) => s + Number(it.qty ?? 0), 0);
 
               return (
                 <div className="receipt-summary">
-                  <p>
-                    <strong>Total Qty:</strong> {totalQty}
-                  </p>
-                  <p>
-                    <strong>Sub Total:</strong> £ {subtotal.toFixed(2)}
-                  </p>
+                  <p><strong>Total Qty:</strong> {totalQty}</p>
+                  <p><strong>Sub Total:</strong> £ {subtotal.toFixed(2)}</p>
                   {discountPct > 0 && (
-                    <p>
-                      <strong>Discount ({discountPct}%):</strong> -£{discountAmt.toFixed(2)}
-                    </p>
+                    <p><strong>Discount ({discountPct}%):</strong> -£{discountAmt.toFixed(2)}</p>
                   )}
-                  <p className="grand-total">
-                    <strong>Grand Total:</strong> £ {grand.toFixed(2)}
-                  </p>
-
+                  <p className="grand-total"><strong>Grand Total:</strong> £ {grand.toFixed(2)}</p>
                   <p className="includes-label">Includes:</p>
                   <p>VAT (5%): £{vatIncluded.toFixed(2)}</p>
                   <p>Service Charge (5%): £{svcIncluded.toFixed(2)}</p>
-                  <p className="server-name">
-                    Staff: {activeOrder.server_name ? `(${activeOrder.server_name})` : ""}
-                  </p>
+                  <p className="server-name">Staff: {activeOrder.server_name ? `(${activeOrder.server_name})` : ""}</p>
                   <hr />
                 </div>
               );
             })()}
           </div>
-        </div>
+        </ReceiptPortal>
       )}
     </DashboardLayout>
   );
