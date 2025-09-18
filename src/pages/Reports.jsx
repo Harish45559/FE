@@ -5,43 +5,29 @@ import './Reports.css';
 
 /* ========================= Helpers ========================= */
 
-// safe string
 const safe = (v) => (v == null ? '' : String(v));
 
-// parse dd-MM-yyyy to ts for sorting
-const dateToKey = (dmy) => {
-  if (!dmy) return 0;
-  const [dd, mm, yyyy] = dmy.split('-').map(Number);
-  if (!yyyy || !mm || !dd) return 0;
-  return new Date(yyyy, mm - 1, dd).getTime();
+// extract first HH:MM in a string
+const firstHHMM = (s) => {
+  if (!s) return null;
+  const m = String(s).match(/\b(\d{1,2}:\d{2})(?::\d{2})?\b/);
+  return m ? m[1] : null;
+};
+// extract last HH:MM in a string (useful if a stray "11:00 - 14:00" leaks in)
+const lastHHMM = (s) => {
+  if (!s) return null;
+  const matches = String(s).match(/\b\d{1,2}:\d{2}(?::\d{2})?\b/g);
+  if (!matches) return firstHHMM(s);
+  return matches[matches.length - 1];
 };
 
-// Parse a time string into minutes since midnight.
+// convert HH:MM to minutes since midnight
 const timeToMin = (s) => {
-  if (!s) return null;
-  const str = String(s).trim();
-
-  // AM/PM format
-  const ampm = /(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([ap]\.?m\.?)/i.exec(str);
-  if (ampm) {
-    let h = parseInt(ampm[1], 10);
-    const m = parseInt(ampm[2] || '0', 10);
-    const mer = ampm[4].toLowerCase();
-    if (mer.startsWith('p') && h !== 12) h += 12;
-    if (mer.startsWith('a') && h === 12) h = 0;
-    return h * 60 + m;
-  }
-
-  // 24h format
-  const hhmm = /(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec(str);
-  if (hhmm) {
-    const h = parseInt(hhmm[1], 10);
-    const m = parseInt(hhmm[2], 10);
-    if (Number.isNaN(h) || Number.isNaN(m)) return null;
-    return h * 60 + m;
-  }
-
-  return null;
+  const t = firstHHMM(s);
+  if (!t) return null;
+  const [h, m] = t.split(':').map(Number);
+  if (Number.isNaN(h) || Number.isNaN(m)) return null;
+  return h * 60 + m;
 };
 
 // "xh ym" / "HH:MM" -> minutes
@@ -52,8 +38,8 @@ const durationToMin = (val) => {
     const [h, m] = str.split(':').map(Number);
     return (Number(h) || 0) * 60 + (Number(m) || 0);
   }
-  const h = (/(\d+)\s*h/i.exec(str)?.[1]) || 0;
-  const m = (/(\d+)\s*m/i.exec(str)?.[1]) || 0;
+  const h = (/\b(\d+)\s*h/i.exec(str)?.[1]) || 0;
+  const m = (/\b(\d+)\s*m/i.exec(str)?.[1]) || 0;
   return Number(h) * 60 + Number(m);
 };
 
@@ -145,36 +131,41 @@ export default function Reports() {
       }
       const g = map.get(key);
 
-      const typeStr = safe(r.type).toLowerCase();
-      const clockIn =
-        r.clock_in ?? r.in_time ?? r.check_in ?? r.start_time ?? r.start ?? r.clock_in_uk;
-      const clockOut =
-        r.clock_out ?? r.out_time ?? r.check_out ?? r.end_time ?? r.end ?? r.clock_out_uk;
+      // STRICT: only use API's clean fields to avoid strings like "04:23 - 14:38"
+      const clockIn = r.clock_in_uk || '';
+      const clockOut = r.clock_out_uk || '';
 
       const inMin = timeToMin(clockIn);
-      const outMin = timeToMin(clockOut);
+      const outMinRaw = timeToMin(clockOut);
 
+      // Track earliest in and latest out (normalize overnight when comparing)
       if (inMin != null) g.firstInMin = g.firstInMin == null ? inMin : Math.min(g.firstInMin, inMin);
+      let outMin = outMinRaw;
+      if (inMin != null && outMin != null && outMin < inMin) outMin += 1440; // crossed midnight
       if (outMin != null) g.lastOutMin = g.lastOutMin == null ? outMin : Math.max(g.lastOutMin, outMin);
 
-      let durMin = durationToMin(r.duration);
-      if (!durMin && inMin != null && outMin != null && outMin >= inMin) {
-        durMin = outMin - inMin;
+      // Prefer explicit duration from backend: total_work_hhmm or total_work_hours
+      let durMin = durationToMin(r.total_work_hhmm ?? r.total_work_hours);
+
+      // If not available, derive from in/out with overnight handling
+      if (!durMin && inMin != null && outMinRaw != null) {
+        let outAdj = outMinRaw;
+        if (outAdj < inMin) outAdj += 1440;
+        durMin = Math.max(0, outAdj - inMin);
       }
 
-      if (typeStr === 'break') g.breakTotalMin += durMin;
-      else g.workTotalMin += durMin;
+      g.workTotalMin += durMin;
 
       g.sessions.push({
-        type: typeStr === 'break' ? 'Break' : 'Work',
-        in: clockIn || '',
-        out: clockOut || '',
+        type: 'Work',
+        in: firstHHMM(clockIn) || '',
+        out: lastHHMM(clockOut) || '',
         duration: minToHHMM(durMin)
       });
     }
 
     return Array.from(map.values()).map((g) => {
-      // derive break time if no explicit data
+      // Derive break from span if no explicit break rows
       const derivedBreakMin =
         g.firstInMin != null && g.lastOutMin != null
           ? Math.max(0, (g.lastOutMin - g.firstInMin) - g.workTotalMin)
@@ -185,11 +176,11 @@ export default function Reports() {
         ...g,
         firstIn:
           g.firstInMin != null
-            ? `${String(Math.floor(g.firstInMin / 60)).padStart(2, '0')}:${String(g.firstInMin % 60).padStart(2, '0')}`
+            ? `${String(Math.floor(g.firstInMin / 60) % 24).padStart(2, '0')}:${String(g.firstInMin % 60).padStart(2, '0')}`
             : '—',
         lastOut:
           g.lastOutMin != null
-            ? `${String(Math.floor(g.lastOutMin / 60)).padStart(2, '0')}:${String(g.lastOutMin % 60).padStart(2, '0')}`
+            ? `${String(Math.floor(g.lastOutMin / 60) % 24).padStart(2, '0')}:${String(g.lastOutMin % 60).padStart(2, '0')}`
             : '—',
         workTotal: minToHHMM(g.workTotalMin),
         breakTotal: minToHHMM(totalBreakMin)
@@ -215,7 +206,12 @@ export default function Reports() {
           return (a.breakTotalMin - b.breakTotalMin) * dir;
         case 'date':
         default:
-          return (dateToKey(a.date) - dateToKey(b.date)) * dir;
+          const toKey = (d) => {
+            if (!d) return 0;
+            const [dd, mm, yyyy] = d.split('-').map(Number);
+            return new Date(yyyy, (mm || 1) - 1, dd || 1).getTime();
+          };
+          return (toKey(a.date) - toKey(b.date)) * dir;
       }
     });
     return arr;

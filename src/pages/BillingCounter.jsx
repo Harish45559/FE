@@ -1,3 +1,4 @@
+// BillingCounter.jsx
 import React, { useEffect, useRef, useState } from 'react';
 import api from '../services/api';
 import DashboardLayout from '../components/DashboardLayout';
@@ -7,15 +8,14 @@ import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import imageMapping from "./imageMapping";
 
-// 🔎 Normalize backend veg values
 const toVegBool = (raw) => {
   if (raw === true) return true;
   if (raw === false) return false;
   if (raw == null) return false;
   if (typeof raw === 'number') return raw === 1;
   const s = String(raw).trim().toLowerCase();
-  if (['true', '1', 'yes', 'y', 'veg', 'v'].includes(s)) return true;
-  if (['false', '0', 'no', 'n', 'non-veg', 'nonveg', 'nv'].includes(s)) return false;
+  if (['true','1','yes','y','veg','v'].includes(s)) return true;
+  if (['false','0','no','n','non-veg','nonveg','nv'].includes(s)) return false;
   return false;
 };
 
@@ -73,19 +73,14 @@ const BillingCounter = () => {
     try {
       const res = await api.get('/menu');
       const normalized = (Array.isArray(res.data) ? res.data : []).map(item => {
-        const rawVeg =
-          item.veg ?? item.isVeg ?? item.is_veg ?? item.type ?? item.category_type;
-
+        const rawVeg = item.veg ?? item.isVeg ?? item.is_veg ?? item.type ?? item.category_type;
         const categoryName =
           typeof item.category === 'object' && item.category
             ? (item.category.name ?? item.category.title ?? String(item.category))
             : item.category;
-
         const priceNum = typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0;
-
         return { ...item, price: priceNum, veg: toVegBool(rawVeg), category: categoryName };
       });
-
       setMenuItems(normalized);
     } catch (err) {
       console.error('Failed to fetch menu:', err);
@@ -106,7 +101,7 @@ const BillingCounter = () => {
   const fetchLastOrderNumber = async () => {
     try {
       const res = await api.get('/orders/all');
-      if (Array.isArray(res.data) && res.data.length > 0) {
+    if (Array.isArray(res.data) && res.data.length > 0) {
         const maxOrder = Math.max(...res.data.map(o => o.order_number || 1000));
         setNextTempOrderNumber(maxOrder + 1);
       } else {
@@ -145,10 +140,8 @@ const BillingCounter = () => {
   const getTotal = () => selectedItems.reduce((sum, i) => sum + i.total, 0);
   const getIncludedTax = () => getTotal() * (5 / 105);
   const getIncludedService = () => getTotal() * (5 / 105);
-
   const getDiscountAmount = () => (getTotal() * discountPercent) / 100;
-  const getGrandTotal = () => Math.max(0, getTotal() - getDiscountAmount());
-
+  const getGrandTotal = () => getTotal() - getDiscountAmount();
   const getDateTime = () => DateTime.now().setZone('Europe/London').toFormat('dd/MM/yyyy HH:mm:ss');
 
   const startNewOrder = () => {
@@ -158,6 +151,82 @@ const BillingCounter = () => {
     setShowReceipt(false);
     setOrderDate(null);
     fetchLastOrderNumber();
+  };
+
+  // Compact-print popup with auto-close; also closes overlay & starts new order
+  const handlePrint = () => {
+    const node = printRef.current;
+    const afterPrintCleanup = () => {
+      setShowReceipt(false);
+      startNewOrder();
+    };
+
+    if (!node) {
+      window.print();
+      afterPrintCleanup();
+      return;
+    }
+
+    const printWindow = window.open('', '_blank', 'width=420,height=640');
+    if (!printWindow) {
+      // Popups blocked: try direct print of current page (overlay is print-optimized)
+      window.print();
+      afterPrintCleanup();
+      return;
+    }
+
+    const styles = `
+      <style>
+        @page { size: 80mm auto; margin: 0; }
+        html, body { margin:0; padding:0; }
+        body { font-family: 'Courier New', Courier, monospace; background:#fff; }
+        .bill-section {
+          width: 72mm; max-width:72mm; padding: 6mm 4mm; margin: 0 auto;
+          font-size: 11px; line-height: 1.12; color:#000;
+        }
+        .receipt-header { text-align:center; margin-bottom: 2mm; }
+        .receipt-header h2 { font-size: 13px; margin: 0 0 1.5mm 0; }
+        .receipt-header p { margin: 1mm 0; }
+        .receipt-table { width:100%; font-size: 11px; border-collapse: collapse; margin-top: 2mm; }
+        .receipt-table th, .receipt-table td { padding: 1mm 0; text-align:left; border-bottom:1px dashed #bbb; }
+        .receipt-summary p { margin: 1mm 0; }
+        hr { border:0; border-top:1px dashed #bbb; margin: 2mm 0; }
+        /* no action buttons in print */
+        .receipt-header-actions { display:none; }
+      </style>
+    `;
+
+    printWindow.document.open();
+    printWindow.document.write(`<!doctype html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>Receipt #${orderNumber ?? nextTempOrderNumber ?? ''}</title>
+          ${styles}
+        </head>
+        <body>
+          <div class="bill-section">${node.innerHTML}</div>
+        </body>
+      </html>`);
+    printWindow.document.close();
+
+    // Trigger print when ready, then auto-close popup and reset order
+    const doPrint = () => {
+      try { printWindow.focus(); printWindow.print(); }
+      finally {
+        // Some browsers delay close; also set a fallback timeout
+        printWindow.close();
+        setTimeout(() => { try { printWindow.close(); } catch {} }, 500);
+        afterPrintCleanup();
+      }
+    };
+
+    // If the window says it's loaded, print; else print after a short delay
+    if (printWindow.document.readyState === 'complete') {
+      setTimeout(doPrint, 50);
+    } else {
+      printWindow.onload = () => setTimeout(doPrint, 50);
+    }
   };
 
   const handlePlaceOrder = async () => {
@@ -170,10 +239,7 @@ const BillingCounter = () => {
       server_name: serverName,
       order_type: orderType,
       items: selectedItems.map(item => ({
-        name: item.name,
-        price: item.price,
-        qty: item.qty,
-        total: item.total
+        name: item.name, price: item.price, qty: item.qty, total: item.total
       })),
       total_amount: getTotal(),
       discount_percent: discountPercent,
@@ -190,19 +256,8 @@ const BillingCounter = () => {
       setOrderDate(res.data.order.date);
       setShowReceipt(true);
 
-      // --- Auto-print and auto-close after printing ---
-      // Set handler BEFORE print to be extra safe
-      window.onafterprint = () => {
-        // clear handler to avoid future unwanted calls
-        window.onafterprint = null;
-        startNewOrder();
-      };
-
-      // Auto-print once modal is rendered
-      setTimeout(() => {
-        window.print();
-      }, 300);
-      // --- end auto-print/close ---
+      // 👇 Automatically open print preview and close everything after
+      setTimeout(() => handlePrint(), 60);
     } catch (err) {
       console.error('Order placement failed:', err);
       toast.error('Failed to place order');
@@ -250,8 +305,7 @@ const BillingCounter = () => {
           localStorage.removeItem('tillOpenedBy');
         }
         setShowAuthModal(false);
-        setAuthUsername('');
-        setAuthPassword('');
+        setAuthUsername(''); setAuthPassword('');
       } else {
         toast.error('Invalid credentials');
       }
@@ -390,23 +444,6 @@ const BillingCounter = () => {
               className="customer-input"
             />
 
-            {/* Discount field for admin */}
-            {userRole === 'admin' && (
-              <div className="discount-row">
-                <label><strong>Discount %:</strong></label>
-                <select
-                  value={discountPercent}
-                  onChange={(e) => setDiscountPercent(Number(e.target.value))}
-                >
-                  <option value={0}>No Discount</option>
-                  <option value={5}>5%</option>
-                  <option value={10}>10%</option>
-                  <option value={15}>15%</option>
-                  <option value={20}>20%</option>
-                </select>
-              </div>
-            )}
-
             {/* ===== Scroll area: items + summary ===== */}
             <div className="order-scroll">
               <div className="order-items">
@@ -515,12 +552,7 @@ const BillingCounter = () => {
       {showReceipt && (
         <div className="receipt-overlay">
           <div className="bill-section" ref={printRef}>
-            <div className="receipt-header-actions" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-              {/* Manual print is optional now since we auto-print. Keep for reprint if needed. */}
-              <button className="print-btn" onClick={() => window.print()} style={{ alignSelf: 'flex-start' }}>🖨️ print</button>
-              <button className="close-preview-btn" onClick={startNewOrder} style={{ alignSelf: 'flex-end' }}>✖</button>
-            </div>
-
+            {/* Removed header action buttons so nothing extra prints */}
             <div className="receipt-header">
               <h2>Mirchi Mafiya</h2>
               <p>Cumberland Street, LU1 3BW, Luton</p>
@@ -559,14 +591,15 @@ const BillingCounter = () => {
             <div className="receipt-summary">
               <p><strong>Total Qty:</strong> {selectedItems.reduce((sum, item) => sum + item.qty, 0)}</p>
               <p><strong>Sub Total:</strong> £ {getTotal().toFixed(2)}</p>
+              <p><strong>Paid By:</strong> {paymentMethod}</p>
+              <p className="includes-label">Includes:</p>
+              <p>VAT (5%): £{getIncludedTax().toFixed(2)}</p>
+              <p>Service Charge (5%): £{getIncludedService().toFixed(2)}</p>
+              <hr />
               {discountPercent > 0 && (
                 <p><strong>Discount ({discountPercent}%):</strong> -£{getDiscountAmount().toFixed(2)}</p>
               )}
               <p className="grand-total"><strong>Grand Total:</strong> £ {getGrandTotal().toFixed(2)}</p>
-
-              <p className="includes-label">Includes:</p>
-              <p>VAT (5%): £{getIncludedTax().toFixed(2)}</p>
-              <p>Service Charge (5%): £{getIncludedService().toFixed(2)}</p>
               <p className="server-name">Staff:{tillOpenedBy && `(${tillOpenedBy})`}</p>
               <hr />
             </div>
