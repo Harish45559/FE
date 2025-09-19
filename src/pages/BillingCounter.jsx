@@ -174,27 +174,34 @@ const BillingCounter = () => {
       afterPrintCleanup();
       return;
     }
+const styles = `
+  <style>
+    @page { size: 80mm auto; margin: 0; }
+    html, body { margin:0; padding:0; }
+    body { font-family: 'Courier New', Courier, monospace; background:#fff; }
+    .bill-section {
+      width: 72mm; max-width:72mm; padding: 6mm 4mm; margin: 0 auto;
+      font-size: 11px; line-height: 1.12; color:#000;
+      font-weight: 600;           /* values slightly thicker */
+    }
+    .bill-section strong {
+      font-weight: 800;           /* labels extra bold */
+    }
+    .receipt-header { text-align:center; margin-bottom: 2mm; }
+    .receipt-header h2 { font-size: 13px; margin: 0 0 1.5mm 0; font-weight: 800; }
+    .receipt-header p { margin: 1mm 0; }
+    .receipt-table { width:100%; font-size: 11px; border-collapse: collapse; margin-top: 2mm; }
+    .receipt-table th, .receipt-table td {
+      padding: 1mm 0; text-align:left; border-bottom:1px dashed #bbb;
+      font-weight: 600;           /* table text also thicker */
+    }
+    .receipt-summary p { margin: 1mm 0; }
+    hr { border:0; border-top:1px dashed #bbb; margin: 2mm 0; }
+    /* no action buttons in print */
+    .receipt-header-actions { display:none; }
+  </style>
+`;
 
-    const styles = `
-      <style>
-        @page { size: 80mm auto; margin: 0; }
-        html, body { margin:0; padding:0; }
-        body { font-family: 'Courier New', Courier, monospace; background:#fff; }
-        .bill-section {
-          width: 72mm; max-width:72mm; padding: 6mm 4mm; margin: 0 auto;
-          font-size: 11px; line-height: 1.12; color:#000;
-        }
-        .receipt-header { text-align:center; margin-bottom: 2mm; }
-        .receipt-header h2 { font-size: 13px; margin: 0 0 1.5mm 0; }
-        .receipt-header p { margin: 1mm 0; }
-        .receipt-table { width:100%; font-size: 11px; border-collapse: collapse; margin-top: 2mm; }
-        .receipt-table th, .receipt-table td { padding: 1mm 0; text-align:left; border-bottom:1px dashed #bbb; }
-        .receipt-summary p { margin: 1mm 0; }
-        hr { border:0; border-top:1px dashed #bbb; margin: 2mm 0; }
-        /* no action buttons in print */
-        .receipt-header-actions { display:none; }
-      </style>
-    `;
 
     printWindow.document.open();
     printWindow.document.write(`<!doctype html>
