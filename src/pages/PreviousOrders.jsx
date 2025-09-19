@@ -71,7 +71,7 @@ const PreviousOrders = () => {
       });
 
     setOrders(norm);
-    
+
       } catch (e) {
         console.error("Failed to load orders", e);
       } finally {
@@ -287,7 +287,7 @@ const PreviousOrders = () => {
                 activeOrder.discount_amount ||
                 (discountPct > 0 ? (subtotal * discountPct) / 100 : 0);
               const grand = activeOrder.final_amount || Math.max(0, subtotal - discountAmt);
-              const vatIncluded = calcIncluded(grand, 5);
+              const vatIncluded = calcIncluded(grand, 20);
               const svcIncluded = calcIncluded(grand, 5);
               const totalQty = (activeOrder.items || []).reduce((s, it) => s + Number(it.qty ?? 0), 0);
 
@@ -300,7 +300,7 @@ const PreviousOrders = () => {
                   )}
                   <p className="grand-total"><strong>Grand Total:</strong> £ {grand.toFixed(2)}</p>
                   <p className="includes-label">Includes:</p>
-                  <p>VAT (5%): £{vatIncluded.toFixed(2)}</p>
+                  <p>VAT (20%): £{vatIncluded.toFixed(2)}</p>
                   <p>Service Charge (5%): £{svcIncluded.toFixed(2)}</p>
                   <p className="server-name">Staff: {activeOrder.server_name ? `(${activeOrder.server_name})` : ""}</p>
                   <hr />
