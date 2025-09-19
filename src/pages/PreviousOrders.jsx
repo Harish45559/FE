@@ -62,7 +62,16 @@ const PreviousOrders = () => {
           final_amount: Number(o.final_amount ?? o.grand_total ?? o.total ?? 0),
           date: o.date ?? o.created_at ?? o.createdAt ?? "",
         }));
-        setOrders(norm.reverse()); // most recent first
+
+        norm.sort((a, b) => {
+        const ta = a.date ? new Date(a.date).getTime() : 0;
+        const tb = b.date ? new Date(b.date).getTime() : 0;
+        if (tb !== ta) return tb - ta;  // latest first
+        return String(b.order_number).localeCompare(String(a.order_number));
+      });
+
+    setOrders(norm);
+    
       } catch (e) {
         console.error("Failed to load orders", e);
       } finally {
@@ -104,14 +113,12 @@ const PreviousOrders = () => {
     setActiveOrder(ord);
     setShowReceipt(true);
 
-    // install handler BEFORE printing → auto-close after print (or cancel)
     window.onafterprint = () => {
       window.onafterprint = null;
       setShowReceipt(false);
       setActiveOrder(null);
     };
 
-    // wait for portal to mount, then print
     setTimeout(() => window.print(), 200);
   };
 

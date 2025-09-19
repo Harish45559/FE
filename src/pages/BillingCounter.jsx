@@ -138,7 +138,7 @@ const BillingCounter = () => {
   };
 
   const getTotal = () => selectedItems.reduce((sum, i) => sum + i.total, 0);
-  const getIncludedTax = () => getTotal() * (5 / 105);
+  const getIncludedTax = () => getTotal() * (20 / 105);
   const getIncludedService = () => getTotal() * (5 / 105);
   const getDiscountAmount = () => (getTotal() * discountPercent) / 100;
   const getGrandTotal = () => getTotal() - getDiscountAmount();
@@ -477,7 +477,7 @@ const BillingCounter = () => {
 
               <div className="order-summary">
                 <div className="line"><span>Subtotal</span><span>£{getTotal().toFixed(2)}</span></div>
-                <div className="line"><span>VAT (5%)</span><span>£{getIncludedTax().toFixed(2)}</span></div>
+                <div className="line"><span>VAT (20%)</span><span>£{getIncludedTax().toFixed(2)}</span></div>
                 <div className="line"><span>Service (5%)</span><span>£{getIncludedService().toFixed(2)}</span></div>
 
                 {discountPercent > 0 && (
@@ -593,7 +593,7 @@ const BillingCounter = () => {
               <p><strong>Sub Total:</strong> £ {getTotal().toFixed(2)}</p>
               <p><strong>Paid By:</strong> {paymentMethod}</p>
               <p className="includes-label">Includes:</p>
-              <p>VAT (5%): £{getIncludedTax().toFixed(2)}</p>
+              <p>VAT (20%): £{getIncludedTax().toFixed(2)}</p>
               <p>Service Charge (5%): £{getIncludedService().toFixed(2)}</p>
               <hr />
               {discountPercent > 0 && (
