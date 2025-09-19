@@ -139,7 +139,7 @@ const BillingCounter = () => {
 
   const getTotal = () => selectedItems.reduce((sum, i) => sum + i.total, 0);
   const getIncludedTax = () => getTotal() * (20 / 105);
-  const getIncludedService = () => getTotal() * (5 / 105);
+  const getIncludedService = () => getTotal() * (8 / 105);
   const getDiscountAmount = () => (getTotal() * discountPercent) / 100;
   const getGrandTotal = () => getTotal() - getDiscountAmount();
   const getDateTime = () => DateTime.now().setZone('Europe/London').toFormat('dd/MM/yyyy HH:mm:ss');
@@ -254,6 +254,8 @@ const BillingCounter = () => {
       const res = await api.post('/orders', payload);
       setOrderNumber(res.data.order.order_number);
       setOrderDate(res.data.order.date);
+      setOrderType(res.data.order.order_type || orderType);
+
       setShowReceipt(true);
 
       // 👇 Automatically open print preview and close everything after
@@ -478,7 +480,7 @@ const BillingCounter = () => {
               <div className="order-summary">
                 <div className="line"><span>Subtotal</span><span>£{getTotal().toFixed(2)}</span></div>
                 <div className="line"><span>VAT (20%)</span><span>£{getIncludedTax().toFixed(2)}</span></div>
-                <div className="line"><span>Service (5%)</span><span>£{getIncludedService().toFixed(2)}</span></div>
+                <div className="line"><span>Service (8%)</span><span>£{getIncludedService().toFixed(2)}</span></div>
 
                 {discountPercent > 0 && (
                   <div className="line">
@@ -594,7 +596,7 @@ const BillingCounter = () => {
               <p><strong>Paid By:</strong> {paymentMethod}</p>
               <p className="includes-label">Includes:</p>
               <p>VAT (20%): £{getIncludedTax().toFixed(2)}</p>
-              <p>Service Charge (5%): £{getIncludedService().toFixed(2)}</p>
+              <p>Service Charge (8%): £{getIncludedService().toFixed(2)}</p>
               <hr />
               {discountPercent > 0 && (
                 <p><strong>Discount ({discountPercent}%):</strong> -£{getDiscountAmount().toFixed(2)}</p>

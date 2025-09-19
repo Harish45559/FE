@@ -61,6 +61,7 @@ const PreviousOrders = () => {
           total_amount: Number(o.total_amount ?? o.subtotal ?? 0),
           final_amount: Number(o.final_amount ?? o.grand_total ?? o.total ?? 0),
           date: o.date ?? o.created_at ?? o.createdAt ?? "",
+          order_type: o.order_type ?? o.orderType ?? o.type ?? "",
         }));
 
         norm.sort((a, b) => {
@@ -246,6 +247,7 @@ const PreviousOrders = () => {
               <p>Cumberland Street, LU1 3BW, Luton</p>
               <p>Phone: +447440086046</p>
               <p>dtsretaillimited@gmail.com</p>
+              <p><strong>Order Type:</strong> {activeOrder.order_type || "—"}</p>
               <p><strong>Order No:</strong> #{activeOrder.order_number}</p>
               <p><strong>Customer:</strong> {activeOrder.customer_name || "N/A"}</p>
               <p><strong>Paid By:</strong> {activeOrder.payment_method}</p>
@@ -288,7 +290,7 @@ const PreviousOrders = () => {
                 (discountPct > 0 ? (subtotal * discountPct) / 100 : 0);
               const grand = activeOrder.final_amount || Math.max(0, subtotal - discountAmt);
               const vatIncluded = calcIncluded(grand, 20);
-              const svcIncluded = calcIncluded(grand, 5);
+              const svcIncluded = calcIncluded(grand, 8);
               const totalQty = (activeOrder.items || []).reduce((s, it) => s + Number(it.qty ?? 0), 0);
 
               return (
@@ -301,7 +303,7 @@ const PreviousOrders = () => {
                   <p className="grand-total"><strong>Grand Total:</strong> £ {grand.toFixed(2)}</p>
                   <p className="includes-label">Includes:</p>
                   <p>VAT (20%): £{vatIncluded.toFixed(2)}</p>
-                  <p>Service Charge (5%): £{svcIncluded.toFixed(2)}</p>
+                  <p>Service Charge (8%): £{svcIncluded.toFixed(2)}</p>
                   <p className="server-name">Staff: {activeOrder.server_name ? `(${activeOrder.server_name})` : ""}</p>
                   <hr />
                 </div>
