@@ -84,7 +84,11 @@ const imageMapping = {
    "Masala Dosa": "/images/masala-dosa.jpg",
    "Egg Dosa": "/images/egg-dosa.jpg",
    "Pancakes": "/images/pancakes.jpg",
-   "Nimbu Soda": "/images/nimbu-soda.jpg"
+   "Nimbu Soda": "/images/nimbu-soda.jpg",
+   "Potato Twist": "/images/potato-twist.jpg",
+   "Chicken Dosa": "/images/chicken-dosa.jpg",
+   "Kaima Idli": "/images/kaima-idli.jpg",
+   "Purani-Dilli": "/images/purani-dilli.jpg"
   };
   
   export default imageMapping;

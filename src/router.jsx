@@ -18,6 +18,7 @@ import EndOfDaySales from './pages/EndOfDaySales'; // ✅ new import
 const AppRouter = () => {
   const routes = useRoutes([
     { path: '/', element: <Login /> },
+    { path: '/login', element: <Login /> },
     { path: '/forgot-password', element: <ForgotPassword /> },
 
     // 🔐 Admin-only routes

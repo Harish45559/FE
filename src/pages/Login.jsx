@@ -7,6 +7,7 @@ const Login = () => {
   const navigate = useNavigate();
   const [form, setForm] = useState({ username: '', password: '' });
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false); 
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -44,7 +45,7 @@ const Login = () => {
       <div className="login-card">
         <img
           className="brand-logo"
-          src="/logo2.png"           // mafia logo
+          src="/logo2.png"
           alt="Mirchi Mafia"
           draggable="false"
         />
@@ -62,14 +63,23 @@ const Login = () => {
             required
           />
 
-          <input
-            id="password"
-            name="password"
-            type="password"
-            placeholder="Password"
-            onChange={handleChange}
-            required
-          />
+          <div className="password-wrapper">
+            <input
+              id="password"
+              name="password"
+              type={showPassword ? 'text' : 'password'} // 👈 toggle
+              placeholder="Password"
+              onChange={handleChange}
+              required
+            />
+            <button
+              type="button"
+              className="toggle-password"
+              onClick={() => setShowPassword((prev) => !prev)}
+            >
+              {showPassword ? '🙈' : '👁️'}
+            </button>
+          </div>
 
           <button type="submit" className="btn-primary">Sign In</button>
         </form>

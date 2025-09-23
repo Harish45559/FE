@@ -1,0 +1,84 @@
+/* Forgot Password Container (safe to import alongside login.css) */
+.forgot-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #111, #1c1c1c);
+  padding: 20px;
+}
+
+/* Card box */
+.forgot-box {
+  width: 100%;
+  max-width: 420px;
+  background: rgba(16, 16, 16, 0.88);
+  border: 1.6px solid rgba(255, 106, 0, 0.9);
+  border-radius: 16px;
+  padding: 28px 24px;
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.6),
+    0 2px 0 rgba(255, 209, 102, 0.1) inset;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  text-align: center;
+}
+
+/* Heading */
+.forgot-box h2 {
+  margin-bottom: 16px;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--mm-glow, #FFD166);
+}
+
+/* Inputs */
+.forgot-box input {
+  width: 100%;
+  padding: 12px 14px;
+  margin: 10px 0;
+  border-radius: 10px;
+  border: 1px solid #333;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 1rem;
+}
+
+/* Submit button */
+.forgot-box button {
+  width: 100%;
+  padding: 12px 14px;
+  margin-top: 12px;
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  background: linear-gradient(180deg, #DD3A00, #B92F00);
+  box-shadow: 0 10px 20px rgba(255, 106, 0, 0.3);
+  transition: transform 0.08s, box-shadow 0.2s;
+}
+.forgot-box button:hover {
+  filter: brightness(1.1);
+}
+.forgot-box button:active {
+  transform: translateY(1px);
+}
+
+/* Error/Success messages */
+.forgot-box .message {
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+.forgot-box .error {
+  background: rgba(221, 58, 0, 0.15);
+  border: 1px solid #B92F00;
+  color: #ffb4a1;
+}
+.forgot-box .success {
+  background: rgba(0, 128, 64, 0.15);
+  border: 1px solid #008040;
+  color: #a4f3c1;
+}

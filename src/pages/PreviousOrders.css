@@ -1,249 +1,320 @@
+/* ==========================================
+   Previous Orders – Friendly Dashboard UI
+   (CSS-only; aligns with Employees/Reports)
+   ========================================== */
+
+/* Theme tokens */
+:root{
+  --bg:#f5f7fb;
+  --panel:#ffffff;
+  --text:#1f2937;
+  --muted:#6b7280;
+  --border:#e5e7eb;
+
+  --accent:#dd3a00;       /* warm orange */
+  --accent-2:#b92f00;
+  --accent-soft:#fff4ec;
+
+  --ok:#10b981;
+  --danger:#ef4444;
+
+  --radius:14px;
+  --radius-sm:10px;
+  --shadow:0 10px 30px rgba(15,23,42,.08);
+}
+
 /* ===== Page layout ===== */
-.previous-orders {
-  padding: 24px;
-  background-color: #f9fafb;
-  min-height: 100vh;
-  font-family: 'Inter', sans-serif;
+.previous-orders{
+  padding:20px;
+  background:var(--bg);
+  min-height:100vh;
+  color:var(--text);
+  font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,'Helvetica Neue',Arial,sans-serif;
 }
 
-.previous-orders .header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  gap: 20px;
-  margin-bottom: 20px;
+.previous-orders .header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:12px;
+  margin-bottom:12px;
 }
 
-.previous-orders .controls {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
+.previous-orders .header h2{
+  margin:0;
+  font-size:26px;
+  font-weight:800;
+  letter-spacing:.2px;
+  color:var(--text);
+}
+
+/* ===== Controls row ===== */
+.previous-orders .controls{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:10px;
 }
 
 .search-box,
-.date-picker {
-  padding: 8px 12px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  min-width: 180px;
-  background-color: #fff;
-  font-size: 14px;
+.date-picker{
+  height:38px;
+  padding:8px 12px;
+  min-width:180px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:#fff;
+  font-size:14px;
+  outline:none;
+  transition:border-color .15s, box-shadow .15s;
+}
+.search-box:focus,
+.date-picker:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(221,58,0,.12);
 }
 
-.clear-btn {
-  background-color: #6366f1;
-  color: white;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 6px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
+/* Clear button -> secondary */
+.clear-btn{
+  height:38px;
+  padding:0 14px;
+  border-radius:10px;
+  border:1px solid var(--border);
+  background:#f4f7fa;
+  color:var(--text);
+  font-weight:800;
+  cursor:pointer;
+  transition:background .15s, transform .06s;
 }
-.clear-btn:hover { background-color: #4f46e5; }
+.clear-btn:hover{ background:#eef3f8; }
+.clear-btn:active{ transform:translateY(1px); }
 
 /* ===== Orders table ===== */
-.orders-table {
-  width: 100%;
-  border-collapse: collapse;
-  background-color: white;
-  border-radius: 10px;
-  overflow: hidden;
-  margin-top: 10px;
-  font-size: 14px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.04);
+.orders-table{
+  width:100%;
+  border-collapse:collapse;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  overflow:hidden;
+  font-size:14px;
 }
-.orders-table th {
-  background-color: #f3f4f6;
-  font-weight: 600;
-  padding: 12px;
-  text-align: left;
-  border-bottom: 1px solid #e5e7eb;
-}
-.orders-table td {
-  padding: 10px 12px;
-  border-bottom: 1px solid #f1f1f1;
-}
-.orders-table tr:nth-child(even) { background-color: #f9fafb; }
-.orders-table tr:hover { background-color: #eef2ff; }
 
-.view-btn {
-  font-size: 16px;
-  cursor: pointer;
-  margin-right: 6px;
-  transition: transform 0.1s;
+.orders-table thead th{
+  position:sticky; top:0; z-index:1;
+  background:#f8fafc;
+  color:#0f172a;
+  font-weight:800;
+  letter-spacing:.2px;
+  text-align:left;
+  padding:12px 14px;
+  border-bottom:1px solid var(--border);
+  user-select:none;
 }
-.view-btn:hover { transform: scale(1.1); }
 
-.pagination {
-  margin-top: 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
+.orders-table td{
+  padding:12px 14px;
+  border-bottom:1px solid var(--border);
+  color:#2b3646;
 }
-.pagination-center button {
-  margin: 0 4px;
-  padding: 6px 12px;
-  background-color: #e5e7eb;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 500;
+.orders-table tbody tr:nth-child(odd){ background:#fff; }
+.orders-table tbody tr:nth-child(even){ background:#fcfeff; }
+.orders-table tbody tr:hover{ background:#fff6f2; }
+
+.orders-table td:nth-child(6){
+  font-variant-numeric:tabular-nums; /* £ totals align nicely */
 }
-.pagination-center button.active {
-  background-color: #6366f1;
-  color: white;
+
+/* View / Print icon button */
+.view-btn{
+  height:32px; width:32px;
+  display:inline-grid; place-items:center;
+  border-radius:10px;
+  border:1px solid var(--border);
+  background:#f4f7fa;
+  cursor:pointer;
+  transition:background .15s, transform .06s, border-color .15s;
 }
-.page-size-select {
-  padding: 6px 10px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 14px;
+.view-btn:hover{
+  background:var(--accent-soft);
+  border-color:var(--accent);
+}
+.view-btn:active{ transform:translateY(1px); }
+
+/* ===== Pagination ===== */
+.pagination{
+  margin-top:12px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.page-size-select{
+  height:38px;
+  padding:0 12px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:#fff;
+  font-size:14px;
+  outline:none;
+}
+.page-size-select:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(221,58,0,.12);
+}
+
+.pagination-center{
+  display:flex; align-items:center; gap:6px;
+}
+.pagination-center button{
+  height:36px; min-width:36px;
+  padding:0 10px;
+  border-radius:10px;
+  border:1px solid var(--border);
+  background:#fff;
+  color:var(--text);
+  font-weight:700;
+  cursor:pointer;
+  transition:background .15s, transform .06s, border-color .15s;
+}
+.pagination-center button:hover{
+  background:#f3f4f6;
+}
+.pagination-center button.active{
+  background:linear-gradient(180deg,var(--accent),var(--accent-2));
+  border-color:var(--accent-2);
+  color:#fff;
+}
+.pagination-center button:disabled{
+  opacity:.55;
+  cursor:not-allowed;
 }
 
 /* ===== Receipt modal (portal at <body>) ===== */
-.receipt-modal {
-  position: fixed;
-  inset: 0;
-  background-color: rgba(30, 41, 59, 0.6);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 2147483647; /* top */
+.receipt-modal{
+  position:fixed; inset:0;
+  background:rgba(2,6,23,.45);
+  display:flex; align-items:center; justify-content:center;
+  z-index:2147483647;
 }
 
 /* Printable ticket box (screen) */
-.bill-section {
-  background-color: #fff;
-  padding: 20px;
-  border-radius: 10px;
-  max-width: 480px;
-  width: 100%;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
-  font-family: 'Courier New', Courier, monospace;
-  color: #000;
+.bill-section{
+  background:#fff;
+  padding:18px;
+  border-radius:14px;
+  width:min(480px,92vw);
+  max-height:90vh;
+  overflow:auto;
+  box-shadow:0 18px 40px rgba(0,0,0,.18);
+  font-family:'Courier New', Courier, monospace;
+  color:#000;
 }
 
-.receipt-header h2 {
-  text-align: center;
-  margin-bottom: 5px;
-  font-size: 20px;
-  font-weight: bold;
+/* Utility buttons on preview */
+.print-btn,
+.close-preview-btn{
+  background:linear-gradient(180deg,var(--accent),var(--accent-2));
+  color:#fff;
+  border:none;
+  padding:8px 14px;
+  border-radius:10px;
+  cursor:pointer;
+  font-size:14px;
+  font-weight:800;
+  box-shadow:0 8px 18px rgba(221,58,0,.25);
 }
-.receipt-header p {
-  font-size: 14px;
-  text-align: center;
-  margin: 2px 0;
+.close-preview-btn{ background:#111827; box-shadow:none; }
+.print-btn:hover{ filter:brightness(1.06); }
+.close-preview-btn:hover{ filter:brightness(1.06); }
+
+/* Receipt header + table on screen */
+.receipt-header h2{
+  text-align:center;
+  margin:0 0 6px;
+  font-size:20px;
+  font-weight:900;
+  color:#000;
+}
+.receipt-header p{
+  font-size:14px; text-align:center; margin:2px 0; color:#000;
 }
 
-/* Table + summary (screen) */
-.receipt-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 12px;
-  margin-bottom: 12px;
-  font-size: 14px;
+.receipt-table{
+  width:100%;
+  border-collapse:collapse;
+  margin:12px 0;
+  font-size:14px;
 }
 .receipt-table th,
-.receipt-table td {
-  padding: 6px 4px;
-  border-bottom: 1px dashed #ccc;
-  font-weight: 600;
-  color: #000;
-  text-align: left;
+.receipt-table td{
+  padding:6px 4px;
+  border-bottom:1px dashed #ccc;
+  font-weight:600;
+  color:#000;
+  text-align:left;
 }
-.receipt-summary p {
-  margin: 6px 0;
-  font-size: 14px;
-  font-weight: 600;
-  color: #000;
+.receipt-summary p{
+  margin:6px 0;
+  font-size:14px;
+  font-weight:600;
+  color:#000;
 }
-.grand-total { font-size: 16px; font-weight: 700; margin-top: 12px; }
-.server-name { margin-top: 10px; font-style: italic; font-size: 13px; color: #333; }
+.grand-total{ font-size:16px; font-weight:800; margin-top:10px; }
 
-.print-btn,
-.close-preview-btn {
-  background-color: #1f2937;
-  color: white;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-}
-.print-btn:hover,
-.close-preview-btn:hover { background-color: #111827; }
+/* ===== PRINT: keep your reliable ticket rules ===== */
+@media print{
+  body > *:not(.receipt-modal){ display:none !important; }
 
-/* ===== PRINT: hide everything except receipt (portal makes this safe) ===== */
-@media print {
-  /* Hide entire app shell */
-  body > *:not(.receipt-modal) { display: none !important; }
-
-  /* Force the modal to behave like a normal page block */
-  .receipt-modal {
-    display: block !important;
-    position: static !important;
-    background: #fff !important;
-    inset: auto !important;
-    width: auto !important;
-    height: auto !important;
-    padding: 0 !important;
-    margin: 0 !important;
+  .receipt-modal{
+    display:block !important;
+    position:static !important;
+    background:#fff !important;
+    inset:auto !important;
+    width:auto !important; height:auto !important;
+    padding:0 !important; margin:0 !important;
   }
 
-  /* Match common POS80 drivers (72mm printable area).
-     If your driver has “80mm continuous roll”, it will still work. */
-  .bill-section {
-    width: 72mm !important;
-    max-width: 72mm !important;
-    margin: 0 auto !important;
-    padding: 10px !important;
-    background: #fff !important;
-    color: #000 !important;
-    box-shadow: none !important;
-    border: 0 !important;
-
-    page-break-before: avoid !important;
-    page-break-after: avoid !important;
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-    overflow: visible !important;
+  .bill-section{
+    width:72mm !important; max-width:72mm !important;
+    margin:0 auto !important; padding:10px !important;
+    background:#fff !important; color:#000 !important;
+    box-shadow:none !important; border:0 !important;
+    page-break-before:avoid !important;
+    page-break-after:avoid !important;
+    page-break-inside:avoid !important;
+    break-inside:avoid !important;
+    overflow:visible !important;
   }
 
-  /* Tight print spacing */
-  .receipt-table th,
-  .receipt-table td {
-    padding: 2px 4px !important;
-    line-height: 1.1 !important;
-    border-bottom: 1px dashed #000 !important;
-    text-align: left !important;
+  .receipt-table th, .receipt-table td{
+    padding:2px 4px !important;
+    line-height:1.1 !important;
+    border-bottom:1px dashed #000 !important;
+    text-align:left !important;
   }
-  .receipt-summary p {
-    margin: 2px 0 !important;
-    line-height: 1.2 !important;
-    font-size: 13px !important;
-    font-weight: 600 !important;
+  .receipt-summary p{
+    margin:2px 0 !important;
+    line-height:1.2 !important;
+    font-size:13px !important;
+    font-weight:600 !important;
   }
 
-  /* Hide buttons on paper */
-  .print-btn, .close-preview-btn { display: none !important; }
+  .print-btn, .close-preview-btn{ display:none !important; }
 
-  /* Page setup */
-  @page { size: 72mm auto; margin: 0; }
-
-  html, body {
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 72mm !important;
-    height: auto !important;
-    overflow: hidden !important;
-    background: #fff !important;
-    -webkit-print-color-adjust: exact !important;
+  @page{ size:72mm auto; margin:0; }
+  html, body{
+    margin:0 !important; padding:0 !important;
+    width:72mm !important; height:auto !important;
+    overflow:hidden !important; background:#fff !important;
+    -webkit-print-color-adjust:exact !important;
   }
 }

@@ -197,3 +197,26 @@
   .login-card{ width: min(94vw, 520px); padding: 24px 16px 18px; }
   .brand-logo{ width: 96px; }
 }
+
+
+.password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-wrapper input {
+  width: 100%;
+  padding-right: 40px; /* space for icon */
+}
+
+.toggle-password {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+

@@ -1,124 +1,215 @@
-/* Employees.css */
+/* =========================================
+   Employees – Clean & Friendly Dashboard UI
+   (CSS-only; matches classes used in JSX)
+   ========================================= */
 
+/* Theme tokens */
+:root {
+  --bg: #f5f7fb;
+  --panel: #ffffff;
+  --text: #1f2937;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+  --accent: #dd3a00;     /* warm orange */
+  --accent-2: #b92f00;
+  --ok: #10b981;
+  --danger: #ef4444;
+  --radius: 14px;
+  --radius-sm: 10px;
+  --shadow: 0 10px 30px rgba(15, 23, 42, .08);
+}
+
+/* Page container lives in DashboardLayout, so we style panels */
+body { background: var(--bg); }
+
+/* Header row */
 .employee-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  margin: 14px 0 12px;
+  color: var(--text);
+}
+.employee-header h2 {
+  margin: 0;
+  font-weight: 800;
+  letter-spacing: .2px;
 }
 
+/* Primary add button */
 .add-button {
-  background-color: #4CAF50;
-  color: white;
-  padding: 8px 16px;
+  background: linear-gradient(180deg, var(--accent), var(--accent-2));
+  color: #fff;
+  padding: 10px 14px;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-size: 14px;
+  font-weight: 800;
+  box-shadow: 0 8px 20px rgba(221,58,0,.28);
+  transition: filter .2s, transform .06s;
 }
+.add-button:hover { filter: brightness(1.07); }
+.add-button:active { transform: translateY(1px); }
 
-.add-button:hover {
-  background-color: #45a049;
-}
-
+/* =========================
+   Employee form (card panel)
+   ========================= */
 .employee-form {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  margin-bottom: 2rem;
-  background-color: #f9f9f9;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 18px;
+  background: var(--panel);
+  padding: 18px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.employee-form label {
+  display: grid;
+  gap: 6px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .employee-form input,
-.employee-form select,
-.employee-form button {
-  padding: 10px;
+.employee-form select {
+  height: 40px;
+  padding: 8px 12px;
   font-size: 14px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  outline: none;
+  background: #fff;
+  transition: border-color .15s, box-shadow .15s;
+}
+.employee-form input::placeholder { color: #94a3b8; }
+.employee-form input:focus,
+.employee-form select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(221,58,0,.12);
 }
 
+/* Submit button spans full row */
 .employee-form button {
-  grid-column: span 2;
-  background-color: #007bff;
-  color: white;
-  border: none;
+  grid-column: 1 / -1;
+  height: 42px;
+  padding: 0 16px;
+  font-size: 14px;
+  font-weight: 800;
+  border: 0;
+  border-radius: var(--radius-sm);
   cursor: pointer;
+  color: #fff;
+  background: linear-gradient(180deg, var(--accent), var(--accent-2));
+  box-shadow: 0 8px 18px rgba(221,58,0,.25);
+  transition: filter .2s, transform .06s;
+}
+.employee-form button:hover { filter: brightness(1.06); }
+.employee-form button:active { transform: translateY(1px); }
+
+/* Helper: Date labels (you already use <label> around date inputs) */
+.employee-form label > input[type="date"] {
+  height: 40px;
 }
 
-.employee-form button:hover {
-  background-color: #0056b3;
+/* Responsive form */
+@media (max-width: 860px) {
+  .employee-form { grid-template-columns: 1fr; }
 }
 
+/* =========================
+   Table wrapper + table
+   ========================= */
 .employee-table-wrapper {
-  max-height: 400px;
-  overflow-y: auto;
-  border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-  background: white;
+  max-height: 480px;
+  overflow: auto;
+  border-radius: var(--radius);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
 }
 
+/* Table base */
 .employee-table {
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
+  border-collapse: collapse;
   font-size: 14px;
-  min-width: 800px;
+  min-width: 880px; /* allow horizontal scroll on small screens */
 }
 
+/* Sticky header */
 .employee-table thead {
   position: sticky;
   top: 0;
-  background-color: #007bff;
-  color: white;
   z-index: 1;
+  background: #f8fafc;
+  color: #0f172a;
 }
-
-.employee-table th,
-.employee-table td {
-  padding: 12px 15px;
+.employee-table th {
   text-align: left;
-  border-bottom: 1px solid #ddd;
-  transition: background 0.3s;
+  font-weight: 800;
+  letter-spacing: .2px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  user-select: none;
 }
 
-.employee-table tbody tr:hover {
-  background-color: #f6f9ff;
-}
-
+/* Rows */
 .employee-table td {
-  color: #333;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  color: #2b3646;
+  transition: background .2s;
 }
+.employee-table tbody tr:nth-child(odd) { background: #fff; }
+.employee-table tbody tr:nth-child(even) { background: #fcfeff; }
+.employee-table tbody tr:hover { background: #fff6f2; }
 
-.employee-table th:first-child,
-.employee-table td:first-child {
-  border-top-left-radius: 10px;
-}
-
-.employee-table th:last-child,
+/* Action buttons in last column */
 .employee-table td:last-child {
-  border-top-right-radius: 10px;
+  white-space: nowrap;
 }
-
 .employee-table button {
   padding: 6px 10px;
-  border: none;
-  border-radius: 4px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
   font-size: 12px;
+  font-weight: 700;
   cursor: pointer;
-  margin-right: 5px;
+  margin-right: 6px;
+  color: var(--text);
+  background: #f4f7fa;
+  transition: background .15s, transform .06s, border-color .15s;
+}
+.employee-table button:hover {
+  background: #eef3f8;
+  border-color: #dbe3ec;
+}
+.employee-table button:active { transform: translateY(1px); }
+
+/* Specific colors for edit/delete (you use ✏️ / 🗑️ already) */
+.employee-table button:first-of-type { /* edit */
+  border-color: rgba(16,185,129,.3);
+  color: var(--ok);
+  background: rgba(16,185,129,.08);
+}
+.employee-table button:last-of-type {  /* delete */
+  border-color: rgba(239,68,68,.3);
+  color: var(--danger);
+  background: rgba(239,68,68,.08);
 }
 
-.employee-table button:first-of-type {
-  background-color: green;
-  color: black;
-}
+/* Round top corners visually when header sticks */
+.employee-table thead th:first-child { border-top-left-radius: var(--radius); }
+.employee-table thead th:last-child  { border-top-right-radius: var(--radius); }
 
-.employee-table button:last-of-type {
-  background-color: red;
-  color: white;
+/* Small screens: make tap targets bigger */
+@media (max-width: 480px) {
+  .add-button { padding: 12px 16px; }
+  .employee-table button { padding: 8px 12px; }
 }
-

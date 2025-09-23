@@ -1,196 +1,332 @@
-/* === Layout === */
-.attendance-container {
-  display: flex;
-  height: 100vh;
-  gap: 24px;
-  padding: 24px;
-  background: #f1f5f9;
-  font-family: 'Inter', sans-serif;
+/* ==========================================
+   Attendance – Glass / Dark Dashboard Theme
+   (CSS-only; no JSX changes)
+   ========================================== */
+
+/* Theme tokens */
+:root {
+  --bg: #0f172a;             /* dark slate */
+  --panel: rgba(255,255,255,.08);
+  --panel-2: rgba(255,255,255,.12);
+  --border: rgba(255,255,255,.16);
+  --text: #f8fafc;
+  --muted: #cbd5e1;
+  --accent: #f97316;         /* warm orange */
+  --accent-2: #ea580c;
+  --ok: #22c55e;
+  --danger: #ef4444;
+  --radius: 16px;
+  --radius-sm: 12px;
+  --shadow: 0 10px 40px rgba(0,0,0,.45);
 }
 
-/* === Left: Employee Section === */
+/* Page layout */
+.attendance-container {
+  display: flex;
+  gap: 22px;
+  padding: 22px;
+  height: calc(100vh - 50px);
+  background: radial-gradient(1200px 600px at 20% 0%, rgba(249,115,22,.08), transparent 50%),
+              radial-gradient(900px 600px at 100% 100%, rgba(59,130,246,.10), transparent 50%),
+              var(--bg);
+  color: var(--text);
+  font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* =========================
+   Employee list (left)
+   ========================= */
 .employee-list {
-  width: 55%;
-  background: white;
-  padding: 24px;
-  border-radius: 16px;
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.06);
+  flex: 1 1 58%;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: var(--shadow);
+  padding: 18px;
+  overflow: hidden;
 }
 
 .search-bar {
-  padding: 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 12px;
-  font-size: 15px;
-  margin-bottom: 16px;
   width: 100%;
+  height: 44px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(255,255,255,.06);
+  color: var(--text);
+  font-size: 15px;
   outline: none;
+  transition: border-color .15s, background .2s, box-shadow .15s;
+  margin-bottom: 14px;
+}
+.search-bar::placeholder { color: #94a3b8; }
+.search-bar:focus {
+  border-color: var(--accent);
+  background: rgba(255,255,255,.12);
+  box-shadow: 0 0 0 3px rgba(249,115,22,.25);
 }
 
 .employee-grid {
+  overflow-y: auto;
+  padding-right: 4px;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 14px;
 }
 
+/* Employee card */
 .employee-card {
-  background: #f9fafb;
+  background: var(--panel-2);
   border: 2px solid transparent;
-  border-radius: 12px;
-  padding: 12px;
+  border-radius: 14px;
+  padding: 14px 12px;
   text-align: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: transform .15s, border-color .15s, background .15s, box-shadow .2s;
+  box-shadow: 0 6px 20px rgba(0,0,0,.25) inset;
 }
-
 .employee-card:hover {
   transform: translateY(-2px);
-  background: #e7f3ff;
+  background: rgba(255,255,255,.16);
 }
-
 .employee-card.selected {
-  border-color: #3b82f6;
-  background-color: #e0f2fe;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(249,115,22,.35) inset, 0 10px 30px rgba(0,0,0,.3);
 }
 
 .avatar-circle {
-  width: 42px;
-  height: 42px;
+  width: 56px; height: 56px;
+  margin: 0 auto 8px;
   border-radius: 50%;
-  background: #dbeafe;
-  margin: 0 auto 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  font-size: 18px;
-  color: #1e3a8a;
+  background: rgba(255,255,255,.18);
+  color: #e2e8f0;
+  font-size: 20px; font-weight: 900;
+  display: grid; place-items: center;
+  border: 1px solid var(--border);
 }
 
+.employee-card strong {
+  display: block;
+  font-weight: 800;
+  letter-spacing: .2px;
+}
+
+/* Status line with pill badge */
 .status-text {
-  font-size: 13px;
-  margin-top: 6px;
+  margin-top: 8px;
+  font-size: 12.5px;
+  color: var(--muted);
 }
+.status-text span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.12);
+  border: 1px solid var(--border);
+  font-weight: 700;
+}
+.status-text .in   { color: var(--ok); }
+.status-text .out  { color: var(--danger); }
+.status-text .none { color: var(--muted); }
 
-.border-green { border: 2px solid #22c55e; }
-.border-red { border: 2px solid #ef4444; }
-.border-gray { border: 2px solid #e5e7eb; }
+.border-green { border-color: var(--ok) !important; }
+.border-red   { border-color: var(--danger) !important; }
+.border-gray  { border-color: var(--border) !important; }
 
-/* === Right: Clock Panel === */
+/* =========================
+   Clock panel (right)
+   ========================= */
 .clock-panel {
-  width: 45%;
-  background: #ffffff;
-  padding: 24px;
-  border-radius: 16px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+  flex: 1 1 42%;
   display: flex;
   flex-direction: column;
   align-items: center;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: var(--shadow);
+  padding: 22px;
+}
+
+.clock-panel h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: .3px;
 }
 
 .live-clock {
-  font-size: 18px;
-  color: #1d4ed8;
-  font-weight: 600;
-  margin-bottom: 12px;
-}
-
-.selected-employee {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #111827;
-  margin-bottom: 16px;
-}
-
-/* PIN display dots */
-.pin-display {
-  display: flex;
-  gap: 12px;
+  font-size: 16px;
+  font-weight: 800;
+  color: #93c5fd; /* soft blue */
   margin-bottom: 10px;
 }
 
-.dot {
-  font-size: 2rem;
-  color: #4b5563;
+.selected-employee {
+  font-size: 16px;
+  font-weight: 900;
+  color: #e2e8f0;
+  margin-bottom: 16px;
 }
 
 /* PIN boxes */
 .pin-display-box {
   display: flex;
   gap: 12px;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
-
 .pin-digit-box {
-  width: 48px;
-  height: 48px;
-  border-radius: 10px;
-  border: 2px solid #d1d5db;
-  background: #f3f4f6;
+  width: 54px; height: 54px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,.10);
+  color: var(--text);
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 54px;
   text-align: center;
-  font-size: 20px;
-  line-height: 48px;
-  font-weight: bold;
+  box-shadow: 0 3px 10px rgba(0,0,0,.25) inset;
 }
 
-/* PIN keypad */
+/* Keypad */
 .numbers-grid {
   display: grid;
-  grid-template-columns: repeat(3, 64px);
-  gap: 14px;
+  grid-template-columns: repeat(3, 72px);
+  gap: 16px;
   justify-content: center;
   margin-bottom: 20px;
 }
-
 .keypad-btn {
-  width: 64px;
-  height: 64px;
+  width: 72px; height: 72px;
   border-radius: 50%;
-  font-size: 20px;
-  font-weight: bold;
-  color: #1e3a8a;
-  background: #e0f2fe;
-  border: none;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,.12);
+  color: #e2e8f0;
+  font-size: 20px; font-weight: 900;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: transform .06s, background .2s, box-shadow .2s;
+  box-shadow: 0 6px 18px rgba(0,0,0,.35);
 }
+.keypad-btn:hover   { background: rgba(255,255,255,.18); }
+.keypad-btn:active  { transform: translateY(1px); }
 
-.keypad-btn:hover {
-  background: #bae6fd;
-}
-
-/* Clock in/out buttons */
+/* Action buttons */
 .action-buttons {
   display: flex;
-  gap: 16px;
+  gap: 14px;
 }
-
 .action-card {
-  padding: 14px 22px;
-  border-radius: 12px;
-  font-weight: bold;
+  padding: 12px 20px;
   border: none;
-  font-size: 16px;
-  min-width: 130px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 900;
+  min-width: 150px;
   cursor: pointer;
-  transition: transform 0.15s ease-in-out;
+  transition: transform .06s, filter .2s, box-shadow .2s;
+  box-shadow: 0 10px 24px rgba(0,0,0,.35);
 }
-
 .action-card.green {
-  background: #22c55e;
-  color: white;
+  background: linear-gradient(180deg, var(--ok), #15803d);
+  color: #fff;
 }
-
 .action-card.gray {
-  background: #ef4444;
-  color: white;
+  background: linear-gradient(180deg, var(--danger), #b91c1c);
+  color: #fff;
+}
+.action-card:hover { filter: brightness(1.06); }
+.action-card:active { transform: translateY(1px); }
+
+/* =========================
+   Responsive
+   ========================= */
+@media (max-width: 1024px) {
+  .attendance-container { flex-direction: column; }
+  .employee-list, .clock-panel { width: 100%; }
+  .numbers-grid { grid-template-columns: repeat(3, 64px); gap: 14px; }
+  .keypad-btn { width: 64px; height: 64px; }
+  .pin-digit-box { width: 50px; height: 50px; line-height: 50px; }
 }
 
-.action-card:hover {
-  transform: scale(1.03);
+@media (max-width: 420px) {
+  .search-bar { height: 48px; }
+  .employee-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 
+/* === Employee Card Status Colors === */
+.employee-card {
+  background: #fff;
+  border: 2px solid transparent;
+  border-radius: 14px;
+  padding: 14px;
+  text-align: center;
+  transition: transform .15s, border-color .15s, box-shadow .2s;
+}
+
+.employee-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0,0,0,.08);
+}
+
+.employee-card.selected {
+  box-shadow: 0 0 0 3px rgba(249,115,22,.2);
+}
+
+/* Clocked In */
+.employee-card.clocked-in {
+  border-color: #22c55e;
+  background: #f0fdf4;
+}
+.employee-card.clocked-in .status-text {
+  color: #15803d;
+}
+
+/* Clocked Out */
+.employee-card.clocked-out {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+.employee-card.clocked-out .status-text {
+  color: #b91c1c;
+}
+
+/* Not Clocked In */
+.employee-card.not-clocked {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+.employee-card.not-clocked .status-text {
+  color: #64748b;
+}
+
+/* === Keypad Buttons === */
+.keypad-btn {
+  background: linear-gradient(180deg,#f1f5f9,#e2e8f0);
+  color: #334155;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 3px 6px rgba(0,0,0,.08);
+}
+.keypad-btn:hover {
+  background: #dbeafe;
+  border-color: #3b82f6;
+  color: #1e3a8a;
+}
+
+/* === Action Buttons === */
+.action-card.green {
+  background: linear-gradient(180deg,#22c55e,#15803d);
+  box-shadow: 0 8px 18px rgba(34,197,94,.35);
+}
+.action-card.gray {
+  background: linear-gradient(180deg,#ef4444,#b91c1c);
+  box-shadow: 0 8px 18px rgba(239,68,68,.35);
+}

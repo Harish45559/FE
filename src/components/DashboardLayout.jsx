@@ -30,7 +30,7 @@ const DashboardLayout = ({ children }) => {
   return (
     <div className="dashboard-container">
       <aside className="sidebar">
-        <h2>Cozy Cup</h2>
+        <h2>Mirchi Mafiya</h2>
         <ul>
           {/* Admin-only routes */}
           {user?.role === 'admin' && (
