@@ -3,6 +3,9 @@ import DashboardLayout from '../components/DashboardLayout';
 import api from '../services/api';
 import './Reports.css';
 
+import usePagination from '../hooks/usePagination';
+import PaginationBar from '../components/PaginationBar';
+
 /* ========================= Helpers ========================= */
 
 const safe = (v) => (v == null ? '' : String(v));
@@ -51,8 +54,6 @@ const minToHHMM = (mins) => {
   return `${String(h).padStart(2, '0')}:${String(r).padStart(2, '0')}`;
 };
 
-const ITEMS_PER_PAGE = 10;
-
 /* ========================= Component ========================= */
 
 export default function Reports() {
@@ -62,7 +63,6 @@ export default function Reports() {
   const [toDate, setToDate] = useState('');
   const [rawRows, setRawRows] = useState([]);
 
-  const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState('date');
   const [sortDir, setSortDir] = useState('asc');
 
@@ -94,7 +94,6 @@ export default function Reports() {
         }
       });
       setRawRows(Array.isArray(res.data) ? res.data : []);
-      setCurrentPage(1);
     } catch (e) {
       console.error('Failed to fetch reports:', e);
       setRawRows([]);
@@ -103,6 +102,7 @@ export default function Reports() {
 
   useEffect(() => {
     fetchReports();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /* -------- Group & Sum -------- */
@@ -188,7 +188,7 @@ export default function Reports() {
     });
   }, [rawRows]);
 
-  /* -------- Sorting & Paging -------- */
+  /* -------- Sorting (unchanged) -------- */
   const sorted = useMemo(() => {
     const arr = [...grouped];
     const dir = sortDir === 'asc' ? 1 : -1;
@@ -205,23 +205,25 @@ export default function Reports() {
         case 'break':
           return (a.breakTotalMin - b.breakTotalMin) * dir;
         case 'date':
-        default:
+        default: {
           const toKey = (d) => {
             if (!d) return 0;
             const [dd, mm, yyyy] = d.split('-').map(Number);
             return new Date(yyyy, (mm || 1) - 1, dd || 1).getTime();
           };
-          return (toKey(a.date) - toKey(b.date)) * dir;
+          return (toKey(a.date) - (toKey(b.date))) * dir;
+        }
       }
     });
     return arr;
   }, [grouped, sortField, sortDir]);
 
-  const totalPages = Math.max(1, Math.ceil(sorted.length / ITEMS_PER_PAGE));
-  const pageRows = useMemo(() => {
-    const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    return sorted.slice(start, start + ITEMS_PER_PAGE);
-  }, [sorted, currentPage]);
+  // Global pagination (shared hook)
+  const {
+    page, setPage,
+    pageSize, setPageSize,
+    pageCount, pageRows
+  } = usePagination(sorted);
 
   const onSort = (field) => {
     if (field === sortField) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
@@ -332,11 +334,13 @@ export default function Reports() {
             </tbody>
           </table>
 
-          <div className="pagination">
-            <button disabled={currentPage === 1} onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}>Prev</button>
-            <span>Page {currentPage} of {totalPages}</span>
-            <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}>Next</button>
-          </div>
+          <PaginationBar
+            page={page}
+            pageCount={pageCount}
+            pageSize={pageSize}
+            onChangePage={setPage}
+            onChangePageSize={setPageSize}
+          />
         </div>
       </div>
 

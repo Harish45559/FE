@@ -3,8 +3,8 @@ import ReactDOM from "react-dom";
 import DashboardLayout from "../components/DashboardLayout";
 import api from "../services/api";
 import "./PreviousOrders.css";
-
-const PAGE_SIZES = [10, 20, 50];
+import usePagination from "../hooks/usePagination";
+import PaginationBar from "../components/PaginationBar";
 
 /* ------- Receipt Portal (renders at document.body) ------- */
 const ReceiptPortal = ({ children }) => {
@@ -17,13 +17,18 @@ const ReceiptPortal = ({ children }) => {
   useEffect(() => {
     document.body.appendChild(el);
     return () => {
-      try { document.body.removeChild(el); } catch {}
+      try {
+        document.body.removeChild(el);
+      } catch (err) {
+        console.error("cleanup error:", err);
+      }
     };
   }, [el]);
 
   return ReactDOM.createPortal(children, el);
 };
-/* --------------------------------------------------------- */
+
+
 
 const PreviousOrders = () => {
   // Table data
@@ -33,10 +38,6 @@ const PreviousOrders = () => {
   // Filters
   const [search, setSearch] = useState("");
   const [date, setDate] = useState("");
-
-  // Pagination
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
 
   // Receipt modal
   const [showReceipt, setShowReceipt] = useState(false);
@@ -65,14 +66,13 @@ const PreviousOrders = () => {
         }));
 
         norm.sort((a, b) => {
-        const ta = a.date ? new Date(a.date).getTime() : 0;
-        const tb = b.date ? new Date(b.date).getTime() : 0;
-        if (tb !== ta) return tb - ta;  // latest first
-        return String(b.order_number).localeCompare(String(a.order_number));
-      });
+          const ta = a.date ? new Date(a.date).getTime() : 0;
+          const tb = b.date ? new Date(b.date).getTime() : 0;
+          if (tb !== ta) return tb - ta;  // latest first
+          return String(b.order_number).localeCompare(String(a.order_number));
+        });
 
-    setOrders(norm);
-
+        setOrders(norm);
       } catch (e) {
         console.error("Failed to load orders", e);
       } finally {
@@ -97,8 +97,12 @@ const PreviousOrders = () => {
     });
   }, [orders, search, date]);
 
-  const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const pageData = filtered.slice((page - 1) * pageSize, page * pageSize);
+  // Global pagination (shared hook)
+  const {
+    page, setPage,
+    pageSize, setPageSize,
+    pageCount, pageRows: pageData
+  } = usePagination(filtered);
 
   // Helpers for receipt math
   const calcSubtotal = (ord) =>
@@ -145,7 +149,7 @@ const PreviousOrders = () => {
               type="text"
               placeholder="Search by customer, order no., or payment…"
               value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}  
             />
             <input
               className="date-picker"
@@ -205,32 +209,13 @@ const PreviousOrders = () => {
           </table>
         </div>
 
-        <div className="pagination">
-          <div>
-            <label>
-              Page size:&nbsp;
-              <select
-                className="page-size-select"
-                value={pageSize}
-                onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
-              >
-                {PAGE_SIZES.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </label>
-          </div>
-
-          <div className="pagination-center">
-            <button onClick={() => setPage(1)} disabled={page === 1}>⏮</button>
-            <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>◀</button>
-            <span style={{ margin: "0 6px" }}>
-              Page {page} / {pageCount}
-            </span>
-            <button onClick={() => setPage((p) => Math.min(pageCount, p + 1))} disabled={page === pageCount}>▶</button>
-            <button onClick={() => setPage(pageCount)} disabled={page === pageCount}>⏭</button>
-          </div>
-
-          <div />
-        </div>
+        <PaginationBar
+          page={page}
+          pageCount={pageCount}
+          pageSize={pageSize}
+          onChangePage={setPage}
+          onChangePageSize={setPageSize}
+        />
       </div>
 
       {/* ===== Receipt via PORTAL to <body> ===== */}

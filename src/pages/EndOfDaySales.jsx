@@ -102,22 +102,21 @@ const EndOfDaySales = () => {
     setTab('summary');
   };
 
-  // -------- Daily Sales series (sum orders by day) ----------
-  // We’ll sum (final_amount || total_amount) per order date (local date).
+  
   const dailySeries = useMemo(() => {
-    const map = new Map(); // key = 'yyyy-MM-dd', val = total £ for that day
+    const map = new Map();
     for (const o of orders) {
-      const iso = o.created_at || o.date || o.createdAt; // try common fields
+      const iso = o.created_at || o.date || o.createdAt;
       if (!iso) continue;
-      const day = DateTime.fromISO(iso).toISODate(); // yyyy-MM-dd
+      const day = DateTime.fromISO(iso).toISODate(); 
       const amt = Number(o.final_amount ?? o.total_amount ?? o.amount ?? 0);
       map.set(day, (map.get(day) || 0) + (isNaN(amt) ? 0 : amt));
     }
 
-    // Sort days ascending
+   
     const entries = Array.from(map.entries()).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
 
-    // If there are no orders, fallback to activeRange with zero
+    
     if (entries.length === 0) {
       const { from, to } = activeRange;
       const start = DateTime.fromISO(from);

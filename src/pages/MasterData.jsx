@@ -3,6 +3,9 @@ import api from '../services/api';
 import './MasterData.css';
 import DashboardLayout from '../components/DashboardLayout';
 
+import usePagination from '../hooks/usePagination';
+import PaginationBar from '../components/PaginationBar';
+
 const MasterData = () => {
   const [categories, setCategories] = useState([]);
   const [menuItems, setMenuItems] = useState([]);
@@ -181,8 +184,16 @@ const MasterData = () => {
     });
   }, [menuItems, filters]);
 
+  // ---------- Pagination ONLY for right-side (Menu Items) ----------
+  const {
+    page, setPage,
+    pageSize, setPageSize,
+    pageCount, pageRows: pagedMenuItems
+  } = usePagination(filteredMenuItems);
+
   const clearFilters = () => {
     setFilters({ q: '', category: 'all', veg: 'all', minPrice: '', maxPrice: '' });
+    setPage(1);
   };
 
   return (
@@ -303,12 +314,12 @@ const MasterData = () => {
                 className="grow"
                 placeholder="Search by name…"
                 value={filters.q}
-                onChange={(e) => setFilters((f) => ({ ...f, q: e.target.value }))}
+                onChange={(e) => { setFilters((f) => ({ ...f, q: e.target.value })); setPage(1); }}
               />
 
               <select
                 value={filters.category}
-                onChange={(e) => setFilters((f) => ({ ...f, category: e.target.value }))}
+                onChange={(e) => { setFilters((f) => ({ ...f, category: e.target.value })); setPage(1); }}
               >
                 <option value="all">All Categories</option>
                 {categories.map((c) => (
@@ -320,7 +331,7 @@ const MasterData = () => {
 
               <select
                 value={filters.veg}
-                onChange={(e) => setFilters((f) => ({ ...f, veg: e.target.value }))}
+                onChange={(e) => { setFilters((f) => ({ ...f, veg: e.target.value })); setPage(1); }}
               >
                 <option value="all">Veg & Non-Veg</option>
                 <option value="veg">Veg only</option>
@@ -333,13 +344,13 @@ const MasterData = () => {
                 type="number"
                 placeholder="Min Price"
                 value={filters.minPrice}
-                onChange={(e) => setFilters((f) => ({ ...f, minPrice: e.target.value }))}
+                onChange={(e) => { setFilters((f) => ({ ...f, minPrice: e.target.value })); setPage(1); }}
               />
               <input
                 type="number"
                 placeholder="Max Price"
                 value={filters.maxPrice}
-                onChange={(e) => setFilters((f) => ({ ...f, maxPrice: e.target.value }))}
+                onChange={(e) => { setFilters((f) => ({ ...f, maxPrice: e.target.value })); setPage(1); }}
               />
               <button type="button" className="secondary" onClick={clearFilters}>
                 Clear Filters
@@ -361,7 +372,7 @@ const MasterData = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredMenuItems.map((item) => (
+              {pagedMenuItems.map((item) => (
                 <tr key={item.id}>
                   {editingItemId === item.id ? (
                     <>
@@ -443,7 +454,7 @@ const MasterData = () => {
                   )}
                 </tr>
               ))}
-              {filteredMenuItems.length === 0 && (
+              {pagedMenuItems.length === 0 && (
                 <tr>
                   <td colSpan="4" style={{ textAlign: 'center', color: '#666' }}>
                     No items match your filters.
@@ -452,6 +463,14 @@ const MasterData = () => {
               )}
             </tbody>
           </table>
+
+          <PaginationBar
+            page={page}
+            pageCount={pageCount}
+            pageSize={pageSize}
+            onChangePage={setPage}
+            onChangePageSize={setPageSize}
+          />
         </div>
       </div>
     </DashboardLayout>

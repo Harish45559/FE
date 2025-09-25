@@ -1,4 +1,4 @@
-// BillingCounter.jsx
+// BillingCounter.jsx (with Favourites)
 import React, { useEffect, useRef, useState } from 'react';
 import api from '../services/api';
 import DashboardLayout from '../components/DashboardLayout';
@@ -24,7 +24,7 @@ const BillingCounter = () => {
   const user = JSON.parse(localStorage.getItem('user'));
   const [menuItems, setMenuItems] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
-  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState('all'); // 'all' | categoryName | '__favs__'
   const [vegFilter, setVegFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [categories, setCategories] = useState([]);
@@ -43,7 +43,14 @@ const BillingCounter = () => {
   const [authPassword, setAuthPassword] = useState('');
   const [tillOpenedBy, setTillOpenedBy] = useState('');
   const [discountPercent, setDiscountPercent] = useState(0);
-  const [userRole, setUserRole] = useState('');
+  const [favourites, setFavourites] = useState(() => {
+    try {
+      const stored = localStorage.getItem('favourites');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
 
   useEffect(() => {
     const storedTillStatus = localStorage.getItem('isTillOpen');
@@ -53,7 +60,9 @@ const BillingCounter = () => {
     if (storedTillUser) setTillOpenedBy(storedTillUser);
 
     const storedRole = localStorage.getItem('userRole');
-    if (storedRole) setUserRole(storedRole);
+    if (storedRole) {
+      // role still persisted; no local state needed to avoid ESLint unused-var
+    }
 
     fetchMenu();
     fetchCategories();
@@ -101,7 +110,7 @@ const BillingCounter = () => {
   const fetchLastOrderNumber = async () => {
     try {
       const res = await api.get('/orders/all');
-    if (Array.isArray(res.data) && res.data.length > 0) {
+      if (Array.isArray(res.data) && res.data.length > 0) {
         const maxOrder = Math.max(...res.data.map(o => o.order_number || 1000));
         setNextTempOrderNumber(maxOrder + 1);
       } else {
@@ -153,86 +162,102 @@ const BillingCounter = () => {
     fetchLastOrderNumber();
   };
 
-  // Compact-print popup with auto-close; also closes overlay & starts new order
-  const handlePrint = () => {
-    const node = printRef.current;
-    const afterPrintCleanup = () => {
-      setShowReceipt(false);
-      startNewOrder();
-    };
+  // Build a receipt HTML string (no overlay)
+  const renderReceiptHTML = (data) => {
+    const {
+      orderNumber: onum, orderType: otype, customerName: cname, paymentMethod: pay,
+      orderDate: odate, items, totals, staffName
+    } = data;
 
-    if (!node) {
+    const rows = items.map(it => `
+      <tr>
+        <td>${it.name}</td>
+        <td style="text-align:right">£${Number(it.price).toFixed(2)}</td>
+        <td style="text-align:right">${it.qty}</td>
+        <td style="text-align:right">£${Number(it.total).toFixed(2)}</td>
+      </tr>
+    `).join('');
+
+    return `
+      <div class="bill-section">
+        <div class="receipt-header">
+          <h2>Mirchi Mafiya</h2>
+          <p>Cumberland Street, LU1 3BW, Luton</p>
+          <p>Phone: +447440086046</p>
+          <p>dtsretaillimited@gmail.com</p>
+          <p>Order Type: ${otype}</p>
+          <p><strong>Customer:</strong> ${cname || 'N/A'}</p>
+          <p><strong>Order No:</strong> #${onum ?? '—'}</p>
+          <p><strong>Paid By:</strong> ${pay}</p>
+          <hr />
+          <p>Date: ${odate || '—'}</p>
+          <hr />
+        </div>
+
+        <table class="receipt-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th style="text-align:right">Price</th>
+              <th style="text-align:right">Qty</th>
+              <th style="text-align:right">Total</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+
+        <div class="receipt-summary">
+          <p><strong>Total Qty:</strong> ${items.reduce((s, it) => s + Number(it.qty || 0), 0)}</p>
+          <p><strong>Sub Total:</strong> £ ${totals.subtotal.toFixed(2)}</p>
+          <p><strong>Paid By:</strong> ${pay}</p>
+          <p class="includes-label">Includes:</p>
+          <p>VAT (20%): £${totals.vat.toFixed(2)}</p>
+          <p>Service Charge (8%): £${totals.service.toFixed(2)}</p>
+          ${totals.discount > 0 ? `<p><strong>Discount (${totals.discountPct}%):</strong> -£${totals.discount.toFixed(2)}</p>` : ''}
+          <p class="grand-total"><strong>Grand Total:</strong> £ ${totals.grand.toFixed(2)}</p>
+          <p class="server-name">Staff: ${staffName ? `(${staffName})` : ''}</p>
+          <hr />
+        </div>
+      </div>
+    `;
+  };
+
+  // Print in a small window and auto-close
+  const printReceipt = (html, title = 'Receipt') => {
+    const w = window.open('', '_blank', 'width=420,height=640');
+    const styles = `
+      <style>
+        @page { size: 80mm auto; margin: 0; }
+        html, body { margin:0; padding:0; }
+        body { font-family: 'Courier New', Courier, monospace; background:#fff; color:#000; }
+        .bill-section { width:72mm; max-width:72mm; padding:6mm 4mm; margin:0 auto; font-size:11px; line-height:1.12; font-weight:600; }
+        .bill-section strong { font-weight:800; }
+        .receipt-header { text-align:center; margin-bottom:2mm; }
+        .receipt-header h2 { font-size:13px; margin:0 0 1.5mm 0; font-weight:800; }
+        .receipt-header p { margin:1mm 0; }
+        .receipt-table { width:100%; font-size:11px; border-collapse:collapse; margin-top:2mm; }
+        .receipt-table th, .receipt-table td { padding:1mm 0; text-align:left; border-bottom:1px dashed #bbb; font-weight:600; }
+        .receipt-summary p { margin:1mm 0; }
+        hr { border:0; border-top:1px dashed #bbb; margin:2mm 0; }
+      </style>
+    `;
+
+    if (!w) {
       window.print();
-      afterPrintCleanup();
       return;
     }
 
-    const printWindow = window.open('', '_blank', 'width=420,height=640');
-    if (!printWindow) {
-      // Popups blocked: try direct print of current page (overlay is print-optimized)
-      window.print();
-      afterPrintCleanup();
-      return;
-    }
-const styles = `
-  <style>
-    @page { size: 80mm auto; margin: 0; }
-    html, body { margin:0; padding:0; }
-    body { font-family: 'Courier New', Courier, monospace; background:#fff; }
-    .bill-section {
-      width: 72mm; max-width:72mm; padding: 6mm 4mm; margin: 0 auto;
-      font-size: 11px; line-height: 1.12; color:#000;
-      font-weight: 600;           /* values slightly thicker */
-    }
-    .bill-section strong {
-      font-weight: 800;           /* labels extra bold */
-    }
-    .receipt-header { text-align:center; margin-bottom: 2mm; }
-    .receipt-header h2 { font-size: 13px; margin: 0 0 1.5mm 0; font-weight: 800; }
-    .receipt-header p { margin: 1mm 0; }
-    .receipt-table { width:100%; font-size: 11px; border-collapse: collapse; margin-top: 2mm; }
-    .receipt-table th, .receipt-table td {
-      padding: 1mm 0; text-align:left; border-bottom:1px dashed #bbb;
-      font-weight: 600;           /* table text also thicker */
-    }
-    .receipt-summary p { margin: 1mm 0; }
-    hr { border:0; border-top:1px dashed #bbb; margin: 2mm 0; }
-    /* no action buttons in print */
-    .receipt-header-actions { display:none; }
-  </style>
-`;
+    w.document.open();
+    w.document.write(`<!doctype html><html><head><meta charset="utf-8"/><title>${title}</title>${styles}</head><body>${html}</body></html>`);
+    w.document.close();
 
-
-    printWindow.document.open();
-    printWindow.document.write(`<!doctype html>
-      <html>
-        <head>
-          <meta charset="utf-8" />
-          <title>Receipt #${orderNumber ?? nextTempOrderNumber ?? ''}</title>
-          ${styles}
-        </head>
-        <body>
-          <div class="bill-section">${node.innerHTML}</div>
-        </body>
-      </html>`);
-    printWindow.document.close();
-
-    // Trigger print when ready, then auto-close popup and reset order
     const doPrint = () => {
-      try { printWindow.focus(); printWindow.print(); }
-      finally {
-        // Some browsers delay close; also set a fallback timeout
-        printWindow.close();
-        setTimeout(() => { try { printWindow.close(); } catch {} }, 500);
-        afterPrintCleanup();
-      }
+      try { w.focus(); w.print(); } finally { w.close(); }
     };
-
-    // If the window says it's loaded, print; else print after a short delay
-    if (printWindow.document.readyState === 'complete') {
+    if (w.document.readyState === 'complete') {
       setTimeout(doPrint, 50);
     } else {
-      printWindow.onload = () => setTimeout(doPrint, 50);
+      w.onload = () => setTimeout(doPrint, 50);
     }
   };
 
@@ -259,14 +284,34 @@ const styles = `
 
     try {
       const res = await api.post('/orders', payload);
-      setOrderNumber(res.data.order.order_number);
-      setOrderDate(res.data.order.date);
-      setOrderType(res.data.order.order_type || orderType);
+      const placed = res?.data?.order || {};
 
-      setShowReceipt(true);
+      // Compute totals using current cart values at the moment of placement
+      const totals = {
+        subtotal: getTotal(),
+        vat: getIncludedTax(),
+        service: getIncludedService(),
+        discount: getDiscountAmount(),
+        discountPct: discountPercent,
+        grand: getGrandTotal(),
+      };
 
-      // 👇 Automatically open print preview and close everything after
-      setTimeout(() => handlePrint(), 60);
+      // Build printable HTML directly (no overlay)
+      const html = renderReceiptHTML({
+        orderNumber: placed.order_number ?? nextTempOrderNumber,
+        orderType: placed.order_type || orderType,
+        customerName,
+        paymentMethod,
+        orderDate: placed.date ?? getDateTime(),
+        items: selectedItems,
+        totals,
+        staffName: tillOpenedBy
+      });
+
+      printReceipt(html, `Receipt #${placed.order_number ?? nextTempOrderNumber}`);
+
+      // Reset for a new order
+      startNewOrder();
     } catch (err) {
       console.error('Order placement failed:', err);
       toast.error('Failed to place order');
@@ -298,7 +343,7 @@ const styles = `
       const res = await api.post('/auth/login', { username: authUsername, password: authPassword });
       if (res.status === 200 && res.data.token) {
         const role = res.data.role || 'staff';
-        setUserRole(role);
+        // Persist to localStorage only (no local state to avoid unused-var)
         localStorage.setItem('userRole', role);
 
         if (tillActionType === 'open') {
@@ -326,6 +371,34 @@ const styles = `
 
   const placeDisabled = !isTillOpen || !paymentMethod || selectedItems.length === 0;
 
+  // NEW: toggle favourite for an item id
+  const toggleFavourite = (itemId) => {
+    setFavourites(prev => {
+      const exists = prev.includes(itemId);
+      const next = exists ? prev.filter(id => id !== itemId) : [...prev, itemId];
+      localStorage.setItem('favourites', JSON.stringify(next));
+      return next;
+    });
+  };
+
+  // Derived: filtered menu list (supports favourites special filter)
+  const filteredMenu = menuItems.filter(item => {
+    const matchCategory =
+      categoryFilter === 'all'
+        ? true
+        : categoryFilter === '__favs__'
+          ? favourites.includes(item.id)
+          : (item.category ?? '').toString() === categoryFilter;
+
+    const matchVeg =
+      vegFilter === 'all' ||
+      (vegFilter === 'veg' && item.veg) ||
+      (vegFilter === 'nonveg' && !item.veg);
+
+    const matchSearch = (item.name?.toLowerCase() || '').includes(searchQuery.toLowerCase());
+    return matchCategory && matchVeg && matchSearch;
+  });
+
   return (
     <DashboardLayout>
       {/* Auth Modal */}
@@ -351,6 +424,8 @@ const styles = `
 
             <div className="filters">
               <button onClick={() => setCategoryFilter('all')} className={categoryFilter === 'all' ? 'active' : ''}>All</button>
+              {/* NEW: Favourites filter tab */}
+              <button onClick={() => setCategoryFilter('__favs__')} className={categoryFilter === '__favs__' ? 'active' : ''}>⭐ Favourites</button>
               {categories.map(cat => (
                 <button key={cat} onClick={() => setCategoryFilter(cat)} className={categoryFilter === cat ? 'active' : ''}>{cat}</button>
               ))}
@@ -372,29 +447,31 @@ const styles = `
           </div>
 
           <div className="menu-grid">
-            {menuItems.filter(item =>
-              (categoryFilter === 'all' || (item.category ?? '').toString() === categoryFilter) &&
-              (
-                vegFilter === 'all' ||
-                (vegFilter === 'veg' && item.veg) ||
-                (vegFilter === 'nonveg' && !item.veg)
-              ) &&
-              (item.name?.toLowerCase().includes(searchQuery.toLowerCase()))
-            ).map(item => (
-              <div key={item.id} className="menu-card" onClick={() => handleAddItem(item)}>
-                <img
-                  src={imageMapping[item.name] || "/images/default-food.jpg"}
-                  alt={item.name}
-                  className="menu-item-image"
-                />
-                <h4>{item.name}</h4>
-                <p>£{item.price}</p>
-                <div className="veg-status">
-                  <span className={`dot ${item.veg ? 'veg' : 'non-veg'}`}></span>
-                  <span>{item.veg ? 'Veg' : 'Non-Veg'}</span>
-                </div>
-                <small className="category-label">{item.category}</small>
+            {filteredMenu.map(item => (
+             <div key={item.id} className="menu-card" onClick={() => handleAddItem(item)}>
+              {/* Heart button in top-right */}
+              <button
+                className={`fav-btn ${favourites.includes(item.id) ? 'active' : ''}`}
+                onClick={(e) => { e.stopPropagation(); toggleFavourite(item.id); }}
+                title={favourites.includes(item.id) ? 'Remove from favourites' : 'Add to favourites'}
+              >
+                {favourites.includes(item.id) ? '❤️' : '🤍'}
+              </button>
+
+              <img
+                src={imageMapping[item.name] || "/images/default-food.jpg"}
+                alt={item.name}
+                className="menu-item-image"
+              />
+              <h4>{item.name}</h4>
+              <p>£{item.price}</p>
+              <div className="veg-status">
+                <span className={`dot ${item.veg ? 'veg' : 'non-veg'}`}></span>
+                <span>{item.veg ? 'Veg' : 'Non-Veg'}</span>
               </div>
+              <small className="category-label">{item.category}</small>
+            </div>
+
             ))}
           </div>
         </div>
