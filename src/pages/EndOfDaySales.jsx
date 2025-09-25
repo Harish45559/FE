@@ -27,6 +27,8 @@ ChartJS.register(
   Legend
 );
 
+const PAGE_SIZES = [10, 20, 50];
+
 const EndOfDaySales = () => {
   const [tab, setTab] = useState('summary');
   const [summary, setSummary] = useState({ totalSales: 0, cashSales: 0, cardSales: 0 });
@@ -40,6 +42,10 @@ const EndOfDaySales = () => {
 
   // NEW: chart type toggle for Daily Sales
   const [chartType, setChartType] = useState('bar'); // 'bar' | 'line'
+
+  // NEW: Orders tab-only pagination
+  const [ordersPage, setOrdersPage] = useState(1);
+  const [ordersPageSize, setOrdersPageSize] = useState(PAGE_SIZES[0]);
 
   const todayISO = DateTime.now().toISODate();
 
@@ -82,6 +88,18 @@ const EndOfDaySales = () => {
     return orders.filter((o) => o.payment_method === paymentFilter);
   }, [orders, paymentFilter]);
 
+  // Reset Orders pagination when filters/date range change
+  useEffect(() => {
+    setOrdersPage(1);
+  }, [paymentFilter, activeRange, ordersPageSize, orders.length]);
+
+  // Page math for Orders tab
+  const ordersPageCount = Math.max(1, Math.ceil((filteredOrders?.length || 0) / ordersPageSize));
+  const ordersPageRows = useMemo(() => {
+    const start = (ordersPage - 1) * ordersPageSize;
+    return filteredOrders.slice(start, start + ordersPageSize);
+  }, [filteredOrders, ordersPage, ordersPageSize]);
+
   const headerDateLabel = useMemo(() => {
     const { from, to } = activeRange;
     return from === to
@@ -102,21 +120,18 @@ const EndOfDaySales = () => {
     setTab('summary');
   };
 
-  
   const dailySeries = useMemo(() => {
     const map = new Map();
     for (const o of orders) {
       const iso = o.created_at || o.date || o.createdAt;
       if (!iso) continue;
-      const day = DateTime.fromISO(iso).toISODate(); 
+      const day = DateTime.fromISO(iso).toISODate();
       const amt = Number(o.final_amount ?? o.total_amount ?? o.amount ?? 0);
       map.set(day, (map.get(day) || 0) + (isNaN(amt) ? 0 : amt));
     }
 
-   
     const entries = Array.from(map.entries()).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
 
-    
     if (entries.length === 0) {
       const { from, to } = activeRange;
       const start = DateTime.fromISO(from);
@@ -328,8 +343,8 @@ const EndOfDaySales = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredOrders.length ? (
-                  filteredOrders.map((o) => (
+                {ordersPageRows.length ? (
+                  ordersPageRows.map((o) => (
                     <tr key={o.id}>
                       <td>{o.display_number || o.order_number || o.id}</td>
                       <td>{o.created_at ? DateTime.fromISO(o.created_at).toFormat('dd/MM/yyyy HH:mm') : '-'}</td>
@@ -345,6 +360,27 @@ const EndOfDaySales = () => {
                 )}
               </tbody>
             </table>
+
+            {/* Orders page controls (bottom) */}
+            <div className="orders-controls" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginTop: 8, gap: 10 }}>
+              <label style={{ fontSize: 14 }}>
+                Page size:&nbsp;
+                <select
+                  className="date-input"
+                  value={ordersPageSize}
+                  onChange={(e) => { setOrdersPageSize(Number(e.target.value)); setOrdersPage(1); }}
+                >
+                  {PAGE_SIZES.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </label>
+              <div className="pagination" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <button onClick={() => setOrdersPage(1)} disabled={ordersPage === 1}>⏮</button>
+                <button onClick={() => setOrdersPage((p) => Math.max(1, p - 1))} disabled={ordersPage === 1}>◀</button>
+                <span style={{ fontSize: 14 }}>Page {ordersPage} / {ordersPageCount}</span>
+                <button onClick={() => setOrdersPage((p) => Math.min(ordersPageCount, p + 1))} disabled={ordersPage === ordersPageCount}>▶</button>
+                <button onClick={() => setOrdersPage(ordersPageCount)} disabled={ordersPage === ordersPageCount}>⏭</button>
+              </div>
+            </div>
           </div>
         )}
       </div>
