@@ -333,162 +333,253 @@
 
 
 
-/* MOBILE (iOS & Android) - START
-   App-only responsiveness for touch devices (portrait & landscape).
-   Scoped to small widths + touch devices so desktop/web layout remains unchanged.
-   Paste this at the end of Attendance.css
+/* MOBILE (iOS & Android) — RESPONSIVE & USER-FRIENDLY
+   Paste this at the END of Attendance.css
+   - Only affects touch devices (pointer: coarse) and mobile widths
+   - No HTML/JSX changes needed
 */
 
-/* Target touch devices and typical mobile widths */
-@media (max-width: 820px) and (pointer: coarse) {
-  /* Stack main areas vertically and use full width panels */
+/* --- tuneable variables (change to match your theme if needed) --- */
+:root {
+  --mobile-padding: 14px;
+  --card-radius: 12px;
+  --card-gap: 12px;
+  --tap-size: 48px;          /* recommended minimum touch size */
+  --font-lg: 17px;
+  --font-md: 15px;
+  --font-sm: 13px;
+  --muted: #9aa0a6;          /* fallback muted text */
+  --accent-positive: #2ea44f; /* success */
+  --accent-negative: #ff6b4a; /* danger */
+  --action-height: 52px;
+}
+
+/* Only apply to touch devices (phones/tablets) — minimizes web/desktop impact */
+@media (pointer: coarse) and (max-width: 820px) {
+  /* Root container: stack vertically and allow natural scrolling */
   .attendance-container {
-    flex-direction: column;
-    gap: 12px;
-    padding: 12px;
-    height: auto;               /* let it grow on mobile */
+    display: flex !important;
+    flex-direction: column !important;
+    gap: var(--card-gap) !important;
+    padding: var(--mobile-padding) !important;
+    box-sizing: border-box;
     min-height: 100vh;
+    align-items: stretch;
   }
 
+  /* Lists and panels become full-width "cards" */
   .employee-list,
   .clock-panel {
-    flex: none;
-    width: 100%;
-    border-radius: 12px;
-    padding: 14px;
+    width: 100% !important;
+    border-radius: var(--card-radius) !important;
+    padding: 14px !important;
+    background-clip: padding-box;
+    box-sizing: border-box;
+    margin: 0 !important;
   }
 
-  /* Make search bigger and easier to tap */
+  /* Search: larger target, clear placeholder */
   .search-bar {
-    height: 50px;
-    font-size: 16px;
-    padding: 12px 16px;
+    width: 100% !important;
+    height: var(--tap-size) !important;
+    padding: 0 14px !important;
+    font-size: var(--font-md) !important;
+    border-radius: calc(var(--card-radius) - 4px) !important;
+    box-sizing: border-box;
+  }
+
+  /* Employee grid/list: single column for readability */
+  .employee-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  /* Employee card: bigger avatar + clearer typography for touch */
+  .employee-card {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    padding: 12px !important;
+    border-radius: 10px !important;
+    min-height: 64px !important;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .employee-card:active { transform: scale(0.998); } /* subtle feedback */
+
+  .employee-card .avatar-circle {
+    width: 56px !important;
+    height: 56px !important;
+    min-width: 56px !important;
+    border-radius: 50% !important;
+    font-size: 18px !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .employee-card .employee-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .employee-card .employee-meta strong {
+    font-size: var(--font-lg) !important;
+    line-height: 1.05;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .employee-card .status-text {
+    font-size: var(--font-sm);
+    color: var(--muted);
+  }
+  .employee-card .status-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 8px;
+  }
+  .status-clocked-in  .status-dot { background: var(--accent-positive); }
+  .status-clocked-out .status-dot { background: var(--accent-negative); }
+
+  /* Clock panel typography & spacing */
+  .clock-panel h3 {
+    font-size: var(--font-lg) !important;
+    margin: 0 0 6px 0;
+  }
+  .live-clock {
+    font-size: var(--font-md) !important;
+    color: var(--muted);
     margin-bottom: 10px;
   }
 
-  /* Employee grid: single column on narrow phones, two on larger phones */
-  .employee-grid {
-    display: grid;
-    grid-template-columns: repeat(1, 1fr);
-    gap: 12px;
-    overflow: visible;
-  }
-
-  /* Employee card: increase hit area for touch */
-  .employee-card {
-    padding: 14px;
-    border-radius: 12px;
-    min-height: 74px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    text-align: left;
-  }
-  .employee-card .avatar-circle {
-    width: 56px;
-    height: 56px;
-    font-size: 18px;
-  }
-  .employee-card strong {
-    font-size: 15px;
-    line-height: 1.1;
-  }
-  .status-text { font-size: 13px; }
-
-  /* Clock panel adjustments */
-  .clock-panel {
-    padding: 16px;
-  }
-  .clock-panel h3 { font-size: 18px; margin-bottom: 8px; }
-  .live-clock { font-size: 15px; margin-bottom: 10px; }
-
-  /* PIN boxes: shrink and center */
+  /* PIN entry boxes: centered and larger for visibility */
   .pin-display-box {
-    gap: 10px;
-    margin-bottom: 12px;
-    justify-content: center;
+    display: flex !important;
+    gap: 10px !important;
+    justify-content: center !important;
+    margin-bottom: 12px !important;
   }
   .pin-digit-box {
-    width: 44px;
-    height: 44px;
-    line-height: 44px;
-    font-size: 20px;
-    border-radius: 10px;
-  }
-
-  /* Keypad: make buttons larger enough for thumbs and responsive grid */
-  .numbers-grid {
-    width: 100%;
-    max-width: 360px;
-    margin: 0 auto 14px;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-  }
-  .keypad-btn {
-    width: 100%;
-    padding-top: 100%; /* square by using aspect ratio trick */
-    position: relative;
-    border-radius: 999px;
-    font-size: 18px;
-    box-shadow: none;
-  }
-  .keypad-btn > * {
-    /* keep label centered inside square button */
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-  }
-
-  /* Action buttons: full-width stacked on small screens for easier tapping */
-  .action-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    width: 100%;
-  }
-  .action-card {
-    min-width: 0;
-    width: 100%;
-    padding: 14px;
-    border-radius: 10px;
-    font-size: 16px;
+    width: 54px !important;
+    height: 54px !important;
+    line-height: 54px !important;
+    border-radius: 8px !important;
+    font-size: 20px !important;
     text-align: center;
+    box-sizing: border-box;
   }
 
-  /* Reduce shadows and heavyweight visuals on mobile for performance */
-  .employee-card,
-  .action-card,
-  .keypad-btn,
-  .clock-panel,
-  .employee-list {
+  /* Keypad: responsive grid, large circular-ish buttons for thumbs */
+  .numbers-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 12px !important;
+    justify-items: center;
+    align-items: center;
+    width: 100% !important;
+    max-width: 420px;
+    margin: 0 auto 12px auto;
+  }
+
+  .keypad-btn {
+    width: 100% !important;
+    height: var(--action-height) !important;
+    min-height: var(--tap-size) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: var(--font-md) !important;
+    border-radius: calc(var(--action-height) / 2) !important; /* pill shape */
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .keypad-btn:active { transform: translateY(1px); }
+
+  /* Action buttons: full width on narrow screens for easier access */
+  .action-buttons {
+    display: flex !important;
+    gap: 10px !important;
+    margin-top: 6px !important;
+  }
+  .action-buttons .action-card {
+    flex: 1 1 50% !important;
+    height: var(--action-height) !important;
+    min-height: var(--tap-size) !important;
+    font-size: var(--font-md) !important;
+    border-radius: calc(var(--action-height) / 2) !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 10px;
+  }
+
+  /* Make primary action more prominent and ensure contrast */
+  .action-card.clock-in {
+    background: #2e8b57; /* greenish default */
+    color: #fff;
+  }
+  .action-card.clock-out {
+    background: #f08a3a; /* orange default */
+    color: #fff;
+  }
+
+  /* Reduce heavy shadows & animations for mobile performance */
+  .employee-card, .action-card, .keypad-btn, .clock-panel, .employee-list {
     box-shadow: none !important;
+    transition: transform .06s linear, box-shadow .06s linear;
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
 
-  /* Prevent accidental horizontal scroll */
+  /* prevent horizontal scrolling from accidental overflow */
   html, body, #root {
-    overflow-x: hidden;
+    overflow-x: hidden !important;
+  }
+
+  /* Accessibility: larger focus ring for keyboard/bluetooth keyboard users */
+  .keypad-btn:focus, .action-card:focus, .employee-card:focus {
+    outline: 3px solid rgba(255,255,255,0.08);
+    outline-offset: 2px;
   }
 }
 
-/* Slight variant for very small phones in portrait (narrower than 380px) */
-@media (max-width: 380px) and (pointer: coarse) {
-  .search-bar { font-size: 15px; height: 48px; padding: 10px 12px; }
+/* Very small phones — slightly compress paddings and sizes */
+@media (pointer: coarse) and (max-width: 380px) {
+  :root {
+    --mobile-padding: 10px;
+    --card-gap: 10px;
+    --tap-size: 44px;
+    --action-height: 48px;
+    --font-lg: 16px;
+    --font-md: 14px;
+    --font-sm: 12px;
+  }
+  .pin-digit-box { width: 48px; height: 48px; line-height: 48px; font-size: 18px; }
   .employee-card .avatar-circle { width: 48px; height: 48px; font-size: 16px; }
-  .pin-digit-box { width: 40px; height: 40px; line-height: 40px; font-size: 18px; }
-  .numbers-grid { gap: 10px; max-width: 320px; }
-  .action-card { padding: 12px; font-size: 15px; }
+  .numbers-grid { gap: 10px; max-width: 360px; }
 }
 
-/* Landscape phones / small tablets - keep two-column but still touch-optimized
-   left list above right panel only if viewport height is small */
-@media (max-width: 1024px) and (pointer: coarse) and (orientation: landscape) {
-  .attendance-container { flex-direction: row; gap: 10px; padding: 10px; }
-  .employee-list { flex: 1 1 55%; max-height: calc(100vh - 40px); overflow-y: auto; }
-  .clock-panel { flex: 1 1 45%; max-height: calc(100vh - 40px); overflow-y: auto; }
-  .numbers-grid { max-width: 300px; }
+/* Landscape phones / larger tablets — two-column friendly but still touch-optimized */
+@media (pointer: coarse) and (min-width: 600px) and (max-width: 1024px) and (orientation: landscape) {
+  .attendance-container {
+    flex-direction: row !important;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .employee-list { flex: 0 0 48%; max-height: calc(100vh - 40px); overflow-y: auto; }
+  .clock-panel { flex: 0 0 52%; max-height: calc(100vh - 40px); overflow-y: auto; }
+  .numbers-grid { max-width: 320px; }
 }
 
-/* MOBILE (iOS & Android) - END */
+/* Respect user's motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .employee-card, .action-card, .keypad-btn { transition: none !important; }
+}
+
+/* End MOBILE (iOS & Android) responsive block */
