@@ -41,15 +41,13 @@ const DashboardLayout = ({ children }) => {
               <li><NavLink to="/master-data">🗂️ Master Data</NavLink></li>
               <li><NavLink to="/end-of-day-sales">📊 End of Day Sales</NavLink></li>
               <li><NavLink to="/held-orders">⏳ Held Orders</NavLink></li>
+              <li><NavLink to="/billing">💵 Billing Counter</NavLink></li>
+              <li><NavLink to="/previous-orders">📜 Previous Orders</NavLink></li>
             </>
           )}
 
           {/* Shared routes */}
           <li><NavLink to="/attendance">⏰ Attendance</NavLink></li>
-          <li><NavLink to="/billing">💵 Billing Counter</NavLink></li>
-          <li><NavLink to="/previous-orders">📜 Previous Orders</NavLink></li>
-          
-
           {/* Logout */}
           <li>
             <button onClick={handleLogout} style={{ marginTop: '1rem' }}>
