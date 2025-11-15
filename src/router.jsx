@@ -79,7 +79,7 @@ const AppRouter = () => {
     {
       path: '/billing',
       element: (
-        <ProtectedRoute allowedRoles={['admin', 'employee']}>
+        <ProtectedRoute allowedRoles={['admin']}>
           <BillingCounter />
         </ProtectedRoute>
       ),
@@ -87,7 +87,7 @@ const AppRouter = () => {
     {
       path: '/previous-orders',
       element: (
-        <ProtectedRoute allowedRoles={['admin', 'employee']}>
+        <ProtectedRoute allowedRoles={['admin']}>
           <PreviousOrders />
         </ProtectedRoute>
       ),
