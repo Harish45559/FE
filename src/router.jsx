@@ -95,7 +95,7 @@ const AppRouter = () => {
     {
       path: '/held-orders',
       element: (
-        <ProtectedRoute allowedRoles={['admin', 'employee']}>
+        <ProtectedRoute allowedRoles={['admin']}>
           <HeldOrders />
         </ProtectedRoute>
       ),
