@@ -333,14 +333,14 @@
 
 
 
-/* ===== Fix: keep menu visible on mobile (convert left sidebar -> top bar) =====
-   Paste this AFTER your existing mobile CSS block.
-   No JSX changes. Only CSS transforms the sidebar for mobile.
-*/
+/* ================================
+   Mobile UI Fix: top menu + safe area
+   Paste AFTER your existing mobile rules
+   ================================ */
 
 @media (max-width: 820px) and (pointer: coarse) {
 
-  /* Make the left sidebar collapse into a fixed top bar */
+  /* ---------- Topbar / keep menu visible ---------- */
   .sidebar {
     position: fixed !important;
     top: 0 !important;
@@ -349,101 +349,137 @@
     height: 64px !important;
     display: flex !important;
     align-items: center !important;
-    gap: 12px !important;
-    padding: 8px 12px !important;
-    background: var(--sidebar-bg, #ffffff) !important; /* fallback to existing theme */
+    justify-content: space-between !important;
+    gap: 10px !important;
+    padding: 8px 14px !important;
+    background: var(--sidebar-bg, #fff) !important;
     box-shadow: 0 6px 18px rgba(18,25,30,0.06) !important;
+    z-index: 1400 !important;
     border-radius: 0 !important;
-    z-index: 1200 !important;
-    overflow: visible !important;
   }
 
-  /* Logo / brand on left */
+  /* Brand (left) and utility items (right) */
   .sidebar .brand, .sidebar .logo, .sidebar .app-title {
     display: inline-flex !important;
     align-items: center !important;
     gap: 8px !important;
-    margin-right: 8px !important;
     font-weight: 700 !important;
     font-size: 18px !important;
+    margin: 0 !important;
   }
 
-  /* Navigation items become a horizontal group */
   .sidebar .menu-section,
-  .sidebar .nav, 
-  .sidebar .nav-items,
+  .sidebar .nav,
   .sidebar .menu-list {
     display: flex !important;
-    align-items: center !important;
     gap: 8px !important;
-    margin-left: 8px !important;
-  }
-
-  /* Style each menu item to be compact and touch-friendly */
-  .sidebar .menu-item, 
-  .sidebar .nav a, 
-  .sidebar button, 
-  .sidebar .attendance-btn {
-    display: inline-flex !important;
     align-items: center !important;
-    justify-content: center !important;
-    padding: 8px 12px !important;
-    min-height: 40px !important;
-    border-radius: 10px !important;
-    font-size: 15px !important;
-    text-decoration: none !important;
-    white-space: nowrap !important;
+    margin: 0 !important;
   }
 
-  /* Keep primary (Attendance) highlighted but compact */
-  .sidebar .attendance-btn, 
-  .sidebar .active {
-    box-shadow: 0 6px 18px rgba(231, 76, 60, 0.12) !important;
+  .sidebar .menu-item, .sidebar a, .sidebar button {
+    padding: 8px 12px !important;
+    border-radius: 10px !important;
+    min-height: 40px !important;
+    font-size: 15px !important;
+  }
+
+  /* keep the active/attendance look */
+  .sidebar .attendance-btn, .sidebar .active {
     background: #e74007 !important;
     color: #fff !important;
+    box-shadow: 0 6px 18px rgba(231,76,60,0.12) !important;
   }
 
-  /* Hide non-essential sidebar elements (like a duplicated footer) on top bar */
-  .sidebar .sidebar-footer, 
-  .sidebar .logout-footer, 
-  .sidebar .extra-links {
-    display: none !important;
-  }
-
-  /* Main content needs spacing from the top bar so nothing is hidden */
+  /* ---------- Push content below the fixed topbar ---------- */
   .attendance-container-parent,
   .main-content,
   .attendance-wrapper,
-  #main-area {
-    margin-top: 76px !important; /* equals top bar height + small gap */
+  #main-area,
+  .page-content {
+    margin-top: calc(64px + env(safe-area-inset-top, 0px) + 8px) !important;
   }
 
-  /* If your layout uses a two-column wrapper, ensure it wraps vertically */
-  .layout-columns, .page-row, .app-grid {
-    flex-direction: column !important;
-    gap: 12px !important;
-  }
-
-  /* Ensure search & first card are visible (avoid huge left padding) */
-  .content-inner, .page-content, .attendance-content {
+  /* Ensure inner content does not collide with the topbar padding */
+  .content-inner, .attendance-content {
     padding-top: 6px !important;
   }
 
-  /* Accessibility: make the top bar focusable items easy to reach */
-  .sidebar .menu-item:focus, .sidebar button:focus, .sidebar a:focus {
-    outline: 3px solid rgba(0,0,0,0.06) !important;
-    outline-offset: 2px !important;
+  /* ---------- Safe area bottom + pinned action buttons ---------- */
+
+  /* Action buttons container will be fixed above bottom safe area for maximum visibility */
+  .action-buttons {
+    position: fixed !important;
+    left: 12px !important;
+    right: 12px !important;
+    bottom: calc(12px + env(safe-area-inset-bottom, 12px)) !important;
+    display: flex !important;
+    gap: 12px !important;
+    z-index: 1350 !important;
+    pointer-events: auto !important;
   }
 
-  /* Very small phones: slightly reduce top bar height */
+  /* Make sure the actions are large, tappable and centered */
+  .action-buttons .clock-in-btn,
+  .action-buttons .clock-out-btn,
+  .action-card {
+    flex: 1 1 50% !important;
+    height: 56px !important;
+    border-radius: 12px !important;
+    font-size: 18px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+  }
+
+  /* Prevent content behind fixed action-buttons from being hidden:
+     add bottom padding to clock panel equal to action-buttons height + safe area */
+  .clock-panel, .clock-panel .panel-inner, .attendance-wrapper {
+    padding-bottom: calc(56px + 24px + env(safe-area-inset-bottom, 12px)) !important;
+  }
+
+  /* If your layout had an existing inline bottom control, hide it so only fixed one displays */
+  .bottom-inline-actions, .inline-action-row {
+    display: none !important;
+  }
+
+  /* ---------- Keypad & content adjustments (keeps scrolling usable) ---------- */
+  .numbers-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 14px !important;
+    width: 100% !important;
+    max-width: 420px !important;
+    margin: 0 auto 10px !important;
+  }
+
+  .keypad-btn {
+    width: 100% !important;
+    height: 64px !important;
+    border-radius: 50% !important;
+    min-width: 64px !important;
+    font-size: 20px !important;
+  }
+
+  /* Make sure the clock panel is scrollable but not covered by topbar */
+  .clock-panel {
+    max-height: calc(100vh - (64px + 100px)) !important; /* leaves space for header + actions */
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  /* ---------- Small phone tweak ---------- */
   @media (max-width: 380px) {
     .sidebar { height: 60px !important; padding: 6px 10px !important; }
-    .attendance-container-parent, .main-content { margin-top: 66px !important; }
-    .sidebar .brand { font-size: 16px !important; }
-    .sidebar .menu-item { padding: 7px 10px !important; font-size: 14px !important; }
+    .attendance-container-parent, .page-content { margin-top: calc(60px + env(safe-area-inset-top, 0px) + 6px) !important; }
+    .action-buttons { left: 10px !important; right: 10px !important; bottom: calc(10px + env(safe-area-inset-bottom, 10px)) !important; }
+    .keypad-btn { height: 58px !important; min-width: 58px !important; }
+    .action-buttons .clock-in-btn, .action-buttons .clock-out-btn { height: 52px !important; }
+    .clock-panel { padding-bottom: calc(52px + 20px + env(safe-area-inset-bottom, 10px)) !important; }
   }
 }
 
-/* =======================================================================
-   End of sidebar->topbar mobile fix
-   ======================================================================= */
+/* ensure no accidental horizontal scroll */
+html, body, #root {
+  overflow-x: hidden !important;
+}
