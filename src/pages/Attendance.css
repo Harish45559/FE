@@ -333,45 +333,66 @@
 
 
 
-/* ====== Fix: Centered two-column mobile layout (robust) ======
-   Paste at end of Attendance.css (after prior mobile rules)
-   - Left = flexible employee list (scroll)
-   - Right = fixed-width keypad card (320px)
-   - Prevents huge empty right area and overlap
-*/
+/* ============================
+  UNIVERSAL MOBILE RESPONSIVENESS
+  Left = employee scroller | Right = sticky keypad
+  Keeps top menu visible. Paste at end of Attendance.css
+  Applies to touch devices (iOS & Android)
+  ============================ */
 
-@media (max-width: 920px) and (pointer: coarse) {
+@media (pointer: coarse) and (max-width: 1024px) {
 
-  /* container that holds both columns; center the content and cap width */
-  .attendance-container-parent,
-  .attendance-layout,
-  .attendance-wrapper {
+  /* ------------- Top menu / header ------------- */
+  /* Keep existing top menu visible if present (common classes) */
+  .sidebar, .topbar, .header {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 64px !important;
+    z-index: 1600 !important;
     display: flex !important;
-    justify-content: center !important; /* center columns in viewport */
-    gap: 12px !important;
-    padding: 12px !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 8px 14px !important;
+    box-sizing: border-box !important;
+    background: var(--topbar-bg, #fff) !important;
+    box-shadow: 0 6px 18px rgba(18,25,30,0.06) !important;
+  }
+
+  /* Ensure main content is pushed below the fixed topbar */
+  .main, .content, .attendance-container-parent, .page-content, .attendance-wrapper {
     margin-top: calc(64px + env(safe-area-inset-top, 8px)) !important;
     box-sizing: border-box !important;
-    width: 100% !important;
   }
 
-  /* wrapper that sets a maximum content width so there isn't a huge empty area */
-  .attendance-content-max {
+  /* ------------- Outer layout: centered two-column area ------------- */
+  .attendance-layout, .attendance-container, .attendance-content, .attendance-content-max {
     display: flex !important;
     gap: 12px !important;
     width: 100% !important;
-    max-width: 820px !important; /* keep layout compact and centered */
+    justify-content: center !important;  /* center columns on wide phones/tablets */
+    box-sizing: border-box !important;
+    padding: 12px !important;
+  }
+
+  /* inner content wrapper sets a max-width so layout doesn't stretch into empty space */
+  .attendance-content-max {
+    width: 100% !important;
+    max-width: 900px !important;   /* safe cap for tablets */
+    display: flex !important;
+    gap: 12px !important;
     box-sizing: border-box !important;
   }
 
-  /* LEFT: flexible list column - will shrink/grow but never push keypad away */
-  .left-column,
-  .employee-list-container,
-  .employee-list {
+  /* ------------- LEFT: employee list (scrollable) ------------- */
+  /* Preferred selectors (common): .left-column, .employee-list-container, .employee-list */
+  .left-column, .employee-list-container, .employee-list {
     flex: 1 1 auto !important;
     min-width: 220px !important;
-    max-width: calc(100% - 340px) !important; /* ensures space for 320px keypad + gaps */
-    height: calc(100vh - (64px + 140px)) !important;
+    /* reserve space for the right panel (320px) + gaps */
+    max-width: calc(100% - 340px) !important;
+    height: calc(100vh - (64px + 140px)) !important; /* leaves room for keypad + actions */
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
     padding: 12px !important;
@@ -379,25 +400,35 @@
     background: transparent !important;
   }
 
-  /* RIGHT: fixed-width keypad card so it never stretches or disappears */
-  .right-column,
-  .clock-panel,
-  .timeclock-container {
-    flex: 0 0 320px !important;   /* fixed width */
-    max-width: 320px !important;
+  /* Employee grid single-column for mobile readability */
+  .employee-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+  .employee-card {
+    width: 100% !important;
+    padding: 14px !important;
+    border-radius: 12px !important;
+    box-sizing: border-box !important;
+    cursor: pointer;
+  }
+
+  /* ------------- RIGHT: keypad / pin (fixed width & sticky) ------------- */
+  .right-column, .clock-panel, .timeclock-container, .keypad-panel {
+    flex: 0 0 320px !important;    /* fixed width ensures predictable layout */
     min-width: 320px !important;
+    max-width: 320px !important;
     display: flex !important;
     flex-direction: column !important;
-    gap: 10px !important;
+    gap: 8px !important;
     align-items: center !important;
     padding: 12px !important;
     box-sizing: border-box !important;
   }
 
   /* sticky inner panel so keypad remains visible while left scrolls */
-  .clock-panel .panel-inner,
-  .timeclock-card,
-  .clock-panel.sticky {
+  .clock-panel .panel-inner, .timeclock-card, .keypad-panel .inner {
     position: sticky !important;
     top: calc(64px + 12px + env(safe-area-inset-top, 0px)) !important;
     width: 100% !important;
@@ -407,13 +438,29 @@
     background: var(--card-bg, #fff) !important;
   }
 
-  /* keypad centering + fixed size */
+  /* PIN boxes centered */
+  .pin-display-box {
+    display: flex !important;
+    justify-content: center !important;
+    gap: 10px !important;
+    margin-bottom: 8px !important;
+  }
+  .pin-box {
+    width: 48px !important;
+    height: 48px !important;
+    line-height: 48px !important;
+    border-radius: 10px !important;
+    text-align: center !important;
+    font-size: 20px !important;
+  }
+
+  /* Keypad - centered and constrained */
   .numbers-grid {
     display: grid !important;
     grid-template-columns: repeat(3, 1fr) !important;
     gap: 12px !important;
     width: 100% !important;
-    max-width: 280px !important; /* keeps keypad neat in 320px card */
+    max-width: 280px !important;
     margin: 6px auto 0 auto !important;
   }
   .keypad-btn {
@@ -421,23 +468,25 @@
     min-width: 60px !important;
     border-radius: 50% !important;
     font-size: 20px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow:
+      inset 6px 6px 14px rgba(0,0,0,0.06),
+      inset -6px -6px 14px rgba(255,255,255,0.9) !important;
   }
 
-  /* Ensure left column cards look good */
-  .employee-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
-  .employee-card { padding: 14px 16px !important; border-radius: 12px !important; }
-
-  /* Fix action buttons: centered and above safe area; limited width to match content */
+  /* ------------- Action buttons pinned above bottom safe area ------------- */
   .action-buttons {
     position: fixed !important;
-    left: calc(50% - 410px/2) !important; /* center relative to max-width 820px (820px/2 = 410px) */
+    left: calc(50% - 410px/2) !important; /* centers relative to max-width 820px */
     right: auto !important;
     width: 820px !important;
     max-width: calc(100% - 24px) !important;
     bottom: calc(12px + env(safe-area-inset-bottom, 12px)) !important;
     display: flex !important;
     gap: 12px !important;
-    z-index: 1600 !important;
+    z-index: 1700 !important;
     pointer-events: auto !important;
     margin: 0 auto;
   }
@@ -446,26 +495,43 @@
     height: 56px !important;
     border-radius: 12px !important;
     font-size: 18px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
 
-  /* For very small screens, fallback to simpler centering */
+  /* If your markup uses other container names, fallback selectors (aliases) */
+  /* .left-panel, .right-panel, .keypad, .employees, .clockCard */
+  .left-panel, .employees, .left-col { flex: 1 1 auto !important; overflow-y: auto !important; }
+  .right-panel, .keypad, .clockCard { flex: 0 0 320px !important; min-width: 320px !important; }
+
+  /* ------------- Small-screen tweaks ------------- */
   @media (max-width: 420px) {
     .attendance-content-max { max-width: 420px !important; }
     .left-column { max-width: calc(100% - 340px) !important; min-width: 200px !important; }
-    .action-buttons { left: 12px !important; right: 12px !important; width: auto !important; max-width: 100% !important; }
     .numbers-grid { max-width: 260px !important; gap: 10px !important; }
     .keypad-btn { height: 56px !important; min-width: 56px !important; }
+    .action-buttons { left: 12px !important; right: 12px !important; width: auto !important; max-width: 100% !important; }
   }
 
-  /* ultra tiny devices: stack as last resort */
+  /* ------------- Ultra small devices: final fallback ------------- */
   @media (max-width: 340px) {
-    .attendance-layout, .attendance-content-max { flex-direction: column !important; }
+    .attendance-layout, .attendance-content-max { flex-direction: column !important; align-items: stretch !important; }
     .left-column, .right-column { width: 100% !important; max-width: 100% !important; flex: none !important; }
     .action-buttons { left: 8px !important; right: 8px !important; width: auto !important; }
+    .clock-panel .panel-inner { position: static !important; top: auto !important; }
   }
 
-  /* no horizontal scroll */
+  /* ------------- Accessibility & safety ------------- */
+  .employee-card:focus, .keypad-btn:focus, .action-buttons button:focus {
+    outline: 3px solid rgba(0,0,0,0.06);
+    outline-offset: 2px;
+  }
+
+  /* prevent accidental horizontal scroll */
   html, body, #root { overflow-x: hidden !important; }
 }
 
-/* ===== end fix ===== */
+/* ============================
+   End universal mobile responsiveness
+   ============================ */
