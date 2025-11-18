@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import api from '../services/api';
 import './Reports.css';
@@ -84,7 +84,7 @@ export default function Reports() {
   }, []);
 
   /* -------- Load reports (raw) -------- */
-  const fetchReports = async () => {
+  const fetchReports = useCallback(async () => {
     try {
       const res = await api.get('/reports', {
         params: {
@@ -98,12 +98,21 @@ export default function Reports() {
       console.error('Failed to fetch reports:', e);
       setRawRows([]);
     }
-  };
+  }, [selectedEmployee, fromDate, toDate]);
 
+  // Initial fetch + re-fetch when filters change
   useEffect(() => {
     fetchReports();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fetchReports]);
+
+  // Auto-refresh (polling) every 10 seconds while component mounted
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchReports();
+    }, 10000); // 10s
+
+    return () => clearInterval(interval);
+  }, [fetchReports]);
 
   /* -------- Group & Sum -------- */
   const grouped = useMemo(() => {
