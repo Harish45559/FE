@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import DashboardLayout from '../components/DashboardLayout';
 import api from '../services/api';
 import './Reports.css';
+import { DateTime } from 'luxon';
 
 import usePagination from '../hooks/usePagination';
 import PaginationBar from '../components/PaginationBar';
@@ -54,6 +55,16 @@ const minToHHMM = (mins) => {
   return `${String(h).padStart(2, '0')}:${String(r).padStart(2, '0')}`;
 };
 
+// Convert ISO datetime to UK HH:mm string (safe)
+const ukTimeHHMM = (iso) => {
+  if (!iso) return '';
+  try {
+    return DateTime.fromISO(iso).setZone('Europe/London').toFormat('HH:mm');
+  } catch {
+    return '';
+  }
+};
+
 /* ========================= Component ========================= */
 
 export default function Reports() {
@@ -93,6 +104,7 @@ export default function Reports() {
           to: toDate || undefined
         }
       });
+      // backend returns array
       setRawRows(Array.isArray(res.data) ? res.data : []);
     } catch (e) {
       console.error('Failed to fetch reports:', e);
@@ -140,9 +152,9 @@ export default function Reports() {
       }
       const g = map.get(key);
 
-      // STRICT: only use API's clean fields to avoid strings like "04:23 - 14:38"
-      const clockIn = r.clock_in_uk || '';
-      const clockOut = r.clock_out_uk || '';
+      // Now use canonical clock_in / clock_out (ISO) from backend and convert to UK times for parsing
+      const clockIn = r.clock_in ? ukTimeHHMM(r.clock_in) : '';
+      const clockOut = r.clock_out ? ukTimeHHMM(r.clock_out) : '';
 
       const inMin = timeToMin(clockIn);
       const outMinRaw = timeToMin(clockOut);
@@ -268,7 +280,7 @@ export default function Reports() {
       a.href = URL.createObjectURL(blob);
       a.download = `attendance_report.${type}`;
       a.click();
-    } catch (e) {
+    } catch (err) {
       alert(`Failed to download ${type.toUpperCase()}`);
     }
   };
