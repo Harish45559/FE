@@ -1,4 +1,3 @@
-// Reports.jsx
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import api from '../services/api';
@@ -72,8 +71,6 @@ export default function Reports() {
   const [hoverSessions, setHoverSessions] = useState([]);
   const hoverTimerRef = useRef(null);
 
-  const [isRefreshing, setIsRefreshing] = useState(false);
-
   /* -------- Load employees -------- */
   useEffect(() => {
     (async () => {
@@ -108,58 +105,7 @@ export default function Reports() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /* ========================= AUTO REFRESH ========================= */
-  useEffect(() => {
-    // Polling interval (only when visible)
-    const POLL_MS = 10000;
-    let pollId = null;
-
-    const startPoll = () => {
-      if (pollId) return;
-      pollId = setInterval(() => {
-        if (document.visibilityState === 'visible') fetchReports();
-      }, POLL_MS);
-    };
-
-    const stopPoll = () => {
-      if (pollId) {
-        clearInterval(pollId);
-        pollId = null;
-      }
-    };
-
-    startPoll();
-
-    const onVisibility = () => {
-      if (document.visibilityState === 'visible') fetchReports();
-    };
-    document.addEventListener('visibilitychange', onVisibility);
-
-    const onReportsUpdated = () => fetchReports();
-    window.addEventListener('reportsUpdated', onReportsUpdated);
-
-    const onStorage = (e) => {
-      if (e.key === 'reportsUpdated') fetchReports();
-    };
-    window.addEventListener('storage', onStorage);
-
-    return () => {
-      stopPoll();
-      document.removeEventListener('visibilitychange', onVisibility);
-      window.removeEventListener('reportsUpdated', onReportsUpdated);
-      window.removeEventListener('storage', onStorage);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const handleManualRefresh = async () => {
-    setIsRefreshing(true);
-    await fetchReports();
-    setTimeout(() => setIsRefreshing(false), 300);
-  };
-
-  /* ========================= Group & Sum ========================= */
-
+  /* -------- Group & Sum -------- */
   const grouped = useMemo(() => {
     const map = new Map();
 
@@ -309,160 +255,118 @@ export default function Reports() {
       const blob = new Blob([res.data], {
         type: type === 'csv' ? 'text/csv' : 'application/pdf'
       });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = type === 'csv' ? 'report.csv' : 'report.pdf';
-      link.click();
-      URL.revokeObjectURL(link.href);
-    } catch (err) {
-      console.error('Download error:', err);
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `attendance_report.${type}`;
+      a.click();
+    } catch (e) {
+      alert(`Failed to download ${type.toUpperCase()}`);
     }
   };
 
-  /* -------- Hover detail fetch (detailed sessions) -------- */
-  const fetchDetailedSessions = async (employeeId, date) => {
-    try {
-      const res = await api.get('/reports/detailed-sessions', {
-        params: { employee_id: employeeId, date }
-      });
-      return res.data?.sessions ?? [];
-    } catch (err) {
-      console.error('Failed to fetch detailed sessions', err);
-      return [];
-    }
-  };
-
-  /* -------- Render UI -------- */
+  /* ========================= Render ========================= */
   return (
     <DashboardLayout>
-      <div className="reports-container">
-        <div className="reports-header">
-          <h2>Reports</h2>
-          <div className="reports-actions">
-            <label>
-              Employee:
-              <select value={selectedEmployee} onChange={(e) => setSelectedEmployee(e.target.value)}>
-                <option value="all">All</option>
-                {employees.map((emp) => (
-                  <option key={emp.id} value={emp.id}>
-                    {emp.first_name} {emp.last_name}
-                  </option>
-                ))}
-              </select>
-            </label>
+      <div className="report-container">
+        <div className="filter-section">
+          <select
+            value={selectedEmployee}
+            onChange={(e) => setSelectedEmployee(e.target.value)}
+          >
+            <option value="all">All Employees</option>
+            {employees.map((emp) => (
+              <option key={emp.id} value={emp.id}>
+                {emp.first_name} {emp.last_name}
+              </option>
+            ))}
+          </select>
 
-            <label>
-              From:
-              <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
-            </label>
+          <input type="date" className="date-picker" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
+          <input type="date" className="date-picker" value={toDate} onChange={(e) => setToDate(e.target.value)} />
 
-            <label>
-              To:
-              <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} />
-            </label>
+          <button className="apply-filter-btn" onClick={fetchReports}>Apply Filters</button>
 
-            <button type="button" onClick={fetchReports}>Apply Filters</button>
-
-            <button
-              onClick={handleManualRefresh}
-              className="refresh-btn"
-              disabled={isRefreshing}
-            >
-              {isRefreshing ? 'Refreshing…' : 'Refresh'}
-            </button>
-
-            <div className="export-buttons">
-              <button onClick={() => handleDownload('csv')}>Export CSV</button>
-              <button onClick={() => handleDownload('pdf')}>Export PDF</button>
-            </div>
+          <div className="export-buttons">
+            <button onClick={() => handleDownload('csv')}>Export CSV</button>
+            <button onClick={() => handleDownload('pdf')}>Export PDF</button>
           </div>
         </div>
 
-        <div className="reports-table-wrap">
-          <table className="reports-table">
+        <div className="table-section">
+          <table className="report-table">
             <thead>
               <tr>
-                <th onClick={() => onSort('employee')}>Employee {sortField === 'employee' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
-                <th onClick={() => onSort('date')}>Date {sortField === 'date' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
-                <th onClick={() => onSort('firstIn')}>First In {sortField === 'firstIn' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
-                <th onClick={() => onSort('lastOut')}>Last Out {sortField === 'lastOut' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
-                <th onClick={() => onSort('total')}>Work Total {sortField === 'total' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
-                <th onClick={() => onSort('break')}>Break {sortField === 'break' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
-                <th>Sessions</th>
+                <th onClick={() => onSort('employee')} style={{ cursor: 'pointer' }}>Employee</th>
+                <th onClick={() => onSort('date')} style={{ cursor: 'pointer' }}>Date</th>
+                <th onClick={() => onSort('firstIn')} style={{ cursor: 'pointer' }}>First In</th>
+                <th onClick={() => onSort('lastOut')} style={{ cursor: 'pointer' }}>Last Out</th>
+                <th onClick={() => onSort('total')} style={{ cursor: 'pointer' }}>Hours Worked (Sum)</th>
+                <th onClick={() => onSort('break')} style={{ cursor: 'pointer' }}>Break Time</th>
               </tr>
             </thead>
+
             <tbody>
-              {pageRows && pageRows.length ? pageRows.map((row) => (
-                <tr key={`${row.employeeId}_${row.date}`}>
-                  <td>{row.employeeName}</td>
-                  <td>{row.date}</td>
-                  <td>{row.firstIn}</td>
-                  <td>{row.lastOut}</td>
-                  <td>{row.workTotal}</td>
-                  <td>{row.breakTotal}</td>
-                  <td>
-                    <div
-                      onMouseEnter={async (e) => {
-                        cancelClose();
-                        hoverTimerRef.current && clearTimeout(hoverTimerRef.current);
-                        setHoverPos({ x: e.clientX, y: e.clientY });
-                        setHoverOpen(true);
-                        const sessions = await fetchDetailedSessions(row.employeeId, row.date);
-                        setHoverSessions(sessions);
-                      }}
-                      onMouseLeave={() => {
-                        scheduleClose();
-                      }}
-                      style={{ cursor: 'pointer', textDecoration: 'underline' }}
-                    >
-                      {row.sessions.length} sessions
-                    </div>
-                  </td>
-                </tr>
-              )) : (
+              {pageRows.length === 0 ? (
                 <tr>
-                  <td colSpan={7} style={{ textAlign: 'center', padding: 20 }}>
-                    No records found.
-                  </td>
+                  <td colSpan="6" style={{ textAlign: 'center' }}>No records</td>
                 </tr>
+              ) : (
+                pageRows.map((r) => (
+                  <tr
+                    key={`${r.employeeId}-${r.date}`}
+                    onMouseEnter={(e) => {
+                      cancelClose();
+                      setHoverSessions(r.sessions);
+                      setHoverPos({ x: e.clientX + 10, y: e.clientY + 10 });
+                      setHoverOpen(true);
+                    }}
+                    onMouseLeave={scheduleClose}
+                  >
+                    <td>{r.employeeName}</td>
+                    <td>{r.date}</td>
+                    <td>{r.firstIn}</td>
+                    <td>{r.lastOut}</td>
+                    <td>{r.workTotal}</td>
+                    <td>{r.breakTotal}</td>
+                  </tr>
+                ))
               )}
             </tbody>
           </table>
-        </div>
 
-        <PaginationBar page={page} pageCount={pageCount} setPage={setPage} pageSize={pageSize} setPageSize={setPageSize} />
-
-        {/* Hover card */}
-        {hoverOpen && (
-          <div
-            className="hover-card"
-            style={{
-              position: 'fixed',
-              left: hoverPos.x + 8,
-              top: hoverPos.y + 8,
-              background: '#fff',
-              border: '1px solid #ddd',
-              padding: 8,
-              zIndex: 9999,
-              boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
-            }}
-            onMouseEnter={cancelClose}
-            onMouseLeave={scheduleClose}
-          >
-            <div style={{ fontWeight: 700, marginBottom: 6 }}>Sessions</div>
-            {hoverSessions && hoverSessions.length ? hoverSessions.map((s, i) => (
-              <div key={i} style={{ marginBottom: 6 }}>
-                <div>{s.type === 'Work' ? `${s.clock_in} — ${s.clock_out}` : s.break_time}</div>
-                <div style={{ fontSize: 12, color: '#444' }}>{s.duration}</div>
-              </div>
-            )) : <div style={{ color: '#666' }}>No details</div>}
-          </div>
-        )}
-
-        <div style={{ marginTop: 8, color: '#666' }}>
-          <small>Auto-refresh: this view polls every 10s while visible. To trigger an immediate refresh from other parts of the app: <code>window.dispatchEvent(new Event('reportsUpdated'))</code> or <code>localStorage.setItem('reportsUpdated', Date.now().toString())</code>.</small>
+          <PaginationBar
+            page={page}
+            pageCount={pageCount}
+            pageSize={pageSize}
+            onChangePage={setPage}
+            onChangePageSize={setPageSize}
+          />
         </div>
       </div>
+
+      {hoverOpen && (
+        <div
+          className="hover-card"
+          style={{ position: 'fixed', left: hoverPos.x, top: hoverPos.y, zIndex: 9999 }}
+          onMouseEnter={cancelClose}
+          onMouseLeave={scheduleClose}
+        >
+          <div className="hover-card-title">Day details</div>
+          <div className="hover-card-body">
+            {hoverSessions.length === 0 ? (
+              <div className="hover-card-row">No sessions</div>
+            ) : (
+              hoverSessions.map((s, i) => (
+                <div key={i} className={`hover-card-row ${s.type === 'Break' ? 'is-break' : 'is-work'}`}>
+                  <div className="col type">{s.type}</div>
+                  <div className="col in">{s.in}</div>
+                  <div className="col out">{s.out ? `${s.out} • ${s.duration}` : s.duration}</div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 }
