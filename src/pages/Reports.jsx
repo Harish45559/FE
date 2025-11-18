@@ -105,14 +105,7 @@ export default function Reports() {
     fetchReports();
   }, [fetchReports]);
 
-  // Auto-refresh (polling) every 10 seconds while component mounted
-  useEffect(() => {
-    const interval = setInterval(() => {
-      fetchReports();
-    }, 10000); // 10s
 
-    return () => clearInterval(interval);
-  }, [fetchReports]);
 
   /* -------- Group & Sum -------- */
   const grouped = useMemo(() => {
