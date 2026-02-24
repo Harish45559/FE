@@ -184,14 +184,14 @@ export default function Reports() {
           g.firstInMin != null
             ? `${String(Math.floor(g.firstInMin / 60) % 24).padStart(
                 2,
-                "0"
+                "0",
               )}:${String(g.firstInMin % 60).padStart(2, "0")}`
             : "—",
         lastOut:
           g.lastOutMin != null
             ? `${String(Math.floor(g.lastOutMin / 60) % 24).padStart(
                 2,
-                "0"
+                "0",
               )}:${String(g.lastOutMin % 60).padStart(2, "0")}`
             : "—",
         workTotal: minToHHMM(g.workTotalMin),
@@ -262,7 +262,7 @@ export default function Reports() {
         `/reports/export/${type}?${params.toString()}`,
         {
           responseType: "blob",
-        }
+        },
       );
       const blob = new Blob([res.data], {
         type: type === "csv" ? "text/csv" : "application/pdf",
@@ -280,8 +280,13 @@ export default function Reports() {
   return (
     <DashboardLayout>
       <div className="report-container">
+        <h1 id="reports-title" className="reports-heading">
+          Reports
+        </h1>
+
         <div className="filter-section">
           <select
+            id="reports-employee-dropdown"
             value={selectedEmployee}
             onChange={(e) => setSelectedEmployee(e.target.value)}
           >

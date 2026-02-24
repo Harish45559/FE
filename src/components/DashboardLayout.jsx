@@ -10,7 +10,7 @@ const DashboardLayout = ({ children }) => {
 
   // Use state to ensure updates after login
   const [user, setUser] = useState(() =>
-    JSON.parse(localStorage.getItem("user"))
+    JSON.parse(localStorage.getItem("user")),
   );
 
   // Sync user data from localStorage every 1 second
@@ -32,45 +32,75 @@ const DashboardLayout = ({ children }) => {
   return (
     <div className="dashboard-container">
       <aside className="sidebar">
-        <h2>Mirchi Mafiya</h2>
+        <h2 id="mirchi-mafiya-title">Mirchi Mafiya</h2>
         <ul>
           {/* Admin-only routes */}
           {user?.role === "admin" && (
             <>
               <li>
-                <NavLink to="/dashboard">📊 Dashboard</NavLink>
+                <NavLink to="/dashboard" id="sidebar-dashboard">
+                  📊 Dashboard
+                </NavLink>
               </li>
+
               <li>
-                <NavLink to="/employees">👥 Employees</NavLink>
+                <NavLink to="/employees" id="sidebar-employees">
+                  👥 Employees
+                </NavLink>
               </li>
+
               <li>
-                <NavLink to="/reports">📈 Reports</NavLink>
+                <NavLink to="/reports" id="sidebar-reports">
+                  📈 Reports
+                </NavLink>
               </li>
+
               <li>
-                <NavLink to="/master-data">🗂️ Master Data</NavLink>
+                <NavLink to="/master-data" id="sidebar-master-data">
+                  🗂️ Master Data
+                </NavLink>
               </li>
+
               <li>
-                <NavLink to="/end-of-day-sales">📊 End of Day Sales</NavLink>
+                <NavLink to="/eod-sales" id="sidebar-eod-sales">
+                  📊 EOD Sales
+                </NavLink>
               </li>
+
               <li>
-                <NavLink to="/held-orders">⏳ Held Orders</NavLink>
+                <NavLink to="/held-orders" id="sidebar-held-orders">
+                  ⏳ Held Orders
+                </NavLink>
               </li>
+
               <li>
-                <NavLink to="/billing">💵 Billing Counter</NavLink>
+                <NavLink to="/billing" id="sidebar-billing">
+                  💵 Billing Counter
+                </NavLink>
               </li>
+
               <li>
-                <NavLink to="/previous-orders">📜 Previous Orders</NavLink>
+                <NavLink to="/previous-orders" id="sidebar-previous-orders">
+                  📜 Previous Orders
+                </NavLink>
               </li>
             </>
           )}
 
           {/* Shared routes */}
           <li>
-            <NavLink to="/attendance">⏰ Attendance</NavLink>
+            <NavLink to="/attendance" id="sidebar-attendance">
+              ⏰ Attendance
+            </NavLink>
           </li>
+
           {/* Logout */}
           <li>
-            <button onClick={handleLogout} style={{ marginTop: "1rem" }}>
+            <button
+              onClick={handleLogout}
+              style={{ marginTop: "1rem" }}
+              id="logout-btn"
+            >
               🚪 Logout
             </button>
           </li>
@@ -81,12 +111,12 @@ const DashboardLayout = ({ children }) => {
           {user?.role === "admin"
             ? "👑 Admin Logged In"
             : user?.first_name
-            ? `👤 Logged in as ${user.first_name} ${user.last_name || ""}`
-            : user?.username
-            ? `👤 Logged in as ${user.username}`
-            : user?.id
-            ? `👤 Logged in as User ${user.id}`
-            : "👤 Employee Logged In"}
+              ? `👤 Logged in as ${user.first_name} ${user.last_name || ""}`
+              : user?.username
+                ? `👤 Logged in as ${user.username}`
+                : user?.id
+                  ? `👤 Logged in as User ${user.id}`
+                  : "👤 Employee Logged In"}
         </div>
       </aside>
 

@@ -51,7 +51,10 @@ export default function PaginationBar({
         >
           ▶
         </button>
-        <button onClick={() => onChangePage(pageCount)} disabled={page === pageCount}>
+        <button
+          onClick={() => onChangePage(pageCount)}
+          disabled={page === pageCount}
+        >
           ⏭
         </button>
       </div>

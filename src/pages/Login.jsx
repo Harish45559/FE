@@ -1,38 +1,38 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import api from '../services/api';
-import './login.css';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import api from "../services/api";
+import "./login.css";
 
 const Login = () => {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ username: '', password: '' });
-  const [error, setError] = useState('');
-  const [showPassword, setShowPassword] = useState(false); 
+  const [form, setForm] = useState({ username: "", password: "" });
+  const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
 
     try {
-      const res = await api.post('/auth/login', form);
+      const res = await api.post("/auth/login", form);
       const { token, role, username } = res.data || {};
 
       if (!token || !role) {
-        setError('Login failed: invalid server response');
+        setError("Login failed: invalid server response");
         return;
       }
 
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify({ username, role, token }));
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify({ username, role, token }));
 
-      if (role === 'admin') navigate('/dashboard');
-      else if (role === 'employee') navigate('/attendance');
-      else setError('Unknown role');
+      if (role === "admin") navigate("/dashboard");
+      else if (role === "employee") navigate("/attendance");
+      else setError("Unknown role");
     } catch (err) {
-      setError(err?.response?.data?.message || 'Login failed');
+      setError(err?.response?.data?.message || "Login failed");
     }
   };
 
@@ -67,21 +67,24 @@ const Login = () => {
             <input
               id="password"
               name="password"
-              type={showPassword ? 'text' : 'password'} // 👈 toggle
+              type={showPassword ? "text" : "password"} // 👈 toggle
               placeholder="Password"
               onChange={handleChange}
               required
             />
             <button
+              id="toggle-password"
               type="button"
               className="toggle-password"
               onClick={() => setShowPassword((prev) => !prev)}
             >
-              {showPassword ? '🙈' : '👁️'}
+              {showPassword ? "🙈" : "👁️"}
             </button>
           </div>
 
-          <button type="submit" className="btn-primary">Sign In</button>
+          <button id="login-btn" type="submit" className="btn-primary">
+            Sign In
+          </button>
         </form>
 
         <p className="forgot">

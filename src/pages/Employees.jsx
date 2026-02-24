@@ -1,28 +1,27 @@
-import React, { useEffect, useState } from 'react';
-import DashboardLayout from '../components/DashboardLayout';
-import api from '../services/api';
-import { FaEdit, FaTrash } from 'react-icons/fa';
-import './Employees.css';
-
+import React, { useEffect, useState } from "react";
+import DashboardLayout from "../components/DashboardLayout";
+import api from "../services/api";
+import { FaEdit, FaTrash } from "react-icons/fa";
+import "./Employees.css";
 
 const Employees = () => {
   const [employees, setEmployees] = useState([]);
   const [formVisible, setFormVisible] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({
-    first_name: '',
-    last_name: '',
-    username: '',
-    password: '',
-    email: '',
-    phone: '',
-    address: '',
-    gender: '',
-    role: 'employee',
-    dob: '',
-    joining_date: '',
-    brp: '',
-    pin: ''
+    first_name: "",
+    last_name: "",
+    username: "",
+    password: "",
+    email: "",
+    phone: "",
+    address: "",
+    gender: "",
+    role: "employee",
+    dob: "",
+    joining_date: "",
+    brp: "",
+    pin: "",
   });
 
   useEffect(() => {
@@ -31,10 +30,10 @@ const Employees = () => {
 
   const fetchEmployees = async () => {
     try {
-      const res = await api.get('/employees');
+      const res = await api.get("/employees");
       setEmployees(res.data);
     } catch (err) {
-      console.error('Error fetching employees:', err);
+      console.error("Error fetching employees:", err);
     }
   };
 
@@ -44,72 +43,71 @@ const Employees = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     try {
       const payload = { ...form };
-  
+
       // ✅ No more bcrypt.hash here — let backend handle it
-  
+
       if (editingId) {
         await api.put(`/employees/${editingId}`, payload);
       } else {
-        await api.post('/employees', payload);
+        await api.post("/employees", payload);
       }
-  
+
       setForm({
-        first_name: '',
-        last_name: '',
-        username: '',
-        password: '',
-        email: '',
-        phone: '',
-        address: '',
-        gender: '',
-        role: 'employee',
-        dob: '',
-        joining_date: '',
-        brp: '',
-        pin: ''
+        first_name: "",
+        last_name: "",
+        username: "",
+        password: "",
+        email: "",
+        phone: "",
+        address: "",
+        gender: "",
+        role: "employee",
+        dob: "",
+        joining_date: "",
+        brp: "",
+        pin: "",
       });
-  
+
       setEditingId(null);
       setFormVisible(false);
       fetchEmployees();
     } catch (err) {
-      console.error('Add employee error:', err.response?.data || err.message);
-      alert(err.response?.data?.error || 'Failed to add employee');
+      console.error("Add employee error:", err.response?.data || err.message);
+      alert(err.response?.data?.error || "Failed to add employee");
     }
   };
-  
 
   const handleEdit = (emp) => {
     setForm({
-      first_name: emp.first_name || '',
-      last_name: emp.last_name || '',
-      username: emp.username || '',
-      password: '', // Do not show hashed password
-      email: emp.email || '',
-      phone: emp.phone || '',
-      address: emp.address || '',
-      gender: emp.gender || '',
-      role: emp.role || 'employee',
-      dob: emp.dob || '',
-      joining_date: emp.joining_date || '',
-      brp: emp.brp || '',
-      pin: '' // Keep PIN empty for editing
+      first_name: emp.first_name || "",
+      last_name: emp.last_name || "",
+      username: emp.username || "",
+      password: "", // Do not show hashed password
+      email: emp.email || "",
+      phone: emp.phone || "",
+      address: emp.address || "",
+      gender: emp.gender || "",
+      role: emp.role || "employee",
+      dob: emp.dob || "",
+      joining_date: emp.joining_date || "",
+      brp: emp.brp || "",
+      pin: "", // Keep PIN empty for editing
     });
     setEditingId(emp.id);
     setFormVisible(true);
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this employee?')) {
+    if (window.confirm("Are you sure you want to delete this employee?")) {
       try {
         await api.delete(`/employees/${id}`);
         fetchEmployees();
       } catch (err) {
-        console.error('Delete error:', err.response?.data || err.message);
-        alert('Failed to delete employee');
+        console.error("Delete error:", err.response?.data || err.message);
+        alert("Failed to delete employee");
       }
     }
   };
@@ -117,31 +115,107 @@ const Employees = () => {
   return (
     <DashboardLayout>
       <div className="employee-header">
-        <h2>Employees</h2>
-        <button className="add-button" onClick={() => setFormVisible(!formVisible)}>
-          {formVisible ? '✖ Close' : '➕ Add Employee'}
+        <h2 id="employee-title">Employees</h2>
+        <button
+          className="add-button"
+          onClick={() => setFormVisible(!formVisible)}
+        >
+          {formVisible ? "✖ Close" : "➕ Add Employee"}
         </button>
       </div>
 
       {formVisible && (
         <form className="employee-form" onSubmit={handleSubmit}>
-          <input type="text" name="first_name" value={form.first_name} onChange={handleChange} placeholder="First Name" required />
-          <input type="text" name="last_name" value={form.last_name} onChange={handleChange} placeholder="Last Name" required />
-          <input type="text" name="username" value={form.username} onChange={handleChange} placeholder="Username" required />
-          <input type="password" name="password" value={form.password} onChange={handleChange} placeholder="Password" required={!editingId} />
-          <input type="email" name="email" value={form.email} onChange={handleChange} placeholder="Email" />
-          <input type="text" name="phone" value={form.phone} onChange={handleChange} placeholder="Phone" />
-          <input type="text" name="address" value={form.address} onChange={handleChange} placeholder="Address" />
-          <input type="password" name="pin" value={form.pin} onChange={handleChange} placeholder="4-digit PIN" maxLength={4} required={!editingId} />
+          <input
+            type="text"
+            name="first_name"
+            value={form.first_name}
+            onChange={handleChange}
+            placeholder="First Name"
+            required
+          />
+          <input
+            type="text"
+            name="last_name"
+            value={form.last_name}
+            onChange={handleChange}
+            placeholder="Last Name"
+            required
+          />
+          <input
+            type="text"
+            name="username"
+            value={form.username}
+            onChange={handleChange}
+            placeholder="Username"
+            required
+          />
+          <input
+            type="password"
+            name="password"
+            value={form.password}
+            onChange={handleChange}
+            placeholder="Password"
+            required={!editingId}
+          />
+          <input
+            type="email"
+            name="email"
+            value={form.email}
+            onChange={handleChange}
+            placeholder="Email"
+          />
+          <input
+            type="text"
+            name="phone"
+            value={form.phone}
+            onChange={handleChange}
+            placeholder="Phone"
+          />
+          <input
+            type="text"
+            name="address"
+            value={form.address}
+            onChange={handleChange}
+            placeholder="Address"
+          />
+          <input
+            type="password"
+            name="pin"
+            value={form.pin}
+            onChange={handleChange}
+            placeholder="4-digit PIN"
+            maxLength={4}
+            required={!editingId}
+          />
           <label>
             Date of Birth:
-            <input type="date" name="dob" value={form.dob} onChange={handleChange} required />
+            <input
+              type="date"
+              name="dob"
+              value={form.dob}
+              onChange={handleChange}
+              required
+            />
           </label>
           <label>
             Joining Date:
-            <input type="date" name="joining_date" value={form.joining_date} onChange={handleChange} required />
+            <input
+              type="date"
+              name="joining_date"
+              value={form.joining_date}
+              onChange={handleChange}
+              required
+            />
           </label>
-          <input type="text" name="brp" value={form.brp} onChange={handleChange} placeholder="BRP Number" required />
+          <input
+            type="text"
+            name="brp"
+            value={form.brp}
+            onChange={handleChange}
+            placeholder="BRP Number"
+            required
+          />
           <select name="gender" value={form.gender} onChange={handleChange}>
             <option value="">Select Gender</option>
             <option value="male">Male</option>
@@ -152,7 +226,7 @@ const Employees = () => {
             <option value="employee">Employee</option>
             <option value="admin">Admin</option>
           </select>
-          <button type="submit">{editingId ? 'Update' : 'Add'} Employee</button>
+          <button type="submit">{editingId ? "Update" : "Add"} Employee</button>
         </form>
       )}
 
@@ -183,7 +257,7 @@ const Employees = () => {
                 <td>{emp.gender}</td>
                 <td>{emp.role}</td>
                 <td>
-                  <button onClick={() => handleEdit(emp)}>✏️</button>{' '}
+                  <button onClick={() => handleEdit(emp)}>✏️</button>{" "}
                   <button onClick={() => handleDelete(emp.id)}>🗑️</button>
                 </td>
               </tr>

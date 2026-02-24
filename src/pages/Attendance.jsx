@@ -119,14 +119,14 @@ const Attendance = () => {
       const clockedAt =
         res.data.attendance?.clock_in || res.data.attendance?.clock_out;
       {
-        /*const totalHours = res.data.attendance?.total_work_hours || '—';*/
+        /*const totalHours = res.data.attendance?.total_work_hours || "—";*/
       }
       const timeFormatted = DateTime.fromISO(clockedAt)
         .setZone("Europe/London")
         .toFormat("dd/MM/yyyy HH:mm");
 
       toast.success(
-        ` ${actionType.replace("_", " ")} successful at ${timeFormatted}`,
+        ` ${actionType.replace("_", " ")} successful at ${timeFormatted} `,
       );
 
       setPin("");
@@ -144,127 +144,139 @@ const Attendance = () => {
   return (
     <DashboardLayout>
       <div className="attendance-container">
-        <div className="employee-list">
-          <input
-            type="text"
-            className="search-bar"
-            placeholder="Search by name, ID..."
-            onChange={(e) => {
-              const query = e.target.value.toLowerCase();
-              if (!query) {
-                setEmployees(allEmployees);
-                return;
-              }
-              const filtered = allEmployees.filter(
-                (emp) =>
-                  emp.first_name.toLowerCase().includes(query) ||
-                  emp.last_name.toLowerCase().includes(query) ||
-                  emp.id.toString().includes(query),
-              );
-              setEmployees(filtered);
-            }}
-          />
-          <div className="employee-grid">
-            {employees.map((emp) => {
-              const initials = `${emp.first_name?.charAt(0) || ""}${
-                emp.last_name?.charAt(0) || ""
-              }`;
-              const status = emp.attendance_status;
-              let borderClass = "border-gray";
-              if (status === "Clocked In") borderClass = "border-green";
-              else if (status === "Clocked Out") borderClass = "border-red";
-              return (
-                <div
-                  key={emp.id}
-                  className={`employee-card ${
-                    selectedEmployee?.id === emp.id ? "selected" : ""
-                  } ${borderClass}`}
-                  onClick={() => setSelectedEmployee(emp)}
-                >
-                  <div className="avatar-circle">{initials}</div>
-                  <strong>
-                    {emp.first_name} {emp.last_name}
-                  </strong>
-                  <div className="status-text">
-                    {status === "Clocked In" && (
-                      <span style={{ color: "green" }}>🟢 Clocked In</span>
-                    )}
-                    {status === "Clocked Out" && (
-                      <span style={{ color: "red" }}>🔴 Clocked Out</span>
-                    )}
-                    {(!status || status === "Not Clocked In") && (
-                      <span style={{ color: "gray" }}>⚪ Not Clocked In</span>
-                    )}
+        <h1 id="attendance-title" className="attendance-heading">
+          Attendance
+        </h1>
+
+        <div className="attendance-content">
+          {/* LEFT SIDE */}
+          <div className="employee-list">
+            <input
+              type="text"
+              className="search-bar"
+              placeholder="Search by name, ID..."
+              onChange={(e) => {
+                const query = e.target.value.toLowerCase();
+                if (!query) {
+                  setEmployees(allEmployees);
+                  return;
+                }
+                const filtered = allEmployees.filter(
+                  (emp) =>
+                    emp.first_name.toLowerCase().includes(query) ||
+                    emp.last_name.toLowerCase().includes(query) ||
+                    emp.id.toString().includes(query),
+                );
+                setEmployees(filtered);
+              }}
+            />
+
+            <div className="employee-grid">
+              {employees.map((emp) => {
+                const initials = `${emp.first_name?.charAt(0) || ""}${
+                  emp.last_name?.charAt(0) || ""
+                }`;
+                const status = emp.attendance_status;
+
+                let borderClass = "border-gray";
+                if (status === "Clocked In") borderClass = "border-green";
+                else if (status === "Clocked Out") borderClass = "border-red";
+
+                return (
+                  <div
+                    key={emp.id}
+                    className={`employee-card ${
+                      selectedEmployee?.id === emp.id ? "selected" : ""
+                    } ${borderClass}`}
+                    onClick={() => setSelectedEmployee(emp)}
+                  >
+                    <div className="avatar-circle">{initials}</div>
+                    <strong>
+                      {emp.first_name} {emp.last_name}
+                    </strong>
+                    <div className="status-text">
+                      {status === "Clocked In" && (
+                        <span style={{ color: "green" }}>🟢 Clocked In</span>
+                      )}
+                      {status === "Clocked Out" && (
+                        <span style={{ color: "red" }}>🔴 Clocked Out</span>
+                      )}
+                      {(!status || status === "Not Clocked In") && (
+                        <span style={{ color: "gray" }}>⚪ Not Clocked In</span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="clock-panel">
-          <h3>Time Clock Actions</h3>
-          <div className="live-clock">
-            🕒 {currentTime.toFormat("dd/MM/yyyy HH:mm:ss")} (BST)
-          </div>
-
-          {selectedEmployee && (
-            <div className="selected-employee">
-              {selectedEmployee.first_name} {selectedEmployee.last_name}
+                );
+              })}
             </div>
-          )}
+          </div>
 
-          <div className="pin-display-box">
-            {[0, 1, 2, 3].map((i) => (
-              <div className="pin-digit-box" key={i}>
-                {pin[i] ? "•" : ""}
+          {/* RIGHT SIDE */}
+          <div className="clock-panel">
+            <h3>Time Clock Actions</h3>
+            <div className="live-clock">
+              🕒 {currentTime.toFormat("dd/MM/yyyy HH:mm:ss")} (BST)
+            </div>
+
+            {selectedEmployee && (
+              <div className="selected-employee">
+                {selectedEmployee.first_name} {selectedEmployee.last_name}
               </div>
-            ))}
-          </div>
+            )}
 
-          <div className="numbers-grid">
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
-              <button
-                key={n}
-                className="keypad-btn"
-                onClick={() => handleNumberClick(n.toString())}
-              >
-                {n}
+            <div className="pin-display-box">
+              {[0, 1, 2, 3].map((i) => (
+                <div className="pin-digit-box" key={i}>
+                  {pin[i] ? "•" : ""}
+                </div>
+              ))}
+            </div>
+
+            <div className="numbers-grid">
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
+                <button
+                  key={n}
+                  className="keypad-btn"
+                  onClick={() => handleNumberClick(n.toString())}
+                >
+                  {n}
+                </button>
+              ))}
+              <button className="keypad-btn" onClick={handleClear}>
+                C
               </button>
-            ))}
-            <button className="keypad-btn" onClick={handleClear}>
-              C
-            </button>
-            <button
-              className="keypad-btn"
-              onClick={() => handleNumberClick("0")}
-            >
-              0
-            </button>
-            <button className="keypad-btn" onClick={handleBackspace}>
-              ×
-            </button>
-          </div>
+              <button
+                className="keypad-btn"
+                onClick={() => handleNumberClick("0")}
+              >
+                0
+              </button>
+              <button className="keypad-btn" onClick={handleBackspace}>
+                ×
+              </button>
+            </div>
 
-          <div className="action-buttons">
-            <button
-              className="action-card green"
-              onClick={() => {
-                actionTypeRef.current = "clock_in";
-                handleSubmit();
-              }}
-            >
-              ✔ Clock In
-            </button>
-            <button
-              className="action-card gray"
-              onClick={() => {
-                actionTypeRef.current = "clock_out";
-                handleSubmit();
-              }}
-            >
-              ⏺ Clock Out
-            </button>
+            <div className="action-buttons">
+              <button
+                className="action-card green"
+                onClick={() => {
+                  actionTypeRef.current = "clock_in";
+                  handleSubmit();
+                }}
+              >
+                ✔ Clock In
+              </button>
+
+              <button
+                className="action-card gray"
+                onClick={() => {
+                  actionTypeRef.current = "clock_out";
+                  handleSubmit();
+                }}
+              >
+                ⏺ Clock Out
+              </button>
+            </div>
           </div>
         </div>
       </div>
