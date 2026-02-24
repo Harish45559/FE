@@ -28,8 +28,6 @@ const ReceiptPortal = ({ children }) => {
   return ReactDOM.createPortal(children, el);
 };
 
-
-
 const PreviousOrders = () => {
   // Table data
   const [orders, setOrders] = useState([]);
@@ -49,7 +47,9 @@ const PreviousOrders = () => {
       setLoading(true);
       try {
         const res = await api.get("/orders/all");
-        const list = Array.isArray(res.data) ? res.data : (res.data?.orders ?? []);
+        const list = Array.isArray(res.data)
+          ? res.data
+          : (res.data?.orders ?? []);
         const norm = list.map((o) => ({
           id: o.id ?? o._id ?? o.order_number,
           order_number: o.order_number ?? o.orderNo ?? o.orderId ?? "—",
@@ -57,7 +57,9 @@ const PreviousOrders = () => {
           server_name: o.server_name ?? o.server ?? "",
           items: Array.isArray(o.items) ? o.items : [],
           payment_method: o.payment_method ?? o.payment ?? "Cash",
-          discount_percent: Number(o.discount_percent ?? o.discountPercent ?? 0),
+          discount_percent: Number(
+            o.discount_percent ?? o.discountPercent ?? 0,
+          ),
           discount_amount: Number(o.discount_amount ?? o.discountAmount ?? 0),
           total_amount: Number(o.total_amount ?? o.subtotal ?? 0),
           final_amount: Number(o.final_amount ?? o.grand_total ?? o.total ?? 0),
@@ -68,7 +70,7 @@ const PreviousOrders = () => {
         norm.sort((a, b) => {
           const ta = a.date ? new Date(a.date).getTime() : 0;
           const tb = b.date ? new Date(b.date).getTime() : 0;
-          if (tb !== ta) return tb - ta;  // latest first
+          if (tb !== ta) return tb - ta; // latest first
           return String(b.order_number).localeCompare(String(a.order_number));
         });
 
@@ -99,19 +101,23 @@ const PreviousOrders = () => {
 
   // Global pagination (shared hook)
   const {
-    page, setPage,
-    pageSize, setPageSize,
-    pageCount, pageRows: pageData
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    pageCount,
+    pageRows: pageData,
   } = usePagination(filtered);
 
   // Helpers for receipt math
   const calcSubtotal = (ord) =>
     (ord?.items ?? []).reduce(
-      (s, it) => s + Number(it.total ?? ((it.price ?? 0) * (it.qty ?? 0))),
-      0
+      (s, it) => s + Number(it.total ?? (it.price ?? 0) * (it.qty ?? 0)),
+      0,
     );
 
-  const calcIncluded = (amount, percent) => (Number(amount) * percent) / (100 + percent);
+  const calcIncluded = (amount, percent) =>
+    (Number(amount) * percent) / (100 + percent);
 
   // Open receipt & auto-print
   const openReceipt = (ord) => {
@@ -141,7 +147,7 @@ const PreviousOrders = () => {
     <DashboardLayout>
       <div className="previous-orders">
         <div className="header">
-          <h2>Previous Orders</h2>
+          <h2 id="previous-orders-title">Previous Orders</h2>
 
           <div className="controls">
             <input
@@ -149,17 +155,27 @@ const PreviousOrders = () => {
               type="text"
               placeholder="Search by customer, order no., or payment…"
               value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1); }}  
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
             />
             <input
               className="date-picker"
               type="date"
               value={date}
-              onChange={(e) => { setDate(e.target.value); setPage(1); }}
+              onChange={(e) => {
+                setDate(e.target.value);
+                setPage(1);
+              }}
             />
             <button
               className="clear-btn"
-              onClick={() => { setSearch(""); setDate(""); setPage(1); }}
+              onClick={() => {
+                setSearch("");
+                setDate("");
+                setPage(1);
+              }}
             >
               Clear
             </button>
@@ -181,9 +197,13 @@ const PreviousOrders = () => {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={7}>Loading…</td></tr>
+                <tr>
+                  <td colSpan={7}>Loading…</td>
+                </tr>
               ) : pageData.length === 0 ? (
-                <tr><td colSpan={7}>No orders found.</td></tr>
+                <tr>
+                  <td colSpan={7}>No orders found.</td>
+                </tr>
               ) : (
                 pageData.map((o) => (
                   <tr key={o.id}>
@@ -222,9 +242,25 @@ const PreviousOrders = () => {
       {showReceipt && activeOrder && (
         <ReceiptPortal>
           <div className="bill-section">
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
-              <button className="print-btn" onClick={handlePrint}>🖨️ Print</button>
-              <button className="close-preview-btn" onClick={() => { setShowReceipt(false); setActiveOrder(null); }}>✖</button>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginBottom: 10,
+              }}
+            >
+              <button className="print-btn" onClick={handlePrint}>
+                🖨️ Print
+              </button>
+              <button
+                className="close-preview-btn"
+                onClick={() => {
+                  setShowReceipt(false);
+                  setActiveOrder(null);
+                }}
+              >
+                ✖
+              </button>
             </div>
 
             <div className="receipt-header">
@@ -232,10 +268,18 @@ const PreviousOrders = () => {
               <p>Cumberland Street, LU1 3BW, Luton</p>
               <p>Phone: +447440086046</p>
               <p>dtsretaillimited@gmail.com</p>
-              <p><strong>Order Type:</strong> {activeOrder.order_type || "—"}</p>
-              <p><strong>Order No:</strong> #{activeOrder.order_number}</p>
-              <p><strong>Customer:</strong> {activeOrder.customer_name || "N/A"}</p>
-              <p><strong>Paid By:</strong> {activeOrder.payment_method}</p>
+              <p>
+                <strong>Order Type:</strong> {activeOrder.order_type || "—"}
+              </p>
+              <p>
+                <strong>Order No:</strong> #{activeOrder.order_number}
+              </p>
+              <p>
+                <strong>Customer:</strong> {activeOrder.customer_name || "N/A"}
+              </p>
+              <p>
+                <strong>Paid By:</strong> {activeOrder.payment_method}
+              </p>
               <hr />
               <p>Date: {activeOrder.date || "—"}</p>
               <hr />
@@ -254,13 +298,17 @@ const PreviousOrders = () => {
                 {(activeOrder.items || []).map((it, idx) => {
                   const price = Number(it.price ?? 0);
                   const qty = Number(it.qty ?? 0);
-                  const total = Number(it.total ?? (price * qty));
+                  const total = Number(it.total ?? price * qty);
                   return (
                     <tr key={idx}>
                       <td>{it.name}</td>
-                      <td style={{ textAlign: "right" }}>£{price.toFixed(2)}</td>
+                      <td style={{ textAlign: "right" }}>
+                        £{price.toFixed(2)}
+                      </td>
                       <td style={{ textAlign: "right" }}>{qty}</td>
-                      <td style={{ textAlign: "right" }}>£{total.toFixed(2)}</td>
+                      <td style={{ textAlign: "right" }}>
+                        £{total.toFixed(2)}
+                      </td>
                     </tr>
                   );
                 })}
@@ -268,28 +316,47 @@ const PreviousOrders = () => {
             </table>
 
             {(() => {
-              const subtotal = activeOrder.total_amount || calcSubtotal(activeOrder);
+              const subtotal =
+                activeOrder.total_amount || calcSubtotal(activeOrder);
               const discountPct = Number(activeOrder.discount_percent || 0);
               const discountAmt =
                 activeOrder.discount_amount ||
                 (discountPct > 0 ? (subtotal * discountPct) / 100 : 0);
-              const grand = activeOrder.final_amount || Math.max(0, subtotal - discountAmt);
+              const grand =
+                activeOrder.final_amount || Math.max(0, subtotal - discountAmt);
               const vatIncluded = calcIncluded(grand, 20);
               const svcIncluded = calcIncluded(grand, 8);
-              const totalQty = (activeOrder.items || []).reduce((s, it) => s + Number(it.qty ?? 0), 0);
+              const totalQty = (activeOrder.items || []).reduce(
+                (s, it) => s + Number(it.qty ?? 0),
+                0,
+              );
 
               return (
                 <div className="receipt-summary">
-                  <p><strong>Total Qty:</strong> {totalQty}</p>
-                  <p><strong>Sub Total:</strong> £ {subtotal.toFixed(2)}</p>
+                  <p>
+                    <strong>Total Qty:</strong> {totalQty}
+                  </p>
+                  <p>
+                    <strong>Sub Total:</strong> £ {subtotal.toFixed(2)}
+                  </p>
                   {discountPct > 0 && (
-                    <p><strong>Discount ({discountPct}%):</strong> -£{discountAmt.toFixed(2)}</p>
+                    <p>
+                      <strong>Discount ({discountPct}%):</strong> -£
+                      {discountAmt.toFixed(2)}
+                    </p>
                   )}
-                  <p className="grand-total"><strong>Grand Total:</strong> £ {grand.toFixed(2)}</p>
+                  <p className="grand-total">
+                    <strong>Grand Total:</strong> £ {grand.toFixed(2)}
+                  </p>
                   <p className="includes-label">Includes:</p>
                   <p>VAT (20%): £{vatIncluded.toFixed(2)}</p>
                   <p>Service Charge (8%): £{svcIncluded.toFixed(2)}</p>
-                  <p className="server-name">Staff: {activeOrder.server_name ? `(${activeOrder.server_name})` : ""}</p>
+                  <p className="server-name">
+                    Staff:{" "}
+                    {activeOrder.server_name
+                      ? `(${activeOrder.server_name})`
+                      : ""}
+                  </p>
                   <hr />
                 </div>
               );

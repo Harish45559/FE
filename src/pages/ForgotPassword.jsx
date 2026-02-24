@@ -7,7 +7,7 @@ import "./forgot.css"; // ← add this file (container/card look)
 const ForgotPassword = () => {
   const [username, setUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  const [message, setMessage] = useState("");    // show success/error text
+  const [message, setMessage] = useState(""); // show success/error text
   const [isError, setIsError] = useState(false); // toggle message style
   const [loading, setLoading] = useState(false); // disable button during call
   const navigate = useNavigate();
@@ -37,7 +37,8 @@ const ForgotPassword = () => {
       });
 
       // backend should return { message: "..." }
-      const text = (res?.data && res.data.message) || "Password updated successfully.";
+      const text =
+        (res?.data && res.data.message) || "Password updated successfully.";
       setIsError(false);
       setMessage(text);
 
@@ -66,6 +67,7 @@ const ForgotPassword = () => {
 
         <form onSubmit={handleReset} noValidate>
           <input
+            id="forgot-username"
             type="text"
             placeholder="Enter username"
             value={username}
@@ -76,6 +78,7 @@ const ForgotPassword = () => {
           />
 
           <input
+            id="forgot-new-password"
             type="password"
             placeholder="Enter new password"
             value={newPassword}
@@ -85,18 +88,24 @@ const ForgotPassword = () => {
             required
           />
 
-          <button type="submit" disabled={loading}>
+          <button id="forgot-submit" type="submit" disabled={loading}>
             {loading ? "Resetting..." : "Reset Password"}
           </button>
         </form>
 
         {message && (
-          <p className={`message ${isError ? "error" : "success"}`}>{message}</p>
+          <p
+            id="forgot-message"
+            className={`message ${isError ? "error" : "success"}`}
+          >
+            {message}
+          </p>
         )}
 
         {/* Optional link back to login */}
         <div style={{ marginTop: 10 }}>
           <button
+            id="forgot-back-btn"
             type="button"
             className="linklike"
             onClick={() => navigate("/login")}

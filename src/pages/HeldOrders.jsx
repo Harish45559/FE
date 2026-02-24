@@ -3,7 +3,6 @@ import DashboardLayout from "../components/DashboardLayout";
 import { useNavigate } from "react-router-dom";
 import "./HeldOrders.css";
 
-
 const HeldOrders = () => {
   const [heldOrders, setHeldOrders] = useState([]);
   const navigate = useNavigate();
@@ -18,7 +17,6 @@ const HeldOrders = () => {
       setHeldOrders([]);
     }
   }, []);
-  
 
   const handleResume = (order) => {
     localStorage.setItem("resumedOrder", JSON.stringify(order));
@@ -39,7 +37,7 @@ const HeldOrders = () => {
   return (
     <DashboardLayout>
       <div className="held-orders-wrapper">
-        <h2>🕒 Held Orders</h2>
+        <h2 id="held-orders-title">🕒 Held Orders</h2>
         {heldOrders.length === 0 ? (
           <p>No held orders.</p>
         ) : (
@@ -63,7 +61,9 @@ const HeldOrders = () => {
                     <td>{order.date}</td>
 
                     <td>
-                      <button onClick={() => handleResume(order)}>Resume</button>
+                      <button onClick={() => handleResume(order)}>
+                        Resume
+                      </button>
                       <button
                         onClick={() => handleDelete(order.id)}
                         style={{ marginLeft: "8px", color: "red" }}

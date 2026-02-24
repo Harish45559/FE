@@ -57,7 +57,7 @@ const AppRouter = () => {
     },
 
     {
-      path: "/end-of-day-sales",
+      path: "/eod-sales",
       element: (
         <ProtectedRoute allowedRoles={["admin"]}>
           <EndOfDaySales />
