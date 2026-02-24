@@ -31,3 +31,5 @@ build/
 .env.local
 .DS_Store
 coverage/
+.env
+.env.*
