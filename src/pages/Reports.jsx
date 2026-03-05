@@ -70,6 +70,11 @@ export default function Reports() {
   const [hoverPos, setHoverPos] = useState({ x: 0, y: 0 });
   const [hoverSessions, setHoverSessions] = useState([]);
   const hoverTimerRef = useRef(null);
+  const [editingRecord, setEditingRecord] = useState(null);
+  const [editClockIn, setEditClockIn] = useState("");
+  const [editClockOut, setEditClockOut] = useState("");
+  const [sessionOpen, setSessionOpen] = useState(false);
+  const [sessionRows, setSessionRows] = useState([]);
 
   /* -------- Load employees -------- */
   useEffect(() => {
@@ -276,6 +281,83 @@ export default function Reports() {
     }
   };
 
+  /* -------- Edit Attendance -------- */
+
+  const openEditModal = (row) => {
+    const raw = rawRows.find(
+      (r) =>
+        (r.employee?.id ?? r.employee_id) === row.employeeId &&
+        (r.date || r.day || r.attendance_date) === row.date,
+    );
+
+    if (!raw) return;
+
+    setEditingRecord(raw);
+
+    setEditClockIn(raw.clock_in ? raw.clock_in.slice(0, 16) : "");
+
+    setEditClockOut(raw.clock_out ? raw.clock_out.slice(0, 16) : "");
+  };
+
+  const updateAttendance = async () => {
+    try {
+      await api.put("/attendance/update", {
+        attendanceId: editingRecord.id,
+        clock_in: editClockIn,
+        clock_out: editClockOut,
+      });
+
+      setEditingRecord(null);
+
+      fetchReports();
+    } catch (err) {
+      console.error(err);
+
+      alert("Update failed");
+    }
+  };
+
+  const openSessions = async (row) => {
+    try {
+      const [dd, mm, yyyy] = row.date.split("-");
+      const isoDate = `${yyyy}-${mm}-${dd}`;
+
+      const res = await api.get("/attendance/records", {
+        params: { date: isoDate },
+      });
+
+      const rows = (res.data.items || []).filter(
+        (r) => (r.employee?.id ?? r.employee_id) === row.employeeId,
+      );
+
+      setSessionRows(rows);
+      setSessionOpen(true);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to load sessions");
+    }
+  };
+
+  const updateSession = async (row) => {
+    try {
+      await api.put("/attendance/update", {
+        attendanceId: row.id,
+        clock_in: row.clock_in,
+        clock_out: row.clock_out,
+      });
+
+      // update local state so modal refreshes instantly
+      setSessionRows((prev) =>
+        prev.map((r) => (r.id === row.id ? { ...r, ...row } : r)),
+      );
+
+      // refresh reports table
+      fetchReports();
+    } catch (err) {
+      console.error(err);
+      alert("Update failed");
+    }
+  };
   /* ========================= Render ========================= */
   return (
     <DashboardLayout>
@@ -363,13 +445,15 @@ export default function Reports() {
                 >
                   Break Time
                 </th>
+                <th>Action</th>
+                <th>Sessions</th>
               </tr>
             </thead>
 
             <tbody>
               {pageRows.length === 0 ? (
                 <tr>
-                  <td colSpan="6" style={{ textAlign: "center" }}>
+                  <td colSpan="8" style={{ textAlign: "center" }}>
                     No records
                   </td>
                 </tr>
@@ -391,6 +475,22 @@ export default function Reports() {
                     <td>{r.lastOut}</td>
                     <td>{r.workTotal}</td>
                     <td>{r.breakTotal}</td>
+                    <td>
+                      <button
+                        className="edit-btn"
+                        onClick={() => openEditModal(r)}
+                      >
+                        Edit
+                      </button>
+                    </td>
+                    <td>
+                      <button
+                        className="session-btn"
+                        onClick={() => openSessions(r)}
+                      >
+                        Sessions
+                      </button>
+                    </td>
                   </tr>
                 ))
               )}
@@ -439,6 +539,102 @@ export default function Reports() {
                 </div>
               ))
             )}
+          </div>
+        </div>
+      )}
+
+      {editingRecord && (
+        <div className="modal-overlay">
+          <div className="edit-modal">
+            <h3>Edit Attendance</h3>
+
+            <label>Clock In</label>
+            <input
+              type="datetime-local"
+              value={editClockIn}
+              onChange={(e) => setEditClockIn(e.target.value)}
+            />
+
+            <label>Clock Out</label>
+            <input
+              type="datetime-local"
+              value={editClockOut}
+              onChange={(e) => setEditClockOut(e.target.value)}
+            />
+
+            <div className="modal-actions">
+              <button className="save-btn" onClick={updateAttendance}>
+                Save
+              </button>
+
+              <button
+                className="cancel-btn"
+                onClick={() => setEditingRecord(null)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {sessionOpen && (
+        <div className="session-overlay">
+          <div className="session-editor">
+            <h3>Daily Sessions</h3>
+
+            <table className="session-table">
+              <thead>
+                <tr>
+                  <th>Clock In</th>
+                  <th>Clock Out</th>
+                  <th>Save</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {sessionRows.map((s, i) => (
+                  <tr key={s.id}>
+                    <td>
+                      <input
+                        type="datetime-local"
+                        value={s.clock_in?.slice(0, 16) || ""}
+                        onChange={(e) => {
+                          const copy = [...sessionRows];
+                          copy[i].clock_in = e.target.value;
+                          setSessionRows(copy);
+                        }}
+                      />
+                    </td>
+
+                    <td>
+                      <input
+                        type="datetime-local"
+                        value={s.clock_out?.slice(0, 16) || ""}
+                        onChange={(e) => {
+                          const copy = [...sessionRows];
+                          copy[i].clock_out = e.target.value;
+                          setSessionRows(copy);
+                        }}
+                      />
+                    </td>
+
+                    <td>
+                      <button
+                        className="save-btn"
+                        onClick={() => updateSession(s)}
+                      >
+                        Save
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            <button className="close-btn" onClick={() => setSessionOpen(false)}>
+              Close
+            </button>
           </div>
         </div>
       )}

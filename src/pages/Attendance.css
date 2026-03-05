@@ -23,11 +23,8 @@
   gap: 22px;
   width: 100%;
   max-width: 1400px;
-  /* important */
   margin: 0 auto;
-  /* center */
-  height: 700px;
-  /* fixed panel height */
+  min-height: 600px;
 }
 
 /* ================= LEFT SIDE ================= */
@@ -53,13 +50,9 @@
 }
 
 .employee-grid {
-  flex: 1;
-  overflow-y: auto;
-  /* ONLY LEFT SIDE SCROLLS */
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
-  padding-right: 6px;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
 }
 
 .employee-grid {
@@ -133,7 +126,7 @@
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 20px 18px;
-  overflow: hidden;
+  overflow-y: auto;
   /* prevent stretching */
 }
 
@@ -166,20 +159,16 @@
 /* Keypad */
 .numbers-grid {
   display: grid;
-  grid-template-columns: repeat(3, 70px);
-  gap: 15px;
-  margin-bottom: 0px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  width: 100%;
+  max-width: 260px;
 }
 
 .keypad-btn {
-  width: 70px;
-  height: 70px;
+  width: 100%;
+  height: 60px;
   border-radius: 50%;
-  border: 1px solid #ddd;
-  background: #e2e8f0;
-  font-weight: 600;
-  font-size: 18px;
-  cursor: pointer;
 }
 
 .keypad-btn:hover {
@@ -226,4 +215,65 @@
 .status-text {
   font-size: 12px;
   margin-top: 4px;
+}
+
+.manual-entry-panel {
+  width: 100%;
+  margin-top: 20px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+}
+
+.manual-entry-panel h4 {
+  font-size: 15px;
+  margin-bottom: 6px;
+}
+
+.manual-entry-panel label {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.manual-entry-panel input {
+  padding: 7px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  font-size: 12px;
+}
+
+.action-card.orange {
+  background: #f59e0b;
+  color: white;
+  margin-top: 6px;
+}
+
+@media (max-width: 900px) {
+
+  .attendance-content {
+    flex-direction: column;
+  }
+
+  .employee-list {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+
+  .clock-panel {
+    width: 100%;
+    margin-top: 15px;
+  }
+
+}
+
+.keypad-btn {
+  font-size: 20px;
+}
+
+.action-card {
+  padding: 14px 20px;
+  font-size: 16px;
 }
