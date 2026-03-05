@@ -11,23 +11,28 @@ const Attendance = () => {
   const [allEmployees, setAllEmployees] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [pin, setPin] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const [manualClockIn, setManualClockIn] = useState("");
+  const [manualClockOut, setManualClockOut] = useState("");
+
   const [currentTime, setCurrentTime] = useState(
     DateTime.now().setZone("Europe/London"),
   );
-  const [isLoading, setIsLoading] = useState(false);
 
   const actionTypeRef = useRef(null);
 
+  const userRole = localStorage.getItem("role"); // admin / employee
+  const user = JSON.parse(localStorage.getItem("user"));
+  const isAdmin = user?.role === "admin";
   useEffect(() => {
-    fetchEmployees(); // Run once on mount only
+    fetchEmployees();
 
-    const clockInterval = setInterval(() => {
+    const timer = setInterval(() => {
       setCurrentTime(DateTime.now().setZone("Europe/London"));
     }, 1000);
 
-    return () => {
-      clearInterval(clockInterval);
-    };
+    return () => clearInterval(timer);
   }, []);
 
   const fetchEmployees = async () => {
@@ -37,39 +42,33 @@ const Attendance = () => {
         api.get("/attendance/status"),
       ]);
 
-      const statusMap = Array.isArray(statusRes.data)
-        ? statusRes.data.reduce((map, emp) => {
-            map[emp.id] = emp.status;
-            return map;
-          }, {})
-        : {};
+      const statusMap = statusRes.data.reduce((map, emp) => {
+        map[emp.id] = emp.status;
+        return map;
+      }, {});
 
-      const updated = empRes.data.map((emp) => {
-        const rawStatus = statusMap[emp.id];
-        let attendanceStatus = "Not Clocked In";
+      const updated = empRes.data.map((emp) => ({
+        ...emp,
 
-        if (rawStatus === "Clocked In") attendanceStatus = "Clocked In";
-        else if (rawStatus === "Clocked Out") attendanceStatus = "Clocked Out";
-
-        return {
-          ...emp,
-          attendance_status: attendanceStatus,
-        };
-      });
+        attendance_status: statusMap[emp.id] || "Not Clocked In",
+      }));
 
       setAllEmployees(updated);
       setEmployees(updated);
     } catch (err) {
-      toast.error("Failed to fetch employees or status");
-      console.error("Fetch Employees Error:", err);
+      console.error(err);
+      toast.error("Failed to load employees");
     }
   };
 
   const handleNumberClick = (num) => {
-    if (pin.length < 4) setPin((prev) => prev + num);
+    if (pin.length < 4) {
+      setPin((prev) => prev + num);
+    }
   };
-  const handleClear = () => setPin("");
+
   const handleBackspace = () => setPin(pin.slice(0, -1));
+  const handleClear = () => setPin("");
 
   const handleSubmit = async () => {
     const actionType = actionTypeRef.current;
@@ -85,25 +84,8 @@ const Attendance = () => {
     }
 
     if (isLoading) return;
+
     setIsLoading(true);
-
-    if (
-      actionType === "clock_in" &&
-      selectedEmployee.attendance_status === "Clocked In"
-    ) {
-      toast.info("Employee is already clocked in");
-      setIsLoading(false);
-      return;
-    }
-
-    if (
-      actionType === "clock_out" &&
-      selectedEmployee.attendance_status !== "Clocked In"
-    ) {
-      toast.info("Employee is not clocked in");
-      setIsLoading(false);
-      return;
-    }
 
     try {
       const endpoint =
@@ -117,83 +99,126 @@ const Attendance = () => {
       });
 
       const clockedAt =
-        res.data.attendance?.clock_in || res.data.attendance?.clock_out;
-      {
-        /*const totalHours = res.data.attendance?.total_work_hours || "—";*/
-      }
-      const timeFormatted = DateTime.fromISO(clockedAt)
-        .setZone("Europe/London")
-        .toFormat("dd/MM/yyyy HH:mm");
+        actionType === "clock_in"
+          ? res.data.attendance?.clock_in
+          : res.data.attendance?.clock_out;
 
-      toast.success(
-        ` ${actionType.replace("_", " ")} successful at ${timeFormatted} `,
-      );
+      let formatted = "";
+
+      if (clockedAt) {
+        formatted = DateTime.fromISO(clockedAt)
+          .setZone("Europe/London")
+          .toFormat("dd/MM/yyyy HH:mm");
+      }
+
+      toast.success(`${actionType.replace("_", " ")} successful ${formatted}`);
 
       setPin("");
       setSelectedEmployee(null);
       actionTypeRef.current = null;
-      await fetchEmployees();
+
+      setEmployees((prev) =>
+        prev.map((emp) =>
+          emp.id === selectedEmployee.id
+            ? {
+                ...emp,
+                attendance_status:
+                  actionType === "clock_in" ? "Clocked In" : "Clocked Out",
+              }
+            : emp,
+        ),
+      );
     } catch (err) {
-      console.error("Attendance Error:", err);
       toast.error(err.response?.data?.error || "Attendance failed");
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleManualSubmit = async () => {
+    if (!selectedEmployee) {
+      toast.error("Select employee first");
+      return;
+    }
+
+    if (!manualClockIn) {
+      toast.error("Clock in required");
+      return;
+    }
+
+    try {
+      await api.post("/attendance/manual-entry", {
+        employeeId: selectedEmployee.id,
+        clock_in: manualClockIn,
+        clock_out: manualClockOut || null,
+      });
+
+      toast.success("Manual attendance recorded");
+
+      setManualClockIn("");
+      setManualClockOut("");
+
+      fetchEmployees();
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Manual entry failed");
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="attendance-container">
-        <h1 id="attendance-title" className="attendance-heading">
-          Attendance
-        </h1>
+        <h1 className="attendance-heading">Attendance</h1>
 
         <div className="attendance-content">
           {/* LEFT SIDE */}
+
           <div className="employee-list">
             <input
-              type="text"
               className="search-bar"
-              placeholder="Search by name, ID..."
+              placeholder="Search by name or id"
               onChange={(e) => {
-                const query = e.target.value.toLowerCase();
-                if (!query) {
+                const q = e.target.value.toLowerCase();
+
+                if (!q) {
                   setEmployees(allEmployees);
                   return;
                 }
+
                 const filtered = allEmployees.filter(
                   (emp) =>
-                    emp.first_name.toLowerCase().includes(query) ||
-                    emp.last_name.toLowerCase().includes(query) ||
-                    emp.id.toString().includes(query),
+                    emp.first_name.toLowerCase().includes(q) ||
+                    emp.last_name.toLowerCase().includes(q) ||
+                    emp.id.toString().includes(q),
                 );
+
                 setEmployees(filtered);
               }}
             />
 
             <div className="employee-grid">
               {employees.map((emp) => {
-                const initials = `${emp.first_name?.charAt(0) || ""}${
-                  emp.last_name?.charAt(0) || ""
-                }`;
                 const status = emp.attendance_status;
 
-                let borderClass = "border-gray";
-                if (status === "Clocked In") borderClass = "border-green";
-                else if (status === "Clocked Out") borderClass = "border-red";
+                let border = "border-gray";
+
+                if (status === "Clocked In") border = "border-green";
+                if (status === "Clocked Out") border = "border-red";
+
+                const initials = `${emp.first_name?.charAt(0) || ""}${emp.last_name?.charAt(0) || ""}`;
 
                 return (
                   <div
                     key={emp.id}
-                    className={`employee-card ${
-                      selectedEmployee?.id === emp.id ? "selected" : ""
-                    } ${borderClass}`}
+                    className={`employee-card ${border}
+${selectedEmployee?.id === emp.id ? "selected" : ""}`}
                     onClick={() => setSelectedEmployee(emp)}
                   >
                     <div className="avatar-circle">{initials}</div>
+
                     <strong>
                       {emp.first_name} {emp.last_name}
                     </strong>
+
                     <div className="status-text">
                       {status === "Clocked In" && (
                         <span style={{ color: "green" }}>🟢 Clocked In</span>
@@ -201,7 +226,7 @@ const Attendance = () => {
                       {status === "Clocked Out" && (
                         <span style={{ color: "red" }}>🔴 Clocked Out</span>
                       )}
-                      {(!status || status === "Not Clocked In") && (
+                      {status === "Not Clocked In" && (
                         <span style={{ color: "gray" }}>⚪ Not Clocked In</span>
                       )}
                     </div>
@@ -212,10 +237,12 @@ const Attendance = () => {
           </div>
 
           {/* RIGHT SIDE */}
+
           <div className="clock-panel">
-            <h3>Time Clock Actions</h3>
+            <h3>Time Clock</h3>
+
             <div className="live-clock">
-              🕒 {currentTime.toFormat("dd/MM/yyyy HH:mm:ss")} (BST)
+              🕒 {currentTime.toFormat("dd/MM/yyyy HH:mm:ss")}
             </div>
 
             {selectedEmployee && (
@@ -226,7 +253,7 @@ const Attendance = () => {
 
             <div className="pin-display-box">
               {[0, 1, 2, 3].map((i) => (
-                <div className="pin-digit-box" key={i}>
+                <div key={i} className="pin-digit-box">
                   {pin[i] ? "•" : ""}
                 </div>
               ))}
@@ -242,15 +269,18 @@ const Attendance = () => {
                   {n}
                 </button>
               ))}
+
               <button className="keypad-btn" onClick={handleClear}>
                 C
               </button>
+
               <button
                 className="keypad-btn"
                 onClick={() => handleNumberClick("0")}
               >
                 0
               </button>
+
               <button className="keypad-btn" onClick={handleBackspace}>
                 ×
               </button>
@@ -277,6 +307,35 @@ const Attendance = () => {
                 ⏺ Clock Out
               </button>
             </div>
+
+            {/* ADMIN ONLY */}
+
+            {isAdmin && (
+              <div className="manual-entry-panel">
+                <h4>Admin Correction</h4>
+
+                <label>Clock In</label>
+                <input
+                  type="datetime-local"
+                  value={manualClockIn}
+                  onChange={(e) => setManualClockIn(e.target.value)}
+                />
+
+                <label>Clock Out</label>
+                <input
+                  type="datetime-local"
+                  value={manualClockOut}
+                  onChange={(e) => setManualClockOut(e.target.value)}
+                />
+
+                <button
+                  className="action-card orange"
+                  onClick={handleManualSubmit}
+                >
+                  Fix Attendance
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
