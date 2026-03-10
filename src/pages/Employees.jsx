@@ -117,6 +117,7 @@ const Employees = () => {
       <div className="employee-header">
         <h2 id="employee-title">Employees</h2>
         <button
+          id="add-btn"
           className="add-button"
           onClick={() => setFormVisible(!formVisible)}
         >
@@ -125,8 +126,13 @@ const Employees = () => {
       </div>
 
       {formVisible && (
-        <form className="employee-form" onSubmit={handleSubmit}>
+        <form
+          id="employee-form"
+          className="employee-form"
+          onSubmit={handleSubmit}
+        >
           <input
+            id="first-name"
             type="text"
             name="first_name"
             value={form.first_name}
@@ -134,7 +140,9 @@ const Employees = () => {
             placeholder="First Name"
             required
           />
+
           <input
+            id="last-name"
             type="text"
             name="last_name"
             value={form.last_name}
@@ -142,7 +150,9 @@ const Employees = () => {
             placeholder="Last Name"
             required
           />
+
           <input
+            id="employee-username"
             type="text"
             name="username"
             value={form.username}
@@ -150,7 +160,9 @@ const Employees = () => {
             placeholder="Username"
             required
           />
+
           <input
+            id="employee-password"
             type="password"
             name="password"
             value={form.password}
@@ -158,28 +170,36 @@ const Employees = () => {
             placeholder="Password"
             required={!editingId}
           />
+
           <input
+            id="employee-email"
             type="email"
             name="email"
             value={form.email}
             onChange={handleChange}
             placeholder="Email"
           />
+
           <input
+            id="employee-phone"
             type="text"
             name="phone"
             value={form.phone}
             onChange={handleChange}
             placeholder="Phone"
           />
+
           <input
+            id="employee-address"
             type="text"
             name="address"
             value={form.address}
             onChange={handleChange}
             placeholder="Address"
           />
+
           <input
+            id="employee-pin"
             type="password"
             name="pin"
             value={form.pin}
@@ -188,9 +208,11 @@ const Employees = () => {
             maxLength={4}
             required={!editingId}
           />
+
           <label>
             Date of Birth:
             <input
+              id="employee-dob"
               type="date"
               name="dob"
               value={form.dob}
@@ -198,9 +220,11 @@ const Employees = () => {
               required
             />
           </label>
+
           <label>
             Joining Date:
             <input
+              id="employee-joining-date"
               type="date"
               name="joining_date"
               value={form.joining_date}
@@ -208,7 +232,9 @@ const Employees = () => {
               required
             />
           </label>
+
           <input
+            id="employee-brp"
             type="text"
             name="brp"
             value={form.brp}
@@ -216,22 +242,37 @@ const Employees = () => {
             placeholder="BRP Number"
             required
           />
-          <select name="gender" value={form.gender} onChange={handleChange}>
+
+          <select
+            id="employee-gender"
+            name="gender"
+            value={form.gender}
+            onChange={handleChange}
+          >
             <option value="">Select Gender</option>
             <option value="male">Male</option>
             <option value="female">Female</option>
             <option value="other">Other</option>
           </select>
-          <select name="role" value={form.role} onChange={handleChange}>
+
+          <select
+            id="employee-role"
+            name="role"
+            value={form.role}
+            onChange={handleChange}
+          >
             <option value="employee">Employee</option>
             <option value="admin">Admin</option>
           </select>
-          <button type="submit">{editingId ? "Update" : "Add"} Employee</button>
+
+          <button id="submit-employee" type="submit">
+            {editingId ? "Update" : "Add"} Employee
+          </button>
         </form>
       )}
 
       <div className="employee-table-wrapper">
-        <table className="employee-table">
+        <table id="employee-table" className="employee-table">
           <thead>
             <tr>
               <th>ID</th>
@@ -247,18 +288,28 @@ const Employees = () => {
           </thead>
           <tbody>
             {employees.map((emp) => (
-              <tr key={emp.id}>
-                <td>{emp.id}</td>
-                <td>{emp.first_name}</td>
-                <td>{emp.last_name}</td>
-                <td>{emp.username}</td>
-                <td>{emp.email}</td>
-                <td>{emp.phone}</td>
-                <td>{emp.gender}</td>
-                <td>{emp.role}</td>
+              <tr key={emp.id} id={`employee-row-${emp.id}`}>
+                <td id={`employee-id-${emp.id}`}>{emp.id}</td>
+                <td id={`employee-first-${emp.id}`}>{emp.first_name}</td>
+                <td id={`employee-last-${emp.id}`}>{emp.last_name}</td>
+                <td id={`employee-username-${emp.id}`}>{emp.username}</td>
+                <td id={`employee-email-${emp.id}`}>{emp.email}</td>
+                <td id={`employee-phone-${emp.id}`}>{emp.phone}</td>
+                <td id={`employee-gender-${emp.id}`}>{emp.gender}</td>
+                <td id={`employee-role-${emp.id}`}>{emp.role}</td>
                 <td>
-                  <button onClick={() => handleEdit(emp)}>✏️</button>{" "}
-                  <button onClick={() => handleDelete(emp.id)}>🗑️</button>
+                  <button
+                    id={`edit-employee-${emp.id}`}
+                    onClick={() => handleEdit(emp)}
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    id={`delete-employee-${emp.id}`}
+                    onClick={() => handleDelete(emp.id)}
+                  >
+                    🗑️
+                  </button>
                 </td>
               </tr>
             ))}
