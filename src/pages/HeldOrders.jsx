@@ -1,44 +1,68 @@
 import React, { useEffect, useState } from "react";
 import DashboardLayout from "../components/DashboardLayout";
 import { useNavigate } from "react-router-dom";
+import api from "../services/api";
 import "./HeldOrders.css";
 
 const HeldOrders = () => {
   const [heldOrders, setHeldOrders] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const navigate = useNavigate();
+  const fetchHeldOrders = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get("/orders/held");
+      setHeldOrders(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      setError("Failed to load held orders");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const data = localStorage.getItem("heldOrders");
-    try {
-      const parsed = JSON.parse(data ?? "[]");
-      setHeldOrders(Array.isArray(parsed) ? parsed : []);
-    } catch (err) {
-      console.error("Failed to parse heldOrders from localStorage", err);
-      setHeldOrders([]);
-    }
+    fetchHeldOrders();
   }, []);
 
   const handleResume = (order) => {
     localStorage.setItem("resumedOrder", JSON.stringify(order));
     navigate("/billing");
   };
-
-  const handleDelete = (id) => {
-    const filtered = heldOrders.filter((o) => o.id !== id);
-    localStorage.setItem("heldOrders", JSON.stringify(filtered));
-    setHeldOrders(filtered);
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this held order?")) return;
+    try {
+      await api.delete(`/orders/held/${id}`);
+      setHeldOrders((prev) => prev.filter((o) => o.id !== id));
+    } catch (err) {
+      const message = err?.response?.data?.error || "Failed to delete";
+      alert(message);
+    }
   };
 
-  const handleClearAll = () => {
-    localStorage.removeItem("heldOrders");
-    setHeldOrders([]);
+  const handleClearAll = async () => {
+    if (!window.confirm("Clear all held orders?")) return;
+    try {
+      await api.delete("/orders/held/clear-all");
+      setHeldOrders([]);
+    } catch (err) {
+      const message = err?.response?.data?.error || "Failed to clear";
+      alert(message);
+    }
   };
 
   return (
     <DashboardLayout>
       <div className="held-orders-wrapper">
         <h2 id="held-orders-title">🕒 Held Orders</h2>
-        {heldOrders.length === 0 ? (
+
+        {error && (
+          <div style={{ color: "red", marginBottom: "10px" }}>⚠️ {error}</div>
+        )}
+
+        {loading ? (
+          <p>Loading...</p>
+        ) : heldOrders.length === 0 ? (
           <p>No held orders.</p>
         ) : (
           <>
@@ -55,11 +79,10 @@ const HeldOrders = () => {
               <tbody>
                 {heldOrders.map((order) => (
                   <tr key={order.id}>
-                    <td>#{order.displayNumber || order.id}</td>
-                    <td>{order.customer || "N/A"}</td>
-                    <td>{order.items.length}</td>
+                    <td>#{order.display_number || order.id}</td>
+                    <td>{order.customer_name || "N/A"}</td>
+                    <td>{order.items?.length}</td>
                     <td>{order.date}</td>
-
                     <td>
                       <button onClick={() => handleResume(order)}>
                         Resume

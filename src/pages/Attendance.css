@@ -1,279 +1,426 @@
-/* ===============================
-   CLEAN Attendance Layout
-   Left: Employee List
-   Right: Clock Panel
-   =============================== */
+/* Attendance.css — compact centered layout */
 
-.attendance-container {
-  padding: 22px;
+.att-wrap {
   display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-.attendance-heading {
-  font-size: 32px;
-  font-weight: 700;
-  margin-bottom: 20px;
-}
-
-/* SIDE BY SIDE WRAPPER */
-.attendance-content {
-  display: flex;
-  gap: 22px;
-  width: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
-  min-height: 600px;
-}
-
-/* ================= LEFT SIDE ================= */
-
-.employee-list {
-  flex: 0 0 60%;
-  display: flex;
-  flex-direction: column;
-  background: #ffffff;
-  border-radius: 14px;
-  padding: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  overflow: hidden;
-  height: 100%;
-}
-
-.search-bar {
-  margin-bottom: 15px;
-  padding: 10px 14px;
-  border-radius: 999px;
-  border: 1px solid #ddd;
-  font-size: 14px;
-}
-
-.employee-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 12px;
-}
-
-.employee-grid {
-  overflow-y: auto;
-  padding-right: 4px;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 12px;
-  display: grid;
-  justify-items: stretch;
-  align-items: baseline;
-  justify-content: stretch;
-  align-content: start;
-}
-
-/* Smaller Employee Card */
-.employee-card {
-  background: var(--panel-2);
-  border: 2px solid transparent;
-  border-radius: 12px;
-  padding: 10px 8px;
-  /* 🔥 reduced */
-  text-align: center;
-  cursor: pointer;
-  transition: 0.2s ease;
-  min-height: 140px;
-  /* 🔥 fixed smaller height */
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  height: 40px;
-}
-
-.employee-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
-}
-
-.employee-card.selected {
-  border-color: #f97316;
-}
-
-/* Status Colors */
-.border-green {
-  border-color: #22c55e !important;
-}
-
-.border-red {
-  border-color: #ef4444 !important;
-}
-
-.border-gray {
-  border-color: #ddd !important;
-}
-
-/* ================= RIGHT SIDE ================= */
-
-/* =========================
-   Clock panel (right)
-   ========================= */
-.clock-panel {
-  flex: 1 1 42%;
-  display: flex;
-  flex-direction: column;
+  align-items: stretch;
   justify-content: flex-start;
-  /* IMPORTANT */
-  align-items: center;
-  gap: 12px;
-  /* control spacing here */
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 20px 18px;
-  overflow-y: auto;
-  /* prevent stretching */
+  padding: 24px 20px;
+  height: calc(100vh - 60px);
+  background: #f7f8fa;
+  box-sizing: border-box;
 }
 
-.clock-panel h3 {
-  margin-bottom: 10px;
-}
-
-.live-clock {
-  margin-bottom: 15px;
-  font-weight: 600;
-}
-
-/* PIN Display */
-.pin-display-box {
+.att-panel {
   display: flex;
-  gap: 12px;
-  margin-bottom: 18px;
+  width: 100%;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, .08);
+  overflow: hidden;
 }
 
-.pin-digit-box {
-  width: 50px;
-  height: 50px;
-  background: #f1f5f9;
-  border-radius: 12px;
-  text-align: center;
-  line-height: 50px;
-  font-size: 20px;
+/* ══════════ LEFT — keypad ══════════ */
+.att-left {
+  width: 280px;
+  flex-shrink: 0;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-right: 1px solid #f0f0f0;
+  overflow-y: auto;
+}
+
+.att-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.att-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111;
+  margin: 0;
+}
+
+.att-clock {
+  text-align: right;
+  line-height: 1.2;
+}
+
+.att-clock-time {
+  font-size: 17px;
+  font-weight: 800;
+  color: #111;
+  letter-spacing: 1px;
+  font-variant-numeric: tabular-nums;
+}
+
+.att-clock-secs {
+  font-size: 11px;
+  font-weight: 700;
+  color: #dd3a00;
+  font-variant-numeric: tabular-nums;
+}
+
+.att-clock-date {
+  font-size: 9px;
+  color: #bbb;
+  letter-spacing: .3px;
+}
+
+/* Selected employee + PIN */
+.att-sel-area {
+  background: #f7f8fa;
+  border-radius: 10px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.att-sel-emp {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.att-sel-av {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.att-sel-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #111;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.att-sel-placeholder {
+  font-size: 11px;
+  color: #ccc;
+}
+
+.att-pin-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.att-pin-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e5e5e5;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.att-pin-dot.filled {
+  background: #dd3a00;
+  box-shadow: 0 0 5px rgba(221, 58, 0, .4);
+  transform: scale(1.15);
 }
 
 /* Keypad */
-.numbers-grid {
+.att-keypad {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  width: 100%;
-  max-width: 260px;
+  gap: 5px;
 }
 
-.keypad-btn {
-  width: 100%;
-  height: 60px;
-  border-radius: 50%;
-}
-
-.keypad-btn:hover {
-  background: #cbd5e1;
-}
-
-/* Action Buttons */
-.action-buttons {
-  display: flex;
-  gap: 14px;
-  margin-top: 12px;
-}
-
-.action-card {
-  padding: 12px 18px;
+.att-kb {
+  height: 58px;
   border-radius: 10px;
-  font-weight: 600;
   border: none;
+  background: #f7f8fa;
+  font-size: 20px;
+  font-weight: 700;
+  color: #111;
   cursor: pointer;
-  color: white;
+  transition: all 0.1s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.action-card.green {
-  background: #22c55e;
+.att-kb:hover {
+  background: #dd3a00;
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(221, 58, 0, .25);
 }
 
-.action-card.gray {
-  background: #ef4444;
+.att-kb:active {
+  transform: scale(0.95);
 }
 
-.avatar-circle {
-  width: 44px;
-  /* was 56px */
-  height: 44px;
-  font-size: 16px;
-  margin: 0 auto 6px;
-}
-
-.employee-card strong {
-  font-size: 14px;
-  margin-bottom: 4px;
-}
-
-.status-text {
+.att-kb-special {
   font-size: 12px;
-  margin-top: 4px;
+  color: #aaa;
 }
 
-.manual-entry-panel {
+.att-kb-special:hover {
+  color: #fff;
+}
+
+/* Action buttons */
+.att-action-btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+}
+
+.att-abtn {
+  height: 50px;
+  border-radius: 10px;
+  border: none;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  color: #fff;
+  transition: all 0.12s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.att-abtn:hover {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+}
+
+.att-abtn:active {
+  transform: scale(0.97);
+}
+
+.att-abtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.att-in {
+  background: #22c55e;
+  box-shadow: 0 2px 8px rgba(34, 197, 94, .3);
+}
+
+.att-out {
+  background: #ef4444;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, .3);
+}
+
+.att-fix {
+  background: #f59e0b;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, .25);
   width: 100%;
-  margin-top: 20px;
-  width: 100%;
+  height: 34px;
+  font-size: 11px;
+}
+
+.att-divider {
+  height: 1px;
+  background: #f0f0f0;
+  flex-shrink: 0;
+}
+
+.att-admin-section {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding-top: 10px;
-  border-top: 1px solid #eee;
+  gap: 5px;
 }
 
-.manual-entry-panel h4 {
-  font-size: 15px;
-  margin-bottom: 6px;
+.att-admin-title {
+  font-size: 9px;
+  font-weight: 700;
+  color: #dd3a00;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
-.manual-entry-panel label {
+.att-admin-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.att-admin-field label {
+  font-size: 10px;
+  color: #aaa;
+  font-weight: 500;
+}
+
+.att-admin-field input {
+  font-size: 10px;
+  padding: 6px 8px;
+  border-radius: 7px;
+  border: none;
+  background: #f7f8fa;
+  color: #111;
+  outline: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .05);
+  transition: box-shadow .15s;
+}
+
+.att-admin-field input:focus {
+  box-shadow: 0 0 0 1.5px #dd3a00;
+}
+
+/* ══════════ RIGHT — employee list ══════════ */
+.att-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  gap: 10px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.att-right-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.att-emp-count {
+  font-size: 10px;
+  color: #ccc;
+  white-space: nowrap;
+}
+
+.att-search {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: none;
+  background: #f7f8fa;
+  font-size: 13px;
+  color: #111;
+  outline: none;
+  width: 100%;
+  transition: box-shadow .15s;
+  flex-shrink: 0;
+}
+
+.att-search:focus {
+  box-shadow: 0 0 0 2px #dd3a00;
+}
+
+.att-grid {
+  flex: 1;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+  align-content: start;
+  padding-right: 2px;
+}
+
+.att-card {
+  background: #f7f8fa;
+  border-radius: 12px;
+  padding: 16px 10px;
+  text-align: center;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.12s ease;
+  border: 1.5px solid transparent;
+}
+
+.att-card:hover {
+  background: #f0f0f0;
+  transform: translateY(-1px);
+}
+
+.att-clocked-in {
+  border-color: #22c55e;
+  background: #f0fdf4;
+}
+
+.att-clocked-out {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+.att-card-selected {
+  background: #fff8f6 !important;
+  border-color: #dd3a00 !important;
+  box-shadow: 0 0 0 1px #dd3a00;
+}
+
+.att-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.att-emp-name {
   font-size: 12px;
   font-weight: 600;
+  color: #111;
+  line-height: 1.3;
 }
 
-.manual-entry-panel input {
-  padding: 7px;
-  border-radius: 6px;
-  border: 1px solid #ddd;
-  font-size: 12px;
+.att-emp-status {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #aaa;
 }
 
-.action-card.orange {
-  background: #f59e0b;
-  color: white;
-  margin-top: 6px;
+.att-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
-@media (max-width: 900px) {
+.att-dot.green { background: #22c55e; }
+.att-dot.red { background: #ef4444; }
+.att-dot.gray { background: #ccc; }
 
-  .attendance-content {
+@media (max-width: 600px) {
+  .att-wrap {
+    padding: 0;
+    min-height: 100vh;
+  }
+
+  .att-panel {
+    border-radius: 0;
     flex-direction: column;
+    max-width: 100%;
   }
 
-  .employee-list {
-    flex: 1 1 auto;
+  .att-left {
     width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #f0f0f0;
   }
-
-  .clock-panel {
-    width: 100%;
-    margin-top: 15px;
-  }
-
-}
-
-.keypad-btn {
-  font-size: 20px;
-}
-
-.action-card {
-  padding: 14px 20px;
-  font-size: 16px;
 }

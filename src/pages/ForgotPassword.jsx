@@ -62,8 +62,8 @@ const ForgotPassword = () => {
 
   return (
     <div className="forgot-container">
-      <div className="forgot-box">
-        <h2>Forgot Password</h2>
+      <div id="forgot-box" className="forgot-box">
+        <h2 id="forgot-password">Forgot Password</h2>
 
         <form onSubmit={handleReset} noValidate>
           <input

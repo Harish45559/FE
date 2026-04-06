@@ -8,19 +8,16 @@ import "./DashboardLayout.css";
 const DashboardLayout = ({ children }) => {
   const navigate = useNavigate();
 
-  // Use state to ensure updates after login
   const [user, setUser] = useState(() =>
     JSON.parse(localStorage.getItem("user")),
   );
 
-  // Sync user data from localStorage every 1 second
   useEffect(() => {
     const interval = setInterval(() => {
       const updatedUser = JSON.parse(localStorage.getItem("user"));
       setUser(updatedUser);
     }, 1000);
-
-    return () => clearInterval(interval); // cleanup
+    return () => clearInterval(interval);
   }, []);
 
   const handleLogout = () => {
@@ -29,98 +26,147 @@ const DashboardLayout = ({ children }) => {
     navigate("/");
   };
 
+  const getInitials = () => {
+    if (user?.first_name && user?.last_name)
+      return `${user.first_name.charAt(0)}${user.last_name.charAt(0)}`.toUpperCase();
+    if (user?.username) return user.username.charAt(0).toUpperCase();
+    return "U";
+  };
+
+  const getDisplayName = () => {
+    if (user?.first_name)
+      return `${user.first_name} ${user.last_name || ""}`.trim();
+    if (user?.username) return user.username;
+    return "User";
+  };
+
   return (
-    <div className="dashboard-container">
-      <aside className="sidebar">
-        <h2 id="mirchi-mafiya-title">Mirchi Mafiya</h2>
-        <ul>
-          {/* Admin-only routes */}
+    <div className="dl-layout">
+      <aside className="dl-sidebar">
+        {/* Logo */}
+        <div className="dl-logo">
+          <img
+            src="/bg-chili.png"
+            alt="Mirchi Mafiya"
+            className="dl-logo-img"
+          />
+          <div className="dl-logo-text">
+            <span className="dl-brand">Mirchi Mafiya</span>
+            <span className="dl-tagline">Point of Sale</span>
+          </div>
+        </div>
+
+        {/* Navigation */}
+        <nav className="dl-nav">
           {user?.role === "admin" && (
             <>
-              <li>
-                <NavLink to="/dashboard" id="sidebar-dashboard">
-                  📊 Dashboard
-                </NavLink>
-              </li>
+              <div className="dl-section">Main</div>
+              <NavLink
+                to="/dashboard"
+                className={({ isActive }) =>
+                  `dl-item${isActive ? " active" : ""}`
+                }
+              >
+                <span className="dl-item-icon">📊</span>
+                <span className="dl-item-label">Dashboard</span>
+              </NavLink>
 
-              <li>
-                <NavLink to="/employees" id="sidebar-employees">
-                  👥 Employees
-                </NavLink>
-              </li>
+              <div className="dl-section">Management</div>
+              <NavLink
+                to="/employees"
+                className={({ isActive }) =>
+                  `dl-item${isActive ? " active" : ""}`
+                }
+              >
+                <span className="dl-item-icon">👥</span>
+                <span className="dl-item-label">Employees</span>
+              </NavLink>
+              <NavLink
+                to="/reports"
+                className={({ isActive }) =>
+                  `dl-item${isActive ? " active" : ""}`
+                }
+              >
+                <span className="dl-item-icon">📈</span>
+                <span className="dl-item-label">Reports</span>
+              </NavLink>
+              <NavLink
+                to="/master-data"
+                className={({ isActive }) =>
+                  `dl-item${isActive ? " active" : ""}`
+                }
+              >
+                <span className="dl-item-icon">🗂️</span>
+                <span className="dl-item-label">Master Data</span>
+              </NavLink>
+              <NavLink
+                to="/eod-sales"
+                className={({ isActive }) =>
+                  `dl-item${isActive ? " active" : ""}`
+                }
+              >
+                <span className="dl-item-icon">📊</span>
+                <span className="dl-item-label">EOD Sales</span>
+              </NavLink>
 
-              <li>
-                <NavLink to="/reports" id="sidebar-reports">
-                  📈 Reports
-                </NavLink>
-              </li>
-
-              <li>
-                <NavLink to="/master-data" id="sidebar-master-data">
-                  🗂️ Master Data
-                </NavLink>
-              </li>
-
-              <li>
-                <NavLink to="/eod-sales" id="sidebar-eod-sales">
-                  📊 EOD Sales
-                </NavLink>
-              </li>
-
-              <li>
-                <NavLink to="/held-orders" id="sidebar-held-orders">
-                  ⏳ Held Orders
-                </NavLink>
-              </li>
-
-              <li>
-                <NavLink to="/billing" id="sidebar-billing">
-                  💵 Billing Counter
-                </NavLink>
-              </li>
-
-              <li>
-                <NavLink to="/previous-orders" id="sidebar-previous-orders">
-                  📜 Previous Orders
-                </NavLink>
-              </li>
+              <div className="dl-section">Operations</div>
+              <NavLink
+                to="/held-orders"
+                className={({ isActive }) =>
+                  `dl-item${isActive ? " active" : ""}`
+                }
+              >
+                <span className="dl-item-icon">⏳</span>
+                <span className="dl-item-label">Held Orders</span>
+              </NavLink>
+              <NavLink
+                to="/billing"
+                className={({ isActive }) =>
+                  `dl-item${isActive ? " active" : ""}`
+                }
+              >
+                <span className="dl-item-icon">💵</span>
+                <span className="dl-item-label">Billing Counter</span>
+              </NavLink>
+              <NavLink
+                to="/previous-orders"
+                className={({ isActive }) =>
+                  `dl-item${isActive ? " active" : ""}`
+                }
+              >
+                <span className="dl-item-icon">📜</span>
+                <span className="dl-item-label">Previous Orders</span>
+              </NavLink>
             </>
           )}
 
-          {/* Shared routes */}
-          <li>
-            <NavLink to="/attendance" id="sidebar-attendance">
-              ⏰ Attendance
-            </NavLink>
-          </li>
+          <NavLink
+            to="/attendance"
+            className={({ isActive }) => `dl-item${isActive ? " active" : ""}`}
+          >
+            <span className="dl-item-icon">⏰</span>
+            <span className="dl-item-label">Attendance</span>
+          </NavLink>
+        </nav>
 
-          {/* Logout */}
-          <li>
-            <button
-              onClick={handleLogout}
-              style={{ marginTop: "1rem" }}
-              id="logout-btn"
-            >
-              🚪 Logout
-            </button>
-          </li>
-        </ul>
-
-        {/* Logged in user info */}
-        <div className="user-info">
-          {user?.role === "admin"
-            ? "👑 Admin Logged In"
-            : user?.first_name
-              ? `👤 Logged in as ${user.first_name} ${user.last_name || ""}`
-              : user?.username
-                ? `👤 Logged in as ${user.username}`
-                : user?.id
-                  ? `👤 Logged in as User ${user.id}`
-                  : "👤 Employee Logged In"}
+        {/* Footer */}
+        <div className="dl-footer">
+          <div className="dl-user">
+            <div className="dl-user-av">{getInitials()}</div>
+            <div className="dl-user-info">
+              <span className="dl-user-name">{getDisplayName()}</span>
+              <span className="dl-user-role">
+                {user?.role === "admin" ? "👑 Administrator" : "👤 Employee"}
+              </span>
+            </div>
+          </div>
+          <button className="dl-logout" onClick={handleLogout}>
+            <span>🚪</span> Logout
+          </button>
         </div>
       </aside>
 
-      <main className="main-content">
+      <main className="dl-main">
         {children}
         <ToastContainer position="top-center" autoClose={3000} />
       </main>

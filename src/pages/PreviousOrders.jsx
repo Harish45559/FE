@@ -4,44 +4,35 @@ import DashboardLayout from "../components/DashboardLayout";
 import api from "../services/api";
 import "./PreviousOrders.css";
 import usePagination from "../hooks/usePagination";
-import PaginationBar from "../components/PaginationBar";
 
-/* ------- Receipt Portal (renders at document.body) ------- */
+/* ── Receipt Portal ── */
 const ReceiptPortal = ({ children }) => {
   const [el] = useState(() => {
     const d = document.createElement("div");
-    d.className = "receipt-modal"; // keep this class for print CSS
+    d.className = "receipt-modal";
     return d;
   });
-
   useEffect(() => {
     document.body.appendChild(el);
     return () => {
       try {
         document.body.removeChild(el);
-      } catch (err) {
-        console.error("cleanup error:", err);
+      } catch (e) {
+        console.error(e);
       }
     };
   }, [el]);
-
   return ReactDOM.createPortal(children, el);
 };
 
 const PreviousOrders = () => {
-  // Table data
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
-
-  // Filters
   const [search, setSearch] = useState("");
   const [date, setDate] = useState("");
-
-  // Receipt modal
   const [showReceipt, setShowReceipt] = useState(false);
   const [activeOrder, setActiveOrder] = useState(null);
 
-  // Fetch all orders once (client-side filter/paginate)
   useEffect(() => {
     const fetchOrders = async () => {
       setLoading(true);
@@ -66,14 +57,12 @@ const PreviousOrders = () => {
           date: o.date ?? o.created_at ?? o.createdAt ?? "",
           order_type: o.order_type ?? o.orderType ?? o.type ?? "",
         }));
-
         norm.sort((a, b) => {
           const ta = a.date ? new Date(a.date).getTime() : 0;
           const tb = b.date ? new Date(b.date).getTime() : 0;
-          if (tb !== ta) return tb - ta; // latest first
+          if (tb !== ta) return tb - ta;
           return String(b.order_number).localeCompare(String(a.order_number));
         });
-
         setOrders(norm);
       } catch (e) {
         console.error("Failed to load orders", e);
@@ -84,7 +73,6 @@ const PreviousOrders = () => {
     fetchOrders();
   }, []);
 
-  // Derived table after filters
   const filtered = useMemo(() => {
     const needle = search.trim().toLowerCase();
     return orders.filter((o) => {
@@ -93,13 +81,27 @@ const PreviousOrders = () => {
         String(o.order_number).toLowerCase().includes(needle) ||
         String(o.customer_name).toLowerCase().includes(needle) ||
         String(o.payment_method).toLowerCase().includes(needle);
-      const matchesDate =
-        !date || (o.date && String(o.date).slice(0, 10) === date);
+
+      let matchesDate = true;
+      if (date && o.date) {
+        const raw = String(o.date);
+        // Handle "DD/MM/YYYY HH:mm:ss" or "DD/MM/YYYY" format
+        if (raw.includes("/")) {
+          const parts = raw.split(" ")[0].split("/"); // ["04","04","2026"]
+          if (parts.length === 3) {
+            const normalised = `${parts[2]}-${parts[1]}-${parts[0]}`; // "2026-04-04"
+            matchesDate = normalised === date;
+          }
+        } else {
+          // ISO format "2026-04-04T..." or "2026-04-04 ..."
+          matchesDate = raw.slice(0, 10) === date;
+        }
+      }
+
       return matchesSearch && matchesDate;
     });
   }, [orders, search, date]);
 
-  // Global pagination (shared hook)
   const {
     page,
     setPage,
@@ -109,7 +111,6 @@ const PreviousOrders = () => {
     pageRows: pageData,
   } = usePagination(filtered);
 
-  // Helpers for receipt math
   const calcSubtotal = (ord) =>
     (ord?.items ?? []).reduce(
       (s, it) => s + Number(it.total ?? (it.price ?? 0) * (it.qty ?? 0)),
@@ -119,21 +120,17 @@ const PreviousOrders = () => {
   const calcIncluded = (amount, percent) =>
     (Number(amount) * percent) / (100 + percent);
 
-  // Open receipt & auto-print
   const openReceipt = (ord) => {
     setActiveOrder(ord);
     setShowReceipt(true);
-
     window.onafterprint = () => {
       window.onafterprint = null;
       setShowReceipt(false);
       setActiveOrder(null);
     };
-
     setTimeout(() => window.print(), 200);
   };
 
-  // Manual reprint
   const handlePrint = () => {
     window.onafterprint = () => {
       window.onafterprint = null;
@@ -143,102 +140,198 @@ const PreviousOrders = () => {
     window.print();
   };
 
+  /* Pagination pages array */
+  const pages = [];
+  for (let i = 1; i <= pageCount; i++) pages.push(i);
+  const visiblePages = pages.filter(
+    (p) => p === 1 || p === pageCount || Math.abs(p - page) <= 1,
+  );
+
   return (
     <DashboardLayout>
       <div className="previous-orders">
-        <div className="header">
-          <h2 id="previous-orders-title">Previous Orders</h2>
-
-          <div className="controls">
-            <input
-              className="search-box"
-              type="text"
-              placeholder="Search by customer, order no., or payment…"
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-            />
-            <input
-              className="date-picker"
-              type="date"
-              value={date}
-              onChange={(e) => {
-                setDate(e.target.value);
-                setPage(1);
-              }}
-            />
-            <button
-              className="clear-btn"
-              onClick={() => {
-                setSearch("");
-                setDate("");
-                setPage(1);
-              }}
-            >
-              Clear
-            </button>
-          </div>
+        {/* ── Header ── */}
+        <div className="po-header">
+          <span className="po-title">Previous Orders</span>
+          <span className="po-badge">{filtered.length} orders</span>
         </div>
 
-        <div style={{ overflowX: "auto" }}>
-          <table className="orders-table">
-            <thead>
-              <tr>
-                <th>Order #</th>
-                <th>Date/Time</th>
-                <th>Customer</th>
-                <th>Items</th>
-                <th>Paid By</th>
-                <th>Total (£)</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
+        {/* ── Controls ── */}
+        <div className="po-controls">
+          <input
+            className="po-search"
+            type="text"
+            placeholder="Search by customer, order no. or payment…"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
+          />
+          <input
+            className="po-date"
+            type="date"
+            value={date}
+            onChange={(e) => {
+              setDate(e.target.value);
+              setPage(1);
+            }}
+          />
+          <button
+            className="po-clear"
+            onClick={() => {
+              setSearch("");
+              setDate("");
+              setPage(1);
+            }}
+          >
+            ✕ Clear
+          </button>
+        </div>
+
+        {/* ── Table card ── */}
+        <div className="po-card">
+          <div className="po-table-wrap">
+            <table className="po-table">
+              <thead>
                 <tr>
-                  <td colSpan={7}>Loading…</td>
+                  <th>Order</th>
+                  <th>Customer</th>
+                  <th>Items</th>
+                  <th>Payment</th>
+                  <th>Total</th>
+                  <th>Print</th>
                 </tr>
-              ) : pageData.length === 0 ? (
-                <tr>
-                  <td colSpan={7}>No orders found.</td>
-                </tr>
-              ) : (
-                pageData.map((o) => (
-                  <tr key={o.id}>
-                    <td>#{o.order_number}</td>
-                    <td>{o.date ? String(o.date) : "—"}</td>
-                    <td>{o.customer_name}</td>
-                    <td>{o.items?.length ?? 0}</td>
-                    <td>{o.payment_method}</td>
-                    <td>{(o.final_amount || calcSubtotal(o)).toFixed(2)}</td>
-                    <td>
-                      <button
-                        className="view-btn"
-                        title="View / Print Receipt"
-                        onClick={() => openReceipt(o)}
-                      >
-                        🧾
-                      </button>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan={6} className="po-empty">
+                      Loading orders…
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ) : pageData.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="po-empty">
+                      No orders found.
+                    </td>
+                  </tr>
+                ) : (
+                  pageData.map((o) => (
+                    <tr key={o.id}>
+                      <td>
+                        <div className="po-order-num">#{o.order_number}</div>
+                        <div className="po-order-sub">
+                          {o.date ? String(o.date) : "—"}
+                        </div>
+                      </td>
+                      <td>
+                        <div className="po-cust-name">{o.customer_name}</div>
+                        <div className="po-cust-type">
+                          {o.order_type || "—"}
+                        </div>
+                      </td>
+                      <td>
+                        <span className="po-items-pill">
+                          {o.items?.length ?? 0} items
+                        </span>
+                      </td>
+                      <td>
+                        <span
+                          className={`po-pay ${o.payment_method?.toLowerCase() === "card" ? "card" : "cash"}`}
+                        >
+                          {o.payment_method?.toLowerCase() === "card"
+                            ? "💳"
+                            : "💵"}{" "}
+                          {o.payment_method}
+                        </span>
+                      </td>
+                      <td>
+                        <span className="po-amount">
+                          £{(o.final_amount || calcSubtotal(o)).toFixed(2)}
+                        </span>
+                      </td>
+                      <td>
+                        <button
+                          className="po-print-btn"
+                          title="View / Print Receipt"
+                          onClick={() => openReceipt(o)}
+                        >
+                          🧾
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
 
-        <PaginationBar
-          page={page}
-          pageCount={pageCount}
-          pageSize={pageSize}
-          onChangePage={setPage}
-          onChangePageSize={setPageSize}
-        />
+          {/* ── Footer pagination ── */}
+          <div className="po-footer">
+            <span className="po-foot-info">
+              Showing {filtered.length === 0 ? 0 : (page - 1) * pageSize + 1}–
+              {Math.min(page * pageSize, filtered.length)} of {filtered.length}{" "}
+              orders
+            </span>
+            <div className="po-foot-right">
+              <select
+                className="po-page-size"
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setPage(1);
+                }}
+              >
+                {[10, 20, 50, 100].map((n) => (
+                  <option key={n} value={n}>
+                    {n} / page
+                  </option>
+                ))}
+              </select>
+              <div className="po-pages">
+                <button
+                  className="po-pg"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                >
+                  ‹
+                </button>
+                {visiblePages.map((p, i, arr) => (
+                  <React.Fragment key={p}>
+                    {i > 0 && arr[i - 1] !== p - 1 && (
+                      <span
+                        style={{
+                          padding: "0 4px",
+                          color: "#ccc",
+                          lineHeight: "32px",
+                        }}
+                      >
+                        …
+                      </span>
+                    )}
+                    <button
+                      className={`po-pg${page === p ? " active" : ""}`}
+                      onClick={() => setPage(p)}
+                    >
+                      {p}
+                    </button>
+                  </React.Fragment>
+                ))}
+                <button
+                  className="po-pg"
+                  onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+                  disabled={page === pageCount || pageCount === 0}
+                >
+                  ›
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* ===== Receipt via PORTAL to <body> ===== */}
+      {/* ── Receipt Portal ── */}
       {showReceipt && activeOrder && (
         <ReceiptPortal>
           <div className="bill-section">
@@ -246,7 +339,7 @@ const PreviousOrders = () => {
               style={{
                 display: "flex",
                 justifyContent: "space-between",
-                marginBottom: 10,
+                marginBottom: 12,
               }}
             >
               <button className="print-btn" onClick={handlePrint}>
@@ -259,7 +352,7 @@ const PreviousOrders = () => {
                   setActiveOrder(null);
                 }}
               >
-                ✖
+                ✕ Close
               </button>
             </div>
 
@@ -330,7 +423,6 @@ const PreviousOrders = () => {
                 (s, it) => s + Number(it.qty ?? 0),
                 0,
               );
-
               return (
                 <div className="receipt-summary">
                   <p>
@@ -348,10 +440,9 @@ const PreviousOrders = () => {
                   <p className="grand-total">
                     <strong>Grand Total:</strong> £ {grand.toFixed(2)}
                   </p>
-                  <p className="includes-label">Includes:</p>
                   <p>VAT (20%): £{vatIncluded.toFixed(2)}</p>
                   <p>Service Charge (8%): £{svcIncluded.toFixed(2)}</p>
-                  <p className="server-name">
+                  <p>
                     Staff:{" "}
                     {activeOrder.server_name
                       ? `(${activeOrder.server_name})`

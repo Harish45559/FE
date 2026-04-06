@@ -45,9 +45,7 @@ const Login = () => {
         setError("Login failed: invalid server response");
         return;
       }
-
       localStorage.setItem("token", token);
-
       localStorage.setItem(
         "user",
         JSON.stringify({
@@ -65,7 +63,14 @@ const Login = () => {
         setError("Unknown role");
       }
     } catch (err) {
-      setError(err?.response?.data?.message || "Invalid password");
+      const errorData = err?.response?.data;
+
+      if (errorData?.errors) {
+        const firstError = Object.values(errorData.errors)[0];
+        setError(firstError);
+      } else {
+        setError(errorData?.message || "Login failed");
+      }
     }
   };
 
@@ -84,7 +89,7 @@ const Login = () => {
         <h2 className="title">Welcome back</h2>
 
         {error && (
-          <div className="alert error" data-testid="login-error">
+          <div className="alert error" id="login-error">
             {error}
           </div>
         )}
@@ -124,7 +129,7 @@ const Login = () => {
           </button>
         </form>
 
-        <p className="forgot">
+        <p id="forgot-password" className="forgot">
           <a href="/forgot-password">Forgot password?</a>
         </p>
 
