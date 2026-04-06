@@ -1,366 +1,385 @@
-/* ===========================
-   Master Data – Polished UI
-   (safe: CSS-only, no JSX changes)
-   =========================== */
+/* MasterData.css */
 
-/* ---- Theme tokens (tweak if you like) ---- */
-:root {
-  --bg: #0b0b0c;             /* app background if visible around layout */
-  --panel: #ffffff;
-  --panel-muted: #fafbfc;
-  --text: #24313f;
-  --muted: #6c7a8a;
-  --border: #e7ecf2;
-  --accent: #dd3a00;         /* warm Mirchi-style accent */
-  --accent-2: #b92f00;
-  --accent-on: #fff;
-  --success: #0a8f5b;
-  --danger: #c62828;
-  --warn: #b7791f;
-  --radius: 14px;
-  --radius-sm: 10px;
-  --shadow: 0 10px 30px rgba(9, 22, 39, .08);
+.md-wrapper {
+  padding: 1.5rem 0;
+  max-width: 1200px;
 }
 
-/* ---- Page wrapper & heading ---- */
-.master-data-wrapper {
+.md-header {
+  margin-bottom: 1.5rem;
+}
+
+.md-title {
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--color-text-primary, #111);
+  margin-bottom: 2px;
+}
+
+.md-subtitle {
+  font-size: 13px;
+  color: var(--color-text-secondary, #666);
+}
+
+/* ── Layout ── */
+.md-layout {
   display: grid;
-  grid-template-columns: 320px 1fr;
-  gap: 20px;
-  padding: 20px;
-  background: #f5f7fa;
+  grid-template-columns: 260px 1fr;
+  gap: 16px;
+  align-items: start;
 }
 
-.master-data-wrapper > h2 {
-  grid-column: 1 / -1;
-  margin: 0 0 6px;
-  font-size: 28px;
-  font-weight: 800;
-  color: var(--text);
-  letter-spacing: .2px;
+/* ── Cards ── */
+.md-card {
+  background: var(--color-background-primary, #fff);
+  border: 0.5px solid var(--color-border-tertiary, #e5e5e5);
+  border-radius: 12px;
+  padding: 1.25rem;
 }
 
-/* ---- Panels (card look) ---- */
-.category-panel,
-.menu-panel {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 18px;
+.md-card--wide {
+  min-width: 0;
 }
 
-/* ===========================
-   Category Panel
-   =========================== */
-.category-panel h3 {
-  margin: 2px 0 14px;
-  font-size: 18px;
-  color: var(--text);
-  font-weight: 700;
-}
-
-.category-panel form {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 10px;
-  margin: 0 0 14px;
-}
-
-.category-panel input {
-  height: 40px;
-  padding: 8px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-size: 14px;
-  outline: none;
-  transition: border-color .15s, box-shadow .15s;
-}
-.category-panel input:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(221,58,0,.12);
-}
-
-.category-panel button {
-  height: 40px;
-  padding: 0 14px;
-  border: 0;
-  border-radius: var(--radius-sm);
-  font-weight: 700;
-  font-size: 14px;
-  cursor: pointer;
-  color: var(--accent-on);
-  background: linear-gradient(180deg, var(--accent), var(--accent-2));
-  box-shadow: 0 8px 18px rgba(221,58,0,.25);
-  transition: filter .2s, transform .06s;
-}
-.category-panel button:hover { filter: brightness(1.06); }
-.category-panel button:active { transform: translateY(1px); }
-
-.category-panel ul {
-  list-style: none; margin: 0; padding: 0;
-  border-top: 1px dashed var(--border);
-}
-.category-panel li {
-  display: grid;
-  grid-template-columns: 1fr auto;
+.md-card-header {
+  display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 0;
-  border-bottom: 1px dashed var(--border);
-}
-.category-panel li:last-child { border-bottom: 0; }
-
-.category-panel .actions {
-  display: inline-flex; gap: 8px;
-}
-.category-panel .actions button {
-  background: #f4f7fa;
-  border: 1px solid var(--border);
-  color: var(--text);
-  box-shadow: none;
-  padding: 6px 8px;
-}
-.category-panel .actions button:hover {
-  background: #eef3f8;
+  gap: 8px;
+  margin-bottom: 1rem;
+  padding-bottom: 10px;
+  border-bottom: 0.5px solid var(--color-border-tertiary, #e5e5e5);
 }
 
-/* Inline editor input inside list */
-.category-panel li input {
-  height: 38px;
-}
-
-/* ===========================
-   Menu Panel
-   =========================== */
-.menu-panel h3 {
-  margin: 2px 0 16px;
-  font-size: 18px;
-  color: var(--text);
-  font-weight: 700;
-}
-
-/* --- Create New Item form --- */
-.menu-panel form {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1.5fr 1fr auto;
-  gap: 10px;
-  align-items: center;
-  margin-bottom: 16px;
-}
-.menu-panel form input,
-.menu-panel form select {
-  height: 40px;
-  padding: 8px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+.md-card-title {
   font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary, #111);
+}
+
+.md-count-badge {
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 99px;
+  background: var(--color-background-secondary, #f5f5f5);
+  color: var(--color-text-secondary, #666);
+  font-weight: 500;
+}
+
+/* ── Inputs ── */
+.md-input {
+  font-size: 13px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 0.5px solid var(--color-border-secondary, #ddd);
+  background: var(--color-background-primary, #fff);
+  color: var(--color-text-primary, #111);
   outline: none;
-  transition: border-color .15s, box-shadow .15s;
-  background: #fff;
-}
-.menu-panel form input:focus,
-.menu-panel form select:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(221,58,0,.12);
+  height: 34px;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease;
 }
 
-.menu-panel form button {
-  height: 40px;
-  padding: 0 16px;
-  border: 0;
-  border-radius: var(--radius-sm);
-  font-weight: 800;
-  cursor: pointer;
-  color: var(--accent-on);
-  background: linear-gradient(180deg, var(--accent), var(--accent-2));
-  box-shadow: 0 8px 18px rgba(221,58,0,.25);
-  transition: filter .2s, transform .06s;
-}
-.menu-panel form button:hover { filter: brightness(1.06); }
-.menu-panel form button:active { transform: translateY(1px); }
-
-/* --- Filters block --- */
-.menu-filters {
-  display: grid;
-  gap: 10px;
-  margin-bottom: 12px;
-  padding: 12px;
-  background: var(--panel-muted);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-}
-.menu-filters .row {
-  display: grid;
-  grid-template-columns: 1fr repeat(2, minmax(140px, 200px)) repeat(2, minmax(120px, 160px)) auto;
-  gap: 10px;
-  align-items: center;
-}
-.menu-filters .grow { grid-column: 1 / 2; }
-
-.menu-filters input,
-.menu-filters select {
-  height: 38px;
-  padding: 8px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: #fff;
-  outline: none;
-}
-.menu-filters input:focus,
-.menu-filters select:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(221,58,0,.12);
+.md-input:focus {
+  border-color: var(--color-border-primary, #999);
 }
 
-.menu-filters .secondary {
-  height: 38px;
-  padding: 0 12px;
-  border-radius: var(--radius-sm);
-  background: #f4f7fa;
-  border: 1px solid var(--border);
-  color: var(--text);
-  font-weight: 600;
-  cursor: pointer;
-}
-.menu-filters .secondary:hover { background: #eef3f8; }
-
-.menu-filters .results-count {
-  margin-left: auto;
-  color: var(--muted);
-  font-size: 14px;
-}
-
-/* --- Table wrapper for overflow --- */
-.menu-panel .table-wrap {
-  overflow: auto;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: #fff;
-}
-
-/* --- Table styling --- */
-.menu-panel table {
+.md-input--flex {
+  flex: 1;
+  min-width: 0;
   width: 100%;
-  border-collapse: collapse;
-  min-width: 640px;
 }
 
-.menu-panel thead th {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  background: #f7fafc;
-  color: #415163;
-  font-weight: 800;
-  letter-spacing: .2px;
-  text-align: left;
-  padding: 12px;
-  border-bottom: 1px solid var(--border);
+.md-input--price {
+  width: 90px;
+  flex-shrink: 0;
 }
 
-.menu-panel tbody td {
-  padding: 12px;
-  border-bottom: 1px solid var(--border);
-  font-size: 14px;
-  color: #2b3847;
-}
-
-.menu-panel tbody tr:nth-child(odd) { background: #fff; }
-.menu-panel tbody tr:nth-child(even) { background: #fbfdff; }
-
-.menu-panel tbody tr:hover {
-  background: #fff6f2; /* subtle warm hover */
-}
-
-/* Price column monospace feel for clarity */
-.menu-panel td:nth-child(2) {
-  font-variant-numeric: tabular-nums;
-}
-
-/* Actions column */
-.menu-panel td.actions {
+.md-input--cat {
   width: 140px;
+  flex-shrink: 0;
+}
+
+.md-input--veg {
+  width: 100px;
+  flex-shrink: 0;
+}
+
+/* ── Add buttons ── */
+.md-add-btn {
+  font-size: 13px;
+  padding: 0 14px;
+  height: 34px;
+  border-radius: 8px;
+  border: none;
+  background: var(--color-text-primary, #111);
+  color: var(--color-background-primary, #fff);
+  cursor: pointer;
+  font-weight: 500;
   white-space: nowrap;
+  flex-shrink: 0;
+  transition: opacity 0.15s ease;
+}
+
+.md-add-btn:hover {
+  opacity: 0.85;
+}
+
+/* ── Error ── */
+.md-error {
+  font-size: 12px;
+  color: #A32D2D;
+  background: #FCEBEB;
+  border: 0.5px solid #F7C1C1;
+  border-radius: 6px;
+  padding: 6px 10px;
+  margin-bottom: 10px;
+}
+
+/* ── Category add form ── */
+.md-add-form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  align-items: center;
+}
+
+/* ── Category list ── */
+.md-cat-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.md-cat-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 0.5px solid var(--color-border-tertiary, #e5e5e5);
+}
+
+.md-cat-item:last-child {
+  border-bottom: none;
+}
+
+.md-cat-name {
+  font-size: 13px;
+  color: var(--color-text-primary, #111);
+  flex: 1;
+}
+
+.md-cat-empty {
+  font-size: 13px;
+  color: var(--color-text-secondary, #666);
+  padding: 12px 0;
+  text-align: center;
+}
+
+/* ── Row action buttons (Edit/Del/Save/Cancel) ── */
+.md-row-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.md-row-actions--center {
+  justify-content: center;
+}
+
+.md-action-btn {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 5px;
+  border: 0.5px solid var(--color-border-secondary, #ddd);
+  background: var(--color-background-primary, #fff);
+  color: var(--color-text-secondary, #666);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.15s ease;
+  height: 24px;
   display: inline-flex;
+  align-items: center;
+}
+
+.md-action-btn:hover {
+  opacity: 0.75;
+}
+
+.md-action-btn--edit {
+  border-color: #B5D4F4;
+  color: #185FA5;
+  background: #E6F1FB;
+}
+
+.md-action-btn--del {
+  border-color: #F7C1C1;
+  color: #A32D2D;
+  background: #FCEBEB;
+}
+
+.md-action-btn--save {
+  border-color: #9FE1CB;
+  color: #085041;
+  background: #E1F5EE;
+}
+
+.md-action-btn--cancel {
+  border-color: var(--color-border-secondary, #ddd);
+  color: var(--color-text-secondary, #666);
+  background: var(--color-background-secondary, #f5f5f5);
+}
+
+/* ── Add item form — single row ── */
+.md-item-form {
+  display: flex;
   gap: 8px;
   align-items: center;
+  flex-wrap: nowrap;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 0.5px solid var(--color-border-tertiary, #e5e5e5);
+  overflow-x: auto;
 }
-.menu-panel td.actions button {
-  display: inline-flex;
+
+/* ── Filters — single row ── */
+.md-filters {
+  display: flex;
+  gap: 8px;
   align-items: center;
-  justify-content: center;
-  padding: 6px 8px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: #f4f7fa;
+  flex-wrap: nowrap;
+  margin-bottom: 12px;
+  padding: 8px 10px;
+  background: var(--color-background-secondary, #f9f9f9);
+  border-radius: 8px;
+  border: 0.5px solid var(--color-border-tertiary, #e5e5e5);
+  overflow-x: auto;
+}
+
+.md-clear-btn {
+  font-size: 12px;
+  padding: 0 10px;
+  height: 34px;
+  border-radius: 8px;
+  border: 0.5px solid var(--color-border-secondary, #ddd);
+  background: var(--color-background-primary, #fff);
+  color: var(--color-text-secondary, #666);
   cursor: pointer;
-  transition: background .15s, transform .06s;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
-.menu-panel td.actions button:hover { background: #eef3f8; }
-.menu-panel td.actions button:active { transform: translateY(1px); }
 
-/* Inline edit inputs inside table */
-.menu-panel td input,
-.menu-panel td select {
-  height: 36px;
-  padding: 6px 10px;
-  border: 1px solid var(--border);
+.md-clear-btn:hover {
+  background: var(--color-background-secondary, #f5f5f5);
+}
+
+.md-results-count {
+  font-size: 12px;
+  color: var(--color-text-secondary, #666);
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+/* ── Table ── */
+.md-table-wrap {
+  border: 0.5px solid var(--color-border-tertiary, #e5e5e5);
   border-radius: 10px;
-  outline: none;
-}
-.menu-panel td input:focus,
-.menu-panel td select:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(221,58,0,.12);
+  overflow: hidden;
+  overflow-x: auto;
+  margin-bottom: 12px;
 }
 
-/* Veg/Non-Veg dot + name alignment already in JSX;
-   refine the dot to look crisp */
-.menu-panel td span[title="Veg"],
-.menu-panel td span[title="Non-Veg"] {
-  box-shadow: 0 0 0 1px rgba(0,0,0,.08) inset;
+.md-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 500px;
 }
 
-/* Empty state row */
-.menu-panel tbody td[colspan="4"] {
-  color: var(--muted);
-  padding: 28px 12px;
+.md-table thead th {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-secondary, #666);
+  text-align: left;
+  padding: 9px 12px;
+  border-bottom: 0.5px solid var(--color-border-tertiary, #e5e5e5);
+  background: var(--color-background-secondary, #f9f9f9);
+  white-space: nowrap;
 }
 
-/* ===========================
-   Responsive
-   =========================== */
-@media (max-width: 1024px) {
-  .menu-panel form {
-    grid-template-columns: 1fr 120px 1fr 120px auto;
-  }
-  .menu-filters .row {
-    grid-template-columns: 1fr 1fr 1fr 1fr auto;
-  }
+.md-table tbody td {
+  padding: 9px 12px;
+  border-bottom: 0.5px solid var(--color-border-tertiary, #e5e5e5);
+  color: var(--color-text-primary, #111);
+  vertical-align: middle;
 }
 
-@media (max-width: 768px) {
-  .master-data-wrapper {
+.md-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.md-table tbody tr:hover td {
+  background: var(--color-background-secondary, #f9f9f9);
+}
+
+/* ── Item name cell ── */
+.md-item-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.md-veg-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.md-veg-dot.veg {
+  background: #1D9E75;
+}
+
+.md-veg-dot.nonveg {
+  background: #E24B4A;
+}
+
+.md-price-cell {
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+.md-muted {
+  color: var(--color-text-secondary, #666);
+}
+
+/* ── Empty ── */
+.md-empty {
+  text-align: center;
+  padding: 2rem;
+  color: var(--color-text-secondary, #666);
+  font-size: 14px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 960px) {
+  .md-layout {
     grid-template-columns: 1fr;
   }
-  .menu-panel form {
-    grid-template-columns: 1fr 1fr;
-  }
-  .menu-panel form button {
-    grid-column: 1 / -1;
-  }
-  .menu-filters .row {
-    grid-template-columns: 1fr 1fr;
-  }
-  .menu-panel table { min-width: 560px; }
 }
 
-/* Small touch targets on very small screens */
-@media (max-width: 420px) {
-  .category-panel button,
-  .menu-panel form button,
-  .menu-filters .secondary {
-    height: 44px;
+@media (max-width: 700px) {
+  .md-item-form {
+    flex-wrap: wrap;
+  }
+
+  .md-item-form .md-input--flex {
+    width: 100%;
+  }
+
+  .md-filters {
+    flex-wrap: wrap;
   }
 }

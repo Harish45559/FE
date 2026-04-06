@@ -1,4 +1,4 @@
-// BillingCounter.jsx (with Favourites)
+// BillingCounter.jsx — 3-column POS layout
 import React, { useEffect, useRef, useState } from "react";
 import api from "../services/api";
 import DashboardLayout from "../components/DashboardLayout";
@@ -15,8 +15,6 @@ const toVegBool = (raw) => {
   if (typeof raw === "number") return raw === 1;
   const s = String(raw).trim().toLowerCase();
   if (["true", "1", "yes", "y", "veg", "v"].includes(s)) return true;
-  if (["false", "0", "no", "n", "non-veg", "nonveg", "nv"].includes(s))
-    return false;
   return false;
 };
 
@@ -25,13 +23,11 @@ const BillingCounter = () => {
   const user = JSON.parse(localStorage.getItem("user"));
   const [menuItems, setMenuItems] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
-  const [categoryFilter, setCategoryFilter] = useState("all"); // 'all' | categoryName | '__favs__'
+  const [activeCategory, setActiveCategory] = useState("All");
   const [vegFilter, setVegFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [categories, setCategories] = useState([]);
-  const [serverName] = useState(
-    user?.first_name || user?.username || "Cozy_Cup",
-  );
+  const [serverName] = useState(user?.first_name || user?.username || "Staff");
   const [orderType, setOrderType] = useState("Eat In");
   const [customerName, setCustomerName] = useState("");
   const [showReceipt, setShowReceipt] = useState(false);
@@ -46,38 +42,37 @@ const BillingCounter = () => {
   const [authPassword, setAuthPassword] = useState("");
   const [tillOpenedBy, setTillOpenedBy] = useState("");
   const [discountPercent, setDiscountPercent] = useState(0);
+  const [resumedHeldOrderId, setResumedHeldOrderId] = useState(null);
+  const [userRole, setUserRole] = useState(
+    () => localStorage.getItem("userRole") || "staff",
+  );
   const [favourites, setFavourites] = useState(() => {
     try {
-      const stored = localStorage.getItem("favourites");
-      return stored ? JSON.parse(stored) : [];
+      return JSON.parse(localStorage.getItem("favourites") || "[]");
     } catch {
       return [];
     }
   });
 
   useEffect(() => {
-    const storedTillStatus = localStorage.getItem("isTillOpen");
-    if (storedTillStatus === "true") setIsTillOpen(true);
-
-    const storedTillUser = localStorage.getItem("tillOpenedBy");
-    if (storedTillUser) setTillOpenedBy(storedTillUser);
-
-    const storedRole = localStorage.getItem("userRole");
-    if (storedRole) {
-      // role still persisted; no local state needed to avoid ESLint unused-var
-    }
-
+    if (localStorage.getItem("isTillOpen") === "true") setIsTillOpen(true);
+    const tu = localStorage.getItem("tillOpenedBy");
+    if (tu) setTillOpenedBy(tu);
     fetchMenu();
     fetchCategories();
     fetchLastOrderNumber();
-
     const resumed = localStorage.getItem("resumedOrder");
     if (resumed) {
-      const order = JSON.parse(resumed);
-      setCustomerName(order.customer);
-      setOrderType(order.orderType);
-      setSelectedItems(order.items);
-      localStorage.removeItem("resumedOrder");
+      try {
+        const order = JSON.parse(resumed);
+        setCustomerName(order.customer_name || order.customer || "");
+        setOrderType(order.order_type || order.orderType || "Eat In");
+        setSelectedItems(Array.isArray(order.items) ? order.items : []);
+        if (order.id) setResumedHeldOrderId(order.id);
+        localStorage.removeItem("resumedOrder");
+      } catch {
+        localStorage.removeItem("resumedOrder");
+      }
     }
   }, []);
 
@@ -140,8 +135,7 @@ const BillingCounter = () => {
       } else {
         setNextTempOrderNumber(1001);
       }
-    } catch (err) {
-      console.error("Failed to fetch last order:", err);
+    } catch {
       setNextTempOrderNumber(1001);
     }
   };
@@ -167,6 +161,14 @@ const BillingCounter = () => {
     }
   };
 
+  const handleQtyChange = (index, delta) => {
+    const updated = [...selectedItems];
+    updated[index].qty += delta;
+    if (updated[index].qty <= 0) updated.splice(index, 1);
+    else updated[index].total = updated[index].qty * updated[index].price;
+    setSelectedItems(updated);
+  };
+
   const handleRemoveItem = (index) => {
     const updated = [...selectedItems];
     updated.splice(index, 1);
@@ -190,7 +192,6 @@ const BillingCounter = () => {
     fetchLastOrderNumber();
   };
 
-  // Build a receipt HTML string (no overlay)
   const renderReceiptHTML = (data) => {
     const {
       orderNumber: onum,
@@ -202,95 +203,27 @@ const BillingCounter = () => {
       totals,
       staffName,
     } = data;
-
     const rows = items
       .map(
-        (it) => `
-      <tr>
-        <td>${it.name}</td>
-        <td style="text-align:right">£${Number(it.price).toFixed(2)}</td>
-        <td style="text-align:right">${it.qty}</td>
-        <td style="text-align:right">£${Number(it.total).toFixed(2)}</td>
-      </tr>
-    `,
+        (it) =>
+          `<tr><td>${it.name}</td><td style="text-align:right">£${Number(it.price).toFixed(2)}</td><td style="text-align:right">${it.qty}</td><td style="text-align:right">£${Number(it.total).toFixed(2)}</td></tr>`,
       )
       .join("");
-
-    return `
-      <div class="bill-section">
-        <div class="receipt-header">
-          <h2>Mirchi Mafiya</h2>
-          <p>Cumberland Street, LU1 3BW, Luton</p>
-          <p>Phone: +447440086046</p>
-          <p>dtsretaillimited@gmail.com</p>
-          <p>Order Type: ${otype}</p>
-          <p><strong>Customer:</strong> ${cname || "N/A"}</p>
-          <p><strong>Order No:</strong> #${onum ?? "—"}</p>
-          <p><strong>Paid By:</strong> ${pay}</p>
-          <hr />
-          <p>Date: ${odate || "—"}</p>
-          <hr />
-        </div>
-
-        <table class="receipt-table">
-          <thead>
-            <tr>
-              <th>Product</th>
-              <th style="text-align:right">Price</th>
-              <th style="text-align:right">Qty</th>
-              <th style="text-align:right">Total</th>
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
-
-        <div class="receipt-summary">
-          <p><strong>Total Qty:</strong> ${items.reduce((s, it) => s + Number(it.qty || 0), 0)}</p>
-          <p><strong>Sub Total:</strong> £ ${totals.subtotal.toFixed(2)}</p>
-          <p><strong>Paid By:</strong> ${pay}</p>
-          <p class="includes-label">Includes:</p>
-          <p>VAT (20%): £${totals.vat.toFixed(2)}</p>
-          <p>Service Charge (8%): £${totals.service.toFixed(2)}</p>
-          ${totals.discount > 0 ? `<p><strong>Discount (${totals.discountPct}%):</strong> -£${totals.discount.toFixed(2)}</p>` : ""}
-          <p class="grand-total"><strong>Grand Total:</strong> £ ${totals.grand.toFixed(2)}</p>
-          <p class="server-name">Staff: ${staffName ? `(${staffName})` : ""}</p>
-          <hr />
-        </div>
-      </div>
-    `;
+    return `<div class="bill-section"><div class="receipt-header"><h2>Mirchi Mafiya</h2><p>Cumberland Street, LU1 3BW, Luton</p><p>Phone: +447440086046</p><p>dtsretaillimited@gmail.com</p><p>Order Type: ${otype}</p><p><strong>Customer:</strong> ${cname || "N/A"}</p><p><strong>Order No:</strong> #${onum ?? "—"}</p><p><strong>Paid By:</strong> ${pay}</p><hr /><p>Date: ${odate || "—"}</p><hr /></div><table class="receipt-table"><thead><tr><th>Product</th><th style="text-align:right">Price</th><th style="text-align:right">Qty</th><th style="text-align:right">Total</th></tr></thead><tbody>${rows}</tbody></table><div class="receipt-summary"><p><strong>Total Qty:</strong> ${items.reduce((s, it) => s + Number(it.qty || 0), 0)}</p><p><strong>Sub Total:</strong> £ ${totals.subtotal.toFixed(2)}</p><p><strong>Paid By:</strong> ${pay}</p><p>VAT (20%): £${totals.vat.toFixed(2)}</p><p>Service Charge (8%): £${totals.service.toFixed(2)}</p>${totals.discount > 0 ? `<p><strong>Discount (${totals.discountPct}%):</strong> -£${totals.discount.toFixed(2)}</p>` : ""}<p class="grand-total"><strong>Grand Total:</strong> £ ${totals.grand.toFixed(2)}</p><p>Staff: ${staffName ? `(${staffName})` : ""}</p><hr /></div></div>`;
   };
 
-  // Print in a small window and auto-close
   const printReceipt = (html, title = "Receipt") => {
     const w = window.open("", "_blank", "width=420,height=640");
-    const styles = `
-      <style>
-        @page { size: 80mm auto; margin: 0; }
-        html, body { margin:0; padding:0; }
-        body { font-family: 'Courier New', Courier, monospace; background:#fff; color:#000; }
-        .bill-section { width:72mm; max-width:72mm; padding:6mm 4mm; margin:0 auto; font-size:11px; line-height:1.12; font-weight:600; }
-        .bill-section strong { font-weight:800; }
-        .receipt-header { text-align:center; margin-bottom:2mm; }
-        .receipt-header h2 { font-size:13px; margin:0 0 1.5mm 0; font-weight:800; }
-        .receipt-header p { margin:1mm 0; }
-        .receipt-table { width:100%; font-size:11px; border-collapse:collapse; margin-top:2mm; }
-        .receipt-table th, .receipt-table td { padding:1mm 0; text-align:left; border-bottom:1px dashed #bbb; font-weight:600; }
-        .receipt-summary p { margin:1mm 0; }
-        hr { border:0; border-top:1px dashed #bbb; margin:2mm 0; }
-      </style>
-    `;
-
+    const styles = `<style>@page{size:80mm auto;margin:0}html,body{margin:0;padding:0}body{font-family:'Courier New',monospace;background:#fff;color:#000}.bill-section{width:72mm;max-width:72mm;padding:6mm 4mm;margin:0 auto;font-size:11px;line-height:1.12;font-weight:600}.bill-section strong{font-weight:800}.receipt-header{text-align:center;margin-bottom:2mm}.receipt-header h2{font-size:13px;margin:0 0 1.5mm;font-weight:800}.receipt-header p{margin:1mm 0}.receipt-table{width:100%;font-size:11px;border-collapse:collapse;margin-top:2mm}.receipt-table th,.receipt-table td{padding:1mm 0;text-align:left;border-bottom:1px dashed #bbb;font-weight:600}.receipt-summary p{margin:1mm 0}hr{border:0;border-top:1px dashed #bbb;margin:2mm 0}</style>`;
     if (!w) {
       window.print();
       return;
     }
-
     w.document.open();
     w.document.write(
       `<!doctype html><html><head><meta charset="utf-8"/><title>${title}</title>${styles}</head><body>${html}</body></html>`,
     );
     w.document.close();
-
     const doPrint = () => {
       try {
         w.focus();
@@ -299,18 +232,15 @@ const BillingCounter = () => {
         w.close();
       }
     };
-    if (w.document.readyState === "complete") {
-      setTimeout(doPrint, 50);
-    } else {
-      w.onload = () => setTimeout(doPrint, 50);
-    }
+    if (w.document.readyState === "complete") setTimeout(doPrint, 50);
+    else w.onload = () => setTimeout(doPrint, 50);
   };
 
   const handlePlaceOrder = async () => {
     if (!isTillOpen) return toast.error("Open the till first.");
     if (!selectedItems.length) return toast.error("Add items first.");
     if (!paymentMethod) return toast.error("Select a payment method.");
-
+    if (!customerName.trim()) return toast.error("Customer name is required.");
     const payload = {
       customer_name: customerName,
       server_name: serverName,
@@ -329,12 +259,9 @@ const BillingCounter = () => {
       created_at: DateTime.now().toUTC().toISO(),
       date: getDateTime(),
     };
-
     try {
       const res = await api.post("/orders", payload);
       const placed = res?.data?.order || {};
-
-      // Compute totals using current cart values at the moment of placement
       const totals = {
         subtotal: getTotal(),
         vat: getIncludedTax(),
@@ -343,54 +270,56 @@ const BillingCounter = () => {
         discountPct: discountPercent,
         grand: getGrandTotal(),
       };
-
-      // Build printable HTML directly (no overlay)
-      const html = renderReceiptHTML({
-        orderNumber: placed.order_number ?? nextTempOrderNumber,
-        orderType: placed.order_type || orderType,
-        customerName,
-        paymentMethod,
-        orderDate: placed.date ?? getDateTime(),
-        items: selectedItems,
-        totals,
-        staffName: tillOpenedBy,
-      });
-
       printReceipt(
-        html,
+        renderReceiptHTML({
+          orderNumber: placed.order_number ?? nextTempOrderNumber,
+          orderType: placed.order_type || orderType,
+          customerName,
+          paymentMethod,
+          orderDate: placed.date ?? getDateTime(),
+          items: selectedItems,
+          totals,
+          staffName: tillOpenedBy,
+        }),
         `Receipt #${placed.order_number ?? nextTempOrderNumber}`,
       );
-
-      // Reset for a new order
+      if (resumedHeldOrderId) {
+        try {
+          await api.delete(`/orders/held/${resumedHeldOrderId}`);
+        } catch (err) {
+          console.error(err);
+        }
+        setResumedHeldOrderId(null);
+      }
       startNewOrder();
     } catch (err) {
-      console.error("Order placement failed:", err);
-      toast.error("Failed to place order");
+      toast.error(err?.response?.data?.error || "Failed to place order");
     }
   };
 
-  const holdCurrentOrder = () => {
-    if (selectedItems.length === 0) return toast.info("No items to hold");
-    const existing = JSON.parse(localStorage.getItem("heldOrders")) || [];
-    const nextDisplayNumber = existing.length
-      ? Math.max(
-          ...existing.map((o) =>
-            parseInt(o.displayNumber?.replace("H", "") || 0),
-          ),
-        ) + 1
-      : 1001;
-    const heldOrder = {
-      id: Date.now(),
-      customer: customerName,
-      server: serverName,
-      orderType,
-      items: selectedItems,
-      date: getDateTime(),
-      displayNumber: `H${nextDisplayNumber}`,
-    };
-    existing.push(heldOrder);
-    localStorage.setItem("heldOrders", JSON.stringify(existing));
-    startNewOrder();
+  const holdCurrentOrder = async () => {
+    if (!selectedItems.length) return toast.info("No items to hold");
+    if (!isTillOpen) return toast.error("Open the till first.");
+    try {
+      await api.post("/orders/held", {
+        customer_name: customerName || "N/A",
+        server_name: serverName || "",
+        order_type: orderType || "",
+        items: selectedItems.map((item) => ({
+          name: item.name,
+          price: item.price,
+          qty: item.qty,
+          total: item.total,
+        })),
+        total_amount: getTotal(),
+        discount_percent: discountPercent || 0,
+        discount_amount: getDiscountAmount() || 0,
+      });
+      toast.success("Order held!");
+      startNewOrder();
+    } catch (err) {
+      toast.error("Failed to hold order");
+    }
   };
 
   const confirmTillAction = async () => {
@@ -401,9 +330,8 @@ const BillingCounter = () => {
       });
       if (res.status === 200 && res.data.token) {
         const role = res.data.role || "staff";
-        // Persist to localStorage only (no local state to avoid unused-var)
         localStorage.setItem("userRole", role);
-
+        setUserRole(role);
         if (tillActionType === "open") {
           setIsTillOpen(true);
           localStorage.setItem("isTillOpen", "true");
@@ -422,20 +350,14 @@ const BillingCounter = () => {
       } else {
         toast.error("Invalid credentials");
       }
-    } catch (err) {
-      console.error("Till action failed:", err);
+    } catch {
       toast.error("Failed to authenticate");
     }
   };
 
-  const placeDisabled =
-    !isTillOpen || !paymentMethod || selectedItems.length === 0;
-
-  // NEW: toggle favourite for an item id
   const toggleFavourite = (itemId) => {
     setFavourites((prev) => {
-      const exists = prev.includes(itemId);
-      const next = exists
+      const next = prev.includes(itemId)
         ? prev.filter((id) => id !== itemId)
         : [...prev, itemId];
       localStorage.setItem("favourites", JSON.stringify(next));
@@ -443,354 +365,439 @@ const BillingCounter = () => {
     });
   };
 
-  // Derived: filtered menu list (supports favourites special filter)
-  const filteredMenu = menuItems.filter((item) => {
-    const matchCategory =
-      categoryFilter === "all"
-        ? true
-        : categoryFilter === "__favs__"
-          ? favourites.includes(item.id)
-          : (item.category ?? "").toString() === categoryFilter;
+  const allCategories = ["All", "★ Favs", ...categories];
 
+  const filteredMenu = menuItems.filter((item) => {
+    const matchCat =
+      activeCategory === "All"
+        ? true
+        : activeCategory === "★ Favs"
+          ? favourites.includes(item.id)
+          : (item.category ?? "").toString() === activeCategory;
     const matchVeg =
       vegFilter === "all" ||
       (vegFilter === "veg" && item.veg) ||
       (vegFilter === "nonveg" && !item.veg);
-
     const matchSearch = (item.name?.toLowerCase() || "").includes(
       searchQuery.toLowerCase(),
     );
-    return matchCategory && matchVeg && matchSearch;
+    return matchCat && matchVeg && matchSearch;
   });
+
+  const getCatCount = (cat) => {
+    if (cat === "All") return menuItems.length;
+    if (cat === "★ Favs") return favourites.length;
+    return menuItems.filter((i) => (i.category ?? "").toString() === cat)
+      .length;
+  };
+
+  const placeDisabled =
+    !isTillOpen || !paymentMethod || selectedItems.length === 0;
 
   return (
     <DashboardLayout>
       {/* Auth Modal */}
       {showAuthModal && (
-        <div className="auth-modal-overlay">
-          <div className="auth-modal">
-            <h3>
-              {tillActionType === "open" ? "Open Till" : "Close Till"} -
-              Authentication
-            </h3>
-            <input
-              type="text"
-              placeholder="Username"
-              value={authUsername}
-              onChange={(e) => setAuthUsername(e.target.value)}
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              value={authPassword}
-              onChange={(e) => setAuthPassword(e.target.value)}
-            />
-            <div className="auth-buttons">
-              <button onClick={confirmTillAction}>✅ Confirm</button>
-              <button onClick={() => setShowAuthModal(false)}>✖ Cancel</button>
+        <div className="bc-overlay" onClick={() => setShowAuthModal(false)}>
+          <div className="bc-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="bc-modal-header">
+              <span className="bc-modal-title">
+                {tillActionType === "open" ? "Open till" : "Close till"}
+              </span>
+              <button
+                className="bc-modal-close"
+                onClick={() => setShowAuthModal(false)}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="bc-modal-body">
+              <div className="bc-field">
+                <label className="bc-label">Username</label>
+                <input
+                  className="bc-input"
+                  type="text"
+                  placeholder="Enter username"
+                  value={authUsername}
+                  onChange={(e) => setAuthUsername(e.target.value)}
+                />
+              </div>
+              <div className="bc-field">
+                <label className="bc-label">Password</label>
+                <input
+                  className="bc-input"
+                  type="password"
+                  placeholder="Enter password"
+                  value={authPassword}
+                  onChange={(e) => setAuthPassword(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && confirmTillAction()}
+                />
+              </div>
+            </div>
+            <div className="bc-modal-footer">
+              <button
+                className="bc-btn-sec"
+                onClick={() => setShowAuthModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className={`bc-btn-pri ${tillActionType === "open" ? "green" : "red"}`}
+                onClick={confirmTillAction}
+              >
+                {tillActionType === "open" ? "Open till" : "Close till"}
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      <div className="billing-wrapper">
-        {/* LEFT */}
-        <div className="menu-left">
-          <div className="billing-header">
-            <h2 id="billing-counter-title">Billing Counter</h2>
-
-            <div className="filters">
-              <button
-                onClick={() => setCategoryFilter("all")}
-                className={categoryFilter === "all" ? "active" : ""}
-              >
-                All
-              </button>
-              {/* NEW: Favourites filter tab */}
-              <button
-                onClick={() => setCategoryFilter("__favs__")}
-                className={categoryFilter === "__favs__" ? "active" : ""}
-              >
-                ⭐ Favourites
-              </button>
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setCategoryFilter(cat)}
-                  className={categoryFilter === cat ? "active" : ""}
-                >
-                  {cat}
-                </button>
-              ))}
-              <select
-                value={vegFilter}
-                onChange={(e) => setVegFilter(e.target.value)}
-              >
-                <option value="all">All</option>
-                <option value="veg">Veg</option>
-                <option value="nonveg">Non-Veg</option>
-              </select>
-            </div>
-
-            <div className="menu-search-bar">
-              <input
-                type="text"
-                placeholder="Search menu items..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
+      <div className="bc-pos">
+        {/* ── SIDEBAR ── */}
+        <div className="bc-sidebar">
+          <div className="bc-sidebar-logo">
+            <div className="bc-sidebar-brand">🌶 Mirchi Mafiya</div>
+            <div className="bc-sidebar-sub">Point of Sale</div>
           </div>
-
-          <div className="menu-grid">
-            {filteredMenu.map((item) => (
-              <div
-                key={item.id}
-                className="menu-card"
-                onClick={() => handleAddItem(item)}
+          <div className="bc-sidebar-cats">
+            {allCategories.map((cat) => (
+              <button
+                key={cat}
+                className={`bc-scat${activeCategory === cat ? " active" : ""}`}
+                onClick={() => setActiveCategory(cat)}
               >
-                {/* Heart button in top-right */}
-                <button
-                  className={`fav-btn ${favourites.includes(item.id) ? "active" : ""}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleFavourite(item.id);
-                  }}
-                  title={
-                    favourites.includes(item.id)
-                      ? "Remove from favourites"
-                      : "Add to favourites"
-                  }
-                >
-                  {favourites.includes(item.id) ? "❤️" : "🤍"}
-                </button>
-
-                <img
-                  src={imageMapping[item.name] || "/images/default-food.jpg"}
-                  alt={item.name}
-                  className="menu-item-image"
-                />
-                <h4>{item.name}</h4>
-                <p>£{item.price}</p>
-                <div className="veg-status">
-                  <span
-                    className={`dot ${item.veg ? "veg" : "non-veg"}`}
-                  ></span>
-                  <span>{item.veg ? "Veg" : "Non-Veg"}</span>
-                </div>
-                <small className="category-label">{item.category}</small>
-              </div>
+                <span className="bc-scat-name">{cat}</span>
+                <span className="bc-scat-count">{getCatCount(cat)}</span>
+              </button>
             ))}
           </div>
         </div>
 
-        {/* RIGHT */}
-        <div className="summary-right">
-          {isTillOpen && tillOpenedBy && (
-            <div className="till-user">
-              🧑‍💼 Opened by: <strong>{tillOpenedBy}</strong>
-            </div>
-          )}
-
-          <div className="order-panel">
-            <h3 className="order-title">
-              Current Order{" "}
-              {(orderNumber || nextTempOrderNumber) && (
-                <span style={{ fontSize: "14px", color: "#888" }}>
-                  # {orderNumber || nextTempOrderNumber}
-                </span>
-              )}
-            </h3>
-
-            {isTillOpen ? (
-              <div className="till-banner open">🟢 Till is Open</div>
-            ) : (
-              <div className="till-banner closed">🔴 Till is Closed</div>
-            )}
-
-            <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
+        {/* ── CENTER MENU ── */}
+        <div className="bc-center">
+          <div className="bc-ctopbar">
+            <input
+              className="bc-search"
+              type="text"
+              placeholder="Search menu items…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <div className="bc-veg-btns">
               <button
+                className={`bc-vbtn${vegFilter === "all" ? " active" : ""}`}
+                onClick={() => setVegFilter("all")}
+              >
+                All
+              </button>
+              <button
+                className={`bc-vbtn${vegFilter === "veg" ? " active" : ""}`}
+                onClick={() => setVegFilter("veg")}
+              >
+                🟢 Veg
+              </button>
+              <button
+                className={`bc-vbtn${vegFilter === "nonveg" ? " active" : ""}`}
+                onClick={() => setVegFilter("nonveg")}
+              >
+                🔴 Non-Veg
+              </button>
+            </div>
+          </div>
+
+          <div className="bc-grid">
+            {filteredMenu.length === 0 ? (
+              <div className="bc-no-items">No items found</div>
+            ) : (
+              filteredMenu.map((item) => {
+                const inCart = selectedItems.find((s) => s.id === item.id);
+                return (
+                  <div
+                    key={item.id}
+                    className="bc-card"
+                    onClick={() => handleAddItem(item)}
+                  >
+                    {inCart && (
+                      <div className="bc-card-badge">{inCart.qty}</div>
+                    )}
+                    <button
+                      className={`bc-fav${favourites.includes(item.id) ? " on" : ""}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleFavourite(item.id);
+                      }}
+                    >
+                      {favourites.includes(item.id) ? "♥" : "♡"}
+                    </button>
+                    <img
+                      className="bc-card-img"
+                      src={
+                        imageMapping[item.name] || "/images/default-food.jpg"
+                      }
+                      alt={item.name}
+                      onError={(e) => {
+                        e.target.style.display = "none";
+                        e.target.nextSibling.style.display = "flex";
+                      }}
+                    />
+                    <div className="bc-card-img-fb" style={{ display: "none" }}>
+                      🍽
+                    </div>
+                    <div className="bc-card-body">
+                      <div className="bc-card-name">{item.name}</div>
+                      <div className="bc-card-foot">
+                        <span className="bc-card-price">
+                          £{item.price.toFixed(2)}
+                        </span>
+                        <span
+                          className={`bc-vdot ${item.veg ? "veg" : "nonveg"}`}
+                          title={item.veg ? "Veg" : "Non-Veg"}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+
+        {/* ── RIGHT ORDER PANEL ── */}
+        <div className="bc-right">
+          {/* Header */}
+          <div className="bc-right-header">
+            <div className="bc-right-header-left">
+              <span className="bc-order-id">
+                Order {nextTempOrderNumber ? `#${nextTempOrderNumber}` : ""}
+              </span>
+              <span
+                className={`bc-till-status ${isTillOpen ? "open" : "closed"}`}
+              >
+                {isTillOpen
+                  ? `🟢 Open · ${tillOpenedBy || ""}`
+                  : "🔴 Till closed"}
+              </span>
+            </div>
+            <div className="bc-till-btns">
+              <button
+                className="bc-till-btn open"
                 onClick={() => {
                   setTillActionType("open");
                   setShowAuthModal(true);
                 }}
-                className="order-btn"
-                style={{ backgroundColor: "#10b981", color: "#fff" }}
               >
-                🟢 Open Till
+                Open
               </button>
-
               <button
+                className="bc-till-btn close"
                 onClick={() => {
                   setTillActionType("close");
                   setShowAuthModal(true);
                 }}
-                className="order-btn"
-                style={{ backgroundColor: "#ef4444", color: "#fff" }}
               >
-                🔴 Close Till
+                Close
               </button>
             </div>
+          </div>
 
-            <div className="order-type-selector">
-              <label>
-                <strong>Order Type:</strong>
-              </label>
-              <select
-                value={orderType}
-                onChange={(e) => setOrderType(e.target.value)}
-              >
-                <option value="Eat In">Eat In</option>
-                <option value="Take Away">Take Away</option>
-              </select>
-            </div>
+          {/* Meta */}
+          <div className="bc-order-meta">
+            <select
+              className="bc-select"
+              value={orderType}
+              onChange={(e) => setOrderType(e.target.value)}
+            >
+              <option value="Eat In">Eat In</option>
+              <option value="Take Away">Take Away</option>
+            </select>
+          </div>
 
-            <input
-              type="text"
-              placeholder="Customer Name"
-              value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)}
-              className="customer-input"
-            />
+          {/* Customer */}
+          <input
+            className="bc-cust-inp"
+            type="text"
+            placeholder="Customer name *"
+            value={customerName}
+            onChange={(e) => setCustomerName(e.target.value)}
+          />
 
-            {/* ===== Scroll area: items + summary ===== */}
-            <div className="order-scroll">
-              <div className="order-items">
+          {/* Cart */}
+          <div className="bc-cart">
+            {selectedItems.length === 0 ? (
+              <div className="bc-cart-empty">
+                <span className="bc-cart-empty-icon">🛒</span>
+                <span>No items added yet</span>
+                <small>Tap a menu item to add</small>
+              </div>
+            ) : (
+              <div className="bc-cart-items">
                 {selectedItems.map((item, index) => (
-                  <div key={index} className="order-item">
-                    <div className="item-info">
-                      <span>
-                        <strong>{index + 1}.</strong> {item.name} £{item.price}
-                      </span>
+                  <div key={index} className="bc-cart-row">
+                    <img
+                      className="bc-cart-img"
+                      src={
+                        imageMapping[item.name] || "/images/default-food.jpg"
+                      }
+                      alt={item.name}
+                      onError={(e) => {
+                        e.target.style.background = "#f0eeff";
+                        e.target.style.display = "flex";
+                      }}
+                    />
+                    <div className="bc-cart-info">
+                      <div className="bc-cart-name">{item.name}</div>
+                      <div className="bc-cart-unit">
+                        £{item.price.toFixed(2)} each
+                      </div>
                     </div>
-
-                    <div className="item-controls">
+                    <div className="bc-qty-ctrl">
                       <button
-                        onClick={() => {
-                          const updated = [...selectedItems];
-                          if (updated[index].qty > 1) {
-                            updated[index].qty -= 1;
-                            updated[index].total =
-                              updated[index].qty * updated[index].price;
-                            setSelectedItems(updated);
-                          }
-                        }}
+                        className="bc-qty-btn"
+                        onClick={() => handleQtyChange(index, -1)}
                       >
-                        ➖
+                        −
                       </button>
-                      <span>{item.qty}</span>
+                      <span className="bc-qty-num">{item.qty}</span>
                       <button
-                        onClick={() => {
-                          const updated = [...selectedItems];
-                          updated[index].qty += 1;
-                          updated[index].total =
-                            updated[index].qty * updated[index].price;
-                          setSelectedItems(updated);
-                        }}
+                        className="bc-qty-btn"
+                        onClick={() => handleQtyChange(index, 1)}
                       >
-                        ➕
-                      </button>
-                      <button
-                        className="item-remove"
-                        onClick={() => handleRemoveItem(index)}
-                      >
-                        ✖
+                        +
                       </button>
                     </div>
+                    <span className="bc-line-total">
+                      £{item.total.toFixed(2)}
+                    </span>
+                    <button
+                      className="bc-remove-btn"
+                      onClick={() => handleRemoveItem(index)}
+                    >
+                      ✕
+                    </button>
                   </div>
                 ))}
               </div>
+            )}
+          </div>
 
-              <div className="order-summary">
-                <div className="line">
-                  <span>Subtotal</span>
-                  <span>£{getTotal().toFixed(2)}</span>
-                </div>
-                <div className="line">
-                  <span>VAT (20%)</span>
-                  <span>£{getIncludedTax().toFixed(2)}</span>
-                </div>
-                <div className="line">
-                  <span>Service (8%)</span>
-                  <span>£{getIncludedService().toFixed(2)}</span>
-                </div>
+          {/* Summary */}
+          {selectedItems.length > 0 && (
+            <div className="bc-summary">
+              <div className="bc-sum-row">
+                <span>Subtotal</span>
+                <span>£{getTotal().toFixed(2)}</span>
+              </div>
+              <div className="bc-sum-row muted">
+                <span>VAT (20%)</span>
+                <span>£{getIncludedTax().toFixed(2)}</span>
+              </div>
+              <div className="bc-sum-row muted">
+                <span>Service (8%)</span>
+                <span>£{getIncludedService().toFixed(2)}</span>
+              </div>
 
-                {discountPercent > 0 && (
-                  <div className="line">
-                    <span>Discount ({discountPercent}%)</span>
-                    <span>-£{getDiscountAmount().toFixed(2)}</span>
+              {userRole === "admin" && (
+                <div className="bc-discount-row">
+                  <span className="bc-discount-label">Discount %</span>
+                  <div className="bc-discount-ctrl">
+                    <button
+                      className="bc-disc-btn"
+                      onClick={() =>
+                        setDiscountPercent((p) => Math.max(0, p - 5))
+                      }
+                    >
+                      −
+                    </button>
+                    <input
+                      className="bc-disc-input"
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={discountPercent}
+                      onChange={(e) =>
+                        setDiscountPercent(
+                          Math.min(
+                            100,
+                            Math.max(0, Number(e.target.value) || 0),
+                          ),
+                        )
+                      }
+                    />
+                    <span className="bc-disc-pct">%</span>
+                    <button
+                      className="bc-disc-btn"
+                      onClick={() =>
+                        setDiscountPercent((p) => Math.min(100, p + 5))
+                      }
+                    >
+                      +
+                    </button>
                   </div>
-                )}
-
-                <div className="line total">
-                  <strong>Total</strong>
-                  <strong>£{getGrandTotal().toFixed(2)}</strong>
+                  {discountPercent > 0 && (
+                    <span className="bc-disc-saving">
+                      −£{getDiscountAmount().toFixed(2)}
+                    </span>
+                  )}
                 </div>
+              )}
+
+              <div className="bc-sum-total">
+                <span>Total</span>
+                <span>£{getGrandTotal().toFixed(2)}</span>
               </div>
             </div>
+          )}
 
-            {/* ===== Buttons OUTSIDE the scroller ===== */}
-            <div className="order-buttons action-groups">
-              <div className="payment-row">
-                <button
-                  type="button"
-                  className={`pos-btn btn-pay btn-cash ${paymentMethod === "Cash" ? "is-selected" : ""}`}
-                  onClick={() => setPaymentMethod("Cash")}
-                  aria-pressed={paymentMethod === "Cash"}
-                  disabled={!isTillOpen}
-                >
-                  <span className="icon">💵</span> Cash
-                </button>
-
-                <button
-                  type="button"
-                  className={`pos-btn btn-pay btn-card ${paymentMethod === "Card" ? "is-selected" : ""}`}
-                  onClick={() => setPaymentMethod("Card")}
-                  aria-pressed={paymentMethod === "Card"}
-                  disabled={!isTillOpen}
-                >
-                  <span className="icon">💳</span> Card
-                </button>
-              </div>
-
-              <div className="confirm-row">
-                <button
-                  type="button"
-                  className={`pos-btn btn-place ${placeDisabled ? "is-waiting" : ""}`}
-                  onClick={handlePlaceOrder}
-                  disabled={placeDisabled}
-                >
-                  <span className="icon">✅</span> Place Order
-                </button>
-
-                <button
-                  type="button"
-                  className="pos-btn btn-hold"
-                  onClick={holdCurrentOrder}
-                  disabled={!isTillOpen}
-                >
-                  <span className="icon">⏱</span> Hold Order
-                </button>
-
-                <button
-                  type="button"
-                  className="pos-btn btn-clear"
-                  onClick={clearCurrentOrder}
-                  title="Clear order"
-                  disabled={!isTillOpen}
-                >
-                  ❌
-                </button>
-              </div>
+          {/* Actions */}
+          <div className="bc-actions">
+            <div className="bc-pay-row">
+              <button
+                className={`bc-pay-btn${paymentMethod === "Cash" ? " selected" : ""}`}
+                onClick={() => setPaymentMethod("Cash")}
+                disabled={!isTillOpen}
+              >
+                💵 Cash
+              </button>
+              <button
+                className={`bc-pay-btn${paymentMethod === "Card" ? " selected" : ""}`}
+                onClick={() => setPaymentMethod("Card")}
+                disabled={!isTillOpen}
+              >
+                💳 Card
+              </button>
+            </div>
+            <div className="bc-confirm-row">
+              <button
+                className="bc-place-btn"
+                onClick={handlePlaceOrder}
+                disabled={placeDisabled}
+              >
+                Place order
+              </button>
+              <button
+                className="bc-hold-btn"
+                onClick={holdCurrentOrder}
+                disabled={!isTillOpen}
+              >
+                Hold
+              </button>
+              <button
+                className="bc-clear-btn"
+                onClick={clearCurrentOrder}
+                disabled={!isTillOpen}
+                title="Clear"
+              >
+                ✕
+              </button>
             </div>
           </div>
         </div>
       </div>
 
+      {/* Receipt overlay */}
       {showReceipt && (
-        <div className="receipt-overlay">
+        <div className="bc-receipt-overlay">
           <div className="bill-section" ref={printRef}>
-            {/* Removed header action buttons so nothing extra prints */}
             <div className="receipt-header">
               <h2>Mirchi Mafiya</h2>
               <p>Cumberland Street, LU1 3BW, Luton</p>
@@ -810,7 +817,6 @@ const BillingCounter = () => {
               <p>Date: {orderDate || "—"}</p>
               <hr />
             </div>
-
             <table className="receipt-table">
               <thead>
                 <tr>
@@ -835,22 +841,12 @@ const BillingCounter = () => {
                 ))}
               </tbody>
             </table>
-
             <div className="receipt-summary">
-              <p>
-                <strong>Total Qty:</strong>{" "}
-                {selectedItems.reduce((sum, item) => sum + item.qty, 0)}
-              </p>
               <p>
                 <strong>Sub Total:</strong> £ {getTotal().toFixed(2)}
               </p>
-              <p>
-                <strong>Paid By:</strong> {paymentMethod}
-              </p>
-              <p className="includes-label">Includes:</p>
               <p>VAT (20%): £{getIncludedTax().toFixed(2)}</p>
-              <p>Service Charge (8%): £{getIncludedService().toFixed(2)}</p>
-              <hr />
+              <p>Service (8%): £{getIncludedService().toFixed(2)}</p>
               {discountPercent > 0 && (
                 <p>
                   <strong>Discount ({discountPercent}%):</strong> -£
@@ -859,9 +855,6 @@ const BillingCounter = () => {
               )}
               <p className="grand-total">
                 <strong>Grand Total:</strong> £ {getGrandTotal().toFixed(2)}
-              </p>
-              <p className="server-name">
-                Staff:{tillOpenedBy && `(${tillOpenedBy})`}
               </p>
               <hr />
             </div>

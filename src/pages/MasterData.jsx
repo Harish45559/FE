@@ -2,7 +2,6 @@ import React, { useEffect, useState, useMemo } from "react";
 import api from "../services/api";
 import "./MasterData.css";
 import DashboardLayout from "../components/DashboardLayout";
-
 import usePagination from "../hooks/usePagination";
 import PaginationBar from "../components/PaginationBar";
 
@@ -10,6 +9,7 @@ const MasterData = () => {
   const [categories, setCategories] = useState([]);
   const [menuItems, setMenuItems] = useState([]);
   const [newCategory, setNewCategory] = useState("");
+  const [categoryError, setCategoryError] = useState("");
   const [newItem, setNewItem] = useState({
     name: "",
     price: "",
@@ -34,8 +34,10 @@ const MasterData = () => {
 
   const fetchData = async () => {
     try {
-      const catRes = await api.get("/categories");
-      const itemRes = await api.get("/menu");
+      const [catRes, itemRes] = await Promise.all([
+        api.get("/categories"),
+        api.get("/menu"),
+      ]);
       setCategories(catRes.data || []);
       setMenuItems(itemRes.data || []);
     } catch (err) {
@@ -43,16 +45,17 @@ const MasterData = () => {
     }
   };
 
-  // ---------- Category handlers ----------
   const handleCategorySubmit = async (e) => {
     e.preventDefault();
-    if (!newCategory.trim()) return alert("Category name is required");
+    if (!newCategory.trim())
+      return setCategoryError("Category name is required");
     try {
       await api.post("/categories", { name: newCategory });
       setNewCategory("");
+      setCategoryError("");
       fetchData();
     } catch (err) {
-      console.error("Category save error:", err);
+      setCategoryError(err?.response?.data?.error || "Failed to add category");
     }
   };
 
@@ -63,7 +66,9 @@ const MasterData = () => {
       await api.delete(`/categories/${id}`);
       fetchData();
     } catch (err) {
-      console.error("Delete category error:", err);
+      setCategoryError(
+        err?.response?.data?.error || "Failed to delete category",
+      );
     }
   };
 
@@ -73,7 +78,7 @@ const MasterData = () => {
   };
 
   const handleSaveCategory = async (id) => {
-    if (!editingCategoryName.trim()) return alert("Category name is required");
+    if (!editingCategoryName.trim()) return;
     try {
       await api.put(`/categories/${id}`, { name: editingCategoryName });
       setEditingCategoryId(null);
@@ -83,16 +88,11 @@ const MasterData = () => {
     }
   };
 
-  // ---------- Menu item handlers ----------
   const handleItemSubmit = async (e) => {
     e.preventDefault();
     const { name, price, categoryId, veg } = newItem;
-
-    if (!name.trim() || !price || !categoryId) {
-      alert("Please fill all fields.");
-      return;
-    }
-
+    if (!name.trim() || !price || !categoryId)
+      return alert("Please fill all fields.");
     try {
       await api.post("/menu", {
         name,
@@ -103,8 +103,7 @@ const MasterData = () => {
       setNewItem({ name: "", price: "", categoryId: "", veg: true });
       fetchData();
     } catch (err) {
-      console.error("Item save error:", err);
-      alert("Failed to add item. Please check backend logs.");
+      alert(err?.response?.data?.error || "Failed to add item");
     }
   };
 
@@ -114,7 +113,7 @@ const MasterData = () => {
       await api.delete(`/menu/${id}`);
       fetchData();
     } catch (err) {
-      console.error("Delete item error:", err);
+      alert(err?.response?.data?.error || "Failed to delete item");
     }
   };
 
@@ -125,10 +124,8 @@ const MasterData = () => {
 
   const handleSaveItem = async (id) => {
     const { name, price, categoryId, veg } = editingItem;
-    if (!name.trim() || !price || !categoryId) {
-      alert("Please fill all fields.");
-      return;
-    }
+    if (!name.trim() || !price || !categoryId)
+      return alert("Please fill all fields.");
     try {
       await api.put(`/menu/${id}`, {
         name,
@@ -143,55 +140,32 @@ const MasterData = () => {
     }
   };
 
-  // ---------- Filters (defensive to handle minor field name differences) ----------
   const filteredMenuItems = useMemo(() => {
     const q = (filters.q || "").trim().toLowerCase();
     const min = filters.minPrice !== "" ? Number(filters.minPrice) : null;
     const max = filters.maxPrice !== "" ? Number(filters.maxPrice) : null;
-
     return (menuItems || []).filter((item) => {
       const name = String(item.name || "").toLowerCase();
-
-      // Category id can be categoryId or category_id depending on backend
       const catId =
-        item.categoryId ??
-        item.category_id ??
-        item.CategoryId ??
-        item.CategoryID ??
-        "";
-
-      // Veg flag may be is_veg or veg; could be boolean or string
+        item.categoryId ?? item.category_id ?? item.CategoryId ?? "";
       const isVeg =
         typeof item.is_veg === "boolean"
           ? item.is_veg
           : typeof item.veg === "boolean"
             ? item.veg
             : String(item.is_veg ?? item.veg ?? "").toLowerCase() === "true";
-
       const priceNum = Number(item.price);
-
-      const matchesSearch = q === "" || name.includes(q);
-      const matchesCategory =
-        filters.category === "all" ||
-        String(catId) === String(filters.category);
-      const matchesVeg =
-        filters.veg === "all" || (filters.veg === "veg" ? isVeg : !isVeg);
-      const matchesMin =
-        min === null || (!Number.isNaN(priceNum) && priceNum >= min);
-      const matchesMax =
-        max === null || (!Number.isNaN(priceNum) && priceNum <= max);
-
       return (
-        matchesSearch &&
-        matchesCategory &&
-        matchesVeg &&
-        matchesMin &&
-        matchesMax
+        (q === "" || name.includes(q)) &&
+        (filters.category === "all" ||
+          String(catId) === String(filters.category)) &&
+        (filters.veg === "all" || (filters.veg === "veg" ? isVeg : !isVeg)) &&
+        (min === null || (!Number.isNaN(priceNum) && priceNum >= min)) &&
+        (max === null || (!Number.isNaN(priceNum) && priceNum <= max))
       );
     });
   }, [menuItems, filters]);
 
-  // ---------- Pagination ONLY for right-side (Menu Items) ----------
   const {
     page,
     setPage,
@@ -214,163 +188,156 @@ const MasterData = () => {
 
   return (
     <DashboardLayout>
-      <div className="master-data-wrapper">
-        <h2 id="master-data-title">Master Data</h2>
-
-        {/* CATEGORIES */}
-        <div className="category-panel">
-          <h3>Categories</h3>
-
-          <form
-            onSubmit={handleCategorySubmit}
-            style={{ display: "flex", gap: 8, marginBottom: 12 }}
-          >
-            <input
-              value={newCategory}
-              onChange={(e) => setNewCategory(e.target.value)}
-              placeholder="New Category"
-              required
-            />
-            <button type="submit">Add</button>
-          </form>
-
-          <ul>
-            {categories.map((cat) => (
-              <li key={cat.id}>
-                {editingCategoryId === cat.id ? (
-                  <>
-                    <input
-                      value={editingCategoryName}
-                      onChange={(e) => setEditingCategoryName(e.target.value)}
-                    />
-                    <div className="actions">
-                      <button
-                        type="button"
-                        onClick={() => handleSaveCategory(cat.id)}
-                      >
-                        <svg
-                          width="16"
-                          height="16"
-                          fill="green"
-                          viewBox="0 0 24 24"
-                        >
-                          <path d="M20.3 5.71L9 17l-5.3-5.3L5.41 10 9 13.59 18.89 3.7z" />
-                        </svg>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setEditingCategoryId(null)}
-                      >
-                        <svg
-                          width="16"
-                          height="16"
-                          fill="gray"
-                          viewBox="0 0 24 24"
-                        >
-                          <path d="M18 6L6 18M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    {cat.name}
-                    <div className="actions">
-                      <button
-                        type="button"
-                        onClick={() => handleEditCategory(cat)}
-                      >
-                        <svg
-                          width="16"
-                          height="16"
-                          fill="blue"
-                          viewBox="0 0 24 24"
-                        >
-                          <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
-                        </svg>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteCategory(cat.id)}
-                      >
-                        <svg
-                          width="16"
-                          height="16"
-                          fill="red"
-                          viewBox="0 0 24 24"
-                        >
-                          <path d="M16 9v10H8V9h8m-1.5-6h-5l-1 1H5v2h14V4h-4.5l-1-1z" />
-                        </svg>
-                      </button>
-                    </div>
-                  </>
-                )}
-              </li>
-            ))}
-          </ul>
+      <div className="md-wrapper">
+        <div className="md-header">
+          <h1 className="md-title">Master data</h1>
+          <p className="md-subtitle">Manage categories and menu items</p>
         </div>
 
-        {/* MENU ITEMS */}
-        <div className="menu-panel">
-          <h3>Menu Items</h3>
+        <div className="md-layout">
+          {/* ── Categories ── */}
+          <div className="md-card">
+            <div className="md-card-header">
+              <span className="md-card-title">Categories</span>
+              <span className="md-count-badge">{categories.length}</span>
+            </div>
 
-          {/* Create New Item */}
-          <form
-            onSubmit={handleItemSubmit}
-            style={{
-              display: "flex",
-              gap: 8,
-              flexWrap: "wrap",
-              marginBottom: 12,
-            }}
-          >
-            <input
-              value={newItem.name}
-              onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
-              placeholder="Item name"
-              required
-            />
-            <input
-              type="number"
-              value={newItem.price}
-              onChange={(e) =>
-                setNewItem({ ...newItem, price: e.target.value })
-              }
-              placeholder="Price"
-              required
-            />
-            <select
-              value={newItem.categoryId}
-              onChange={(e) =>
-                setNewItem({ ...newItem, categoryId: e.target.value })
-              }
-              required
-            >
-              <option value="">Select Category</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
-            <select
-              value={newItem.veg ? "veg" : "nonveg"}
-              onChange={(e) =>
-                setNewItem({ ...newItem, veg: e.target.value === "veg" })
-              }
-              required
-            >
-              <option value="veg">Veg</option>
-              <option value="nonveg">Non-Veg</option>
-            </select>
-            <button type="submit">Add Item</button>
-          </form>
-
-          {/* Filters */}
-          <div className="menu-filters">
-            <div className="row">
+            <form className="md-add-form" onSubmit={handleCategorySubmit}>
               <input
-                className="grow"
+                className="md-input md-input--flex"
+                value={newCategory}
+                onChange={(e) => {
+                  setNewCategory(e.target.value);
+                  setCategoryError("");
+                }}
+                placeholder="New category name"
+              />
+              <button type="submit" className="md-add-btn">
+                Add
+              </button>
+            </form>
+
+            {categoryError && <div className="md-error">{categoryError}</div>}
+
+            <ul className="md-cat-list">
+              {categories.length === 0 && (
+                <li className="md-cat-empty">No categories yet</li>
+              )}
+              {categories.map((cat) => (
+                <li key={cat.id} className="md-cat-item">
+                  {editingCategoryId === cat.id ? (
+                    <>
+                      <input
+                        className="md-input md-input--flex"
+                        value={editingCategoryName}
+                        onChange={(e) => setEditingCategoryName(e.target.value)}
+                        autoFocus
+                      />
+                      <div className="md-row-actions">
+                        <button
+                          className="md-action-btn md-action-btn--save"
+                          type="button"
+                          onClick={() => handleSaveCategory(cat.id)}
+                        >
+                          ✓
+                        </button>
+                        <button
+                          className="md-action-btn md-action-btn--cancel"
+                          type="button"
+                          onClick={() => setEditingCategoryId(null)}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <span className="md-cat-name">{cat.name}</span>
+                      <div className="md-row-actions">
+                        <button
+                          className="md-action-btn md-action-btn--edit"
+                          type="button"
+                          onClick={() => handleEditCategory(cat)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="md-action-btn md-action-btn--del"
+                          type="button"
+                          onClick={() => handleDeleteCategory(cat.id)}
+                        >
+                          Del
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* ── Menu Items ── */}
+          <div className="md-card md-card--wide">
+            <div className="md-card-header">
+              <span className="md-card-title">Menu items</span>
+              <span className="md-count-badge">{menuItems.length}</span>
+            </div>
+
+            {/* Add item form — single row */}
+            <form className="md-item-form" onSubmit={handleItemSubmit}>
+              <input
+                className="md-input md-input--flex"
+                value={newItem.name}
+                onChange={(e) =>
+                  setNewItem({ ...newItem, name: e.target.value })
+                }
+                placeholder="Item name"
+                required
+              />
+              <input
+                className="md-input md-input--price"
+                type="number"
+                value={newItem.price}
+                onChange={(e) =>
+                  setNewItem({ ...newItem, price: e.target.value })
+                }
+                placeholder="Price £"
+                required
+              />
+              <select
+                className="md-input md-input--cat"
+                value={newItem.categoryId}
+                onChange={(e) =>
+                  setNewItem({ ...newItem, categoryId: e.target.value })
+                }
+                required
+              >
+                <option value="">Category</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="md-input md-input--veg"
+                value={newItem.veg ? "veg" : "nonveg"}
+                onChange={(e) =>
+                  setNewItem({ ...newItem, veg: e.target.value === "veg" })
+                }
+              >
+                <option value="veg">Veg</option>
+                <option value="nonveg">Non-Veg</option>
+              </select>
+              <button type="submit" className="md-add-btn">
+                Add item
+              </button>
+            </form>
+
+            {/* Filters — single row */}
+            <div className="md-filters">
+              <input
+                className="md-input md-input--flex"
                 placeholder="Search by name…"
                 value={filters.q}
                 onChange={(e) => {
@@ -378,39 +345,37 @@ const MasterData = () => {
                   setPage(1);
                 }}
               />
-
               <select
+                className="md-input md-input--cat"
                 value={filters.category}
                 onChange={(e) => {
                   setFilters((f) => ({ ...f, category: e.target.value }));
                   setPage(1);
                 }}
               >
-                <option value="all">All Categories</option>
+                <option value="all">All categories</option>
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
                   </option>
                 ))}
               </select>
-
               <select
+                className="md-input md-input--veg"
                 value={filters.veg}
                 onChange={(e) => {
                   setFilters((f) => ({ ...f, veg: e.target.value }));
                   setPage(1);
                 }}
               >
-                <option value="all">Veg & Non-Veg</option>
+                <option value="all">Veg & non-veg</option>
                 <option value="veg">Veg only</option>
-                <option value="nonveg">Non-Veg only</option>
+                <option value="nonveg">Non-veg only</option>
               </select>
-            </div>
-
-            <div className="row">
               <input
+                className="md-input md-input--price"
                 type="number"
-                placeholder="Min Price"
+                placeholder="Min £"
                 value={filters.minPrice}
                 onChange={(e) => {
                   setFilters((f) => ({ ...f, minPrice: e.target.value }));
@@ -418,8 +383,9 @@ const MasterData = () => {
                 }}
               />
               <input
+                className="md-input md-input--price"
                 type="number"
-                placeholder="Max Price"
+                placeholder="Max £"
                 value={filters.maxPrice}
                 onChange={(e) => {
                   setFilters((f) => ({ ...f, maxPrice: e.target.value }));
@@ -427,184 +393,159 @@ const MasterData = () => {
                 }}
               />
               <button
+                className="md-clear-btn"
                 type="button"
-                className="secondary"
                 onClick={clearFilters}
               >
-                Clear Filters
+                Clear
               </button>
-
-              <div className="results-count">
-                Showing <b>{filteredMenuItems.length}</b> of {menuItems.length}
-              </div>
+              <span className="md-results-count">
+                {filteredMenuItems.length} of {menuItems.length}
+              </span>
             </div>
-          </div>
 
-          <table>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Price</th>
-                <th>Category</th>
-                <th style={{ width: 120 }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pagedMenuItems.map((item) => (
-                <tr key={item.id}>
-                  {editingItemId === item.id ? (
-                    <>
-                      <td>
-                        <input
-                          value={editingItem.name}
-                          onChange={(e) =>
-                            setEditingItem({
-                              ...editingItem,
-                              name: e.target.value,
-                            })
-                          }
-                        />
+            {/* Table */}
+            <div className="md-table-wrap">
+              <table className="md-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Price</th>
+                    <th>Category</th>
+                    <th style={{ textAlign: "center", width: 110 }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pagedMenuItems.length === 0 ? (
+                    <tr>
+                      <td colSpan="4" className="md-empty">
+                        No items match your filters
                       </td>
-                      <td>
-                        <input
-                          type="number"
-                          value={editingItem.price}
-                          onChange={(e) =>
-                            setEditingItem({
-                              ...editingItem,
-                              price: e.target.value,
-                            })
-                          }
-                        />
-                      </td>
-                      <td>
-                        <select
-                          value={editingItem.categoryId}
-                          onChange={(e) =>
-                            setEditingItem({
-                              ...editingItem,
-                              categoryId: e.target.value,
-                            })
-                          }
-                        >
-                          {categories.map((cat) => (
-                            <option key={cat.id} value={cat.id}>
-                              {cat.name}
-                            </option>
-                          ))}
-                        </select>
-                      </td>
-                      <td className="actions">
-                        <button
-                          type="button"
-                          onClick={() => handleSaveItem(item.id)}
-                        >
-                          <svg
-                            width="16"
-                            height="16"
-                            fill="green"
-                            viewBox="0 0 24 24"
-                          >
-                            <path d="M20.3 5.71L9 17l-5.3-5.3L5.41 10 9 13.59 18.89 3.7z" />
-                          </svg>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setEditingItemId(null)}
-                        >
-                          <svg
-                            width="16"
-                            height="16"
-                            fill="gray"
-                            viewBox="0 0 24 24"
-                          >
-                            <path d="M18 6L6 18M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </td>
-                    </>
+                    </tr>
                   ) : (
-                    <>
-                      <td
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "8px",
-                        }}
-                      >
-                        <span
-                          style={{
-                            width: "14px",
-                            height: "14px",
-                            borderRadius: "50%",
-                            backgroundColor: item.is_veg ? "green" : "red",
-                            display: "inline-block",
-                          }}
-                          title={item.is_veg ? "Veg" : "Non-Veg"}
-                        />
-                        <span>{item.name}</span>
-                      </td>
-                      <td>£{item.price}</td>
-                      <td>
-                        {/* Prefer nested name if available, else look up by categoryId */}
-                        {item.category?.name ||
-                          categories.find(
-                            (c) => String(c.id) === String(item.categoryId),
-                          )?.name ||
-                          ""}
-                      </td>
-                      <td className="actions">
-                        <button
-                          type="button"
-                          onClick={() => handleEditItem(item)}
-                        >
-                          <svg
-                            width="16"
-                            height="16"
-                            fill="blue"
-                            viewBox="0 0 24 24"
-                          >
-                            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
-                          </svg>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteItem(item.id)}
-                        >
-                          <svg
-                            width="16"
-                            height="16"
-                            fill="red"
-                            viewBox="0 0 24 24"
-                          >
-                            <path d="M16 9v10H8V9h8m-1.5-6h-5l-1 1H5v2h14V4h-4.5l-1-1z" />
-                          </svg>
-                        </button>
-                      </td>
-                    </>
+                    pagedMenuItems.map((item) => (
+                      <tr key={item.id}>
+                        {editingItemId === item.id ? (
+                          <>
+                            <td>
+                              <input
+                                className="md-input md-input--flex"
+                                value={editingItem.name}
+                                onChange={(e) =>
+                                  setEditingItem({
+                                    ...editingItem,
+                                    name: e.target.value,
+                                  })
+                                }
+                              />
+                            </td>
+                            <td>
+                              <input
+                                className="md-input md-input--price"
+                                type="number"
+                                value={editingItem.price}
+                                onChange={(e) =>
+                                  setEditingItem({
+                                    ...editingItem,
+                                    price: e.target.value,
+                                  })
+                                }
+                              />
+                            </td>
+                            <td>
+                              <select
+                                className="md-input md-input--flex"
+                                value={editingItem.categoryId}
+                                onChange={(e) =>
+                                  setEditingItem({
+                                    ...editingItem,
+                                    categoryId: e.target.value,
+                                  })
+                                }
+                              >
+                                {categories.map((cat) => (
+                                  <option key={cat.id} value={cat.id}>
+                                    {cat.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </td>
+                            <td>
+                              <div className="md-row-actions md-row-actions--center">
+                                <button
+                                  className="md-action-btn md-action-btn--save"
+                                  type="button"
+                                  onClick={() => handleSaveItem(item.id)}
+                                >
+                                  ✓
+                                </button>
+                                <button
+                                  className="md-action-btn md-action-btn--cancel"
+                                  type="button"
+                                  onClick={() => setEditingItemId(null)}
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            </td>
+                          </>
+                        ) : (
+                          <>
+                            <td>
+                              <div className="md-item-name-cell">
+                                <span
+                                  className={`md-veg-dot ${item.is_veg ? "veg" : "nonveg"}`}
+                                  title={item.is_veg ? "Veg" : "Non-Veg"}
+                                />
+                                <span>{item.name}</span>
+                              </div>
+                            </td>
+                            <td className="md-price-cell">
+                              £{Number(item.price).toFixed(2)}
+                            </td>
+                            <td className="md-muted">
+                              {item.category?.name ||
+                                categories.find(
+                                  (c) =>
+                                    String(c.id) === String(item.categoryId),
+                                )?.name ||
+                                "—"}
+                            </td>
+                            <td>
+                              <div className="md-row-actions md-row-actions--center">
+                                <button
+                                  className="md-action-btn md-action-btn--edit"
+                                  type="button"
+                                  onClick={() => handleEditItem(item)}
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  className="md-action-btn md-action-btn--del"
+                                  type="button"
+                                  onClick={() => handleDeleteItem(item.id)}
+                                >
+                                  Del
+                                </button>
+                              </div>
+                            </td>
+                          </>
+                        )}
+                      </tr>
+                    ))
                   )}
-                </tr>
-              ))}
-              {pagedMenuItems.length === 0 && (
-                <tr>
-                  <td
-                    colSpan="4"
-                    style={{ textAlign: "center", color: "#666" }}
-                  >
-                    No items match your filters.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                </tbody>
+              </table>
+            </div>
 
-          <PaginationBar
-            page={page}
-            pageCount={pageCount}
-            pageSize={pageSize}
-            onChangePage={setPage}
-            onChangePageSize={setPageSize}
-          />
+            <PaginationBar
+              page={page}
+              pageCount={pageCount}
+              pageSize={pageSize}
+              onChangePage={setPage}
+              onChangePageSize={setPageSize}
+            />
+          </div>
         </div>
       </div>
     </DashboardLayout>

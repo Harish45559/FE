@@ -5,43 +5,79 @@ import "./login.css";
 
 const Login = () => {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ username: "", password: "" });
+
+  const [form, setForm] = useState({
+    username: "",
+    password: "",
+  });
+
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleChange = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) => {
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value,
+    });
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
 
+    // Client validation
+    if (!form.username.trim()) {
+      setError("Username required");
+      return;
+    }
+
+    if (!form.password) {
+      setError("Password required");
+      return;
+    }
+
     try {
       const res = await api.post("/auth/login", form);
+
       const { token, role, username } = res.data || {};
 
       if (!token || !role) {
         setError("Login failed: invalid server response");
         return;
       }
-
       localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify({ username, role, token }));
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          username,
+          role,
+          token,
+        }),
+      );
 
-      if (role === "admin") navigate("/dashboard");
-      else if (role === "employee") navigate("/attendance");
-      else setError("Unknown role");
+      if (role === "admin") {
+        navigate("/dashboard");
+      } else if (role === "employee") {
+        navigate("/attendance");
+      } else {
+        setError("Unknown role");
+      }
     } catch (err) {
-      setError(err?.response?.data?.message || "Login failed");
+      const errorData = err?.response?.data;
+
+      if (errorData?.errors) {
+        const firstError = Object.values(errorData.errors)[0];
+        setError(firstError);
+      } else {
+        setError(errorData?.message || "Login failed");
+      }
     }
   };
 
   return (
     <div className="login-page">
-      {/* Background */}
       <div className="login-background"></div>
 
-      {/* Card */}
       <div className="login-card">
         <img
           className="brand-logo"
@@ -49,9 +85,14 @@ const Login = () => {
           alt="Mirchi Mafia"
           draggable="false"
         />
+
         <h2 className="title">Welcome back</h2>
 
-        {error && <div className="alert error">{error}</div>}
+        {error && (
+          <div className="alert error" id="login-error">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleLogin} className="login-form" autoComplete="on">
           <input
@@ -59,19 +100,20 @@ const Login = () => {
             name="username"
             type="text"
             placeholder="Username"
+            value={form.username}
             onChange={handleChange}
-            required
           />
 
           <div className="password-wrapper">
             <input
               id="password"
               name="password"
-              type={showPassword ? "text" : "password"} // 👈 toggle
+              type={showPassword ? "text" : "password"}
               placeholder="Password"
+              value={form.password}
               onChange={handleChange}
-              required
             />
+
             <button
               id="toggle-password"
               type="button"
@@ -87,7 +129,7 @@ const Login = () => {
           </button>
         </form>
 
-        <p className="forgot">
+        <p id="forgot-password" className="forgot">
           <a href="/forgot-password">Forgot password?</a>
         </p>
 

@@ -1,215 +1,381 @@
-/* =========================================
-   Employees – Clean & Friendly Dashboard UI
-   (CSS-only; matches classes used in JSX)
-   ========================================= */
+/* Employees.css */
 
-/* Theme tokens */
-:root {
-  --bg: #f5f7fb;
-  --panel: #ffffff;
-  --text: #1f2937;
-  --muted: #6b7280;
-  --border: #e5e7eb;
-  --accent: #dd3a00;     /* warm orange */
-  --accent-2: #b92f00;
-  --ok: #10b981;
-  --danger: #ef4444;
-  --radius: 14px;
-  --radius-sm: 10px;
-  --shadow: 0 10px 30px rgba(15, 23, 42, .08);
+.ep-container {
+  padding: 1.5rem 0;
+  max-width: 1100px;
 }
 
-/* Page container lives in DashboardLayout, so we style panels */
-body { background: var(--bg); }
-
-/* Header row */
-.employee-header {
+/* ── Header ── */
+.ep-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin: 14px 0 12px;
-  color: var(--text);
-}
-.employee-header h2 {
-  margin: 0;
-  font-weight: 800;
-  letter-spacing: .2px;
-}
-
-/* Primary add button */
-.add-button {
-  background: linear-gradient(180deg, var(--accent), var(--accent-2));
-  color: #fff;
-  padding: 10px 14px;
-  border: none;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 800;
-  box-shadow: 0 8px 20px rgba(221,58,0,.28);
-  transition: filter .2s, transform .06s;
-}
-.add-button:hover { filter: brightness(1.07); }
-.add-button:active { transform: translateY(1px); }
-
-/* =========================
-   Employee form (card panel)
-   ========================= */
-.employee-form {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
   gap: 12px;
-  margin-bottom: 18px;
-  background: var(--panel);
-  padding: 18px;
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
+  flex-wrap: wrap;
 }
 
-.employee-form label {
-  display: grid;
-  gap: 6px;
-  color: var(--text);
+.ep-title {
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--color-text-primary, #111);
+  margin-bottom: 2px;
+}
+
+.ep-subtitle {
   font-size: 13px;
-  font-weight: 700;
+  color: var(--color-text-secondary, #666);
 }
 
-.employee-form input,
-.employee-form select {
-  height: 40px;
-  padding: 8px 12px;
-  font-size: 14px;
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  outline: none;
-  background: #fff;
-  transition: border-color .15s, box-shadow .15s;
-}
-.employee-form input::placeholder { color: #94a3b8; }
-.employee-form input:focus,
-.employee-form select:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(221,58,0,.12);
-}
-
-/* Submit button spans full row */
-.employee-form button {
-  grid-column: 1 / -1;
-  height: 42px;
-  padding: 0 16px;
-  font-size: 14px;
-  font-weight: 800;
-  border: 0;
-  border-radius: var(--radius-sm);
+.ep-add-btn {
+  font-size: 13px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 0.5px solid var(--color-border-secondary, #ddd);
+  background: var(--color-text-primary, #111);
+  color: var(--color-background-primary, #fff);
   cursor: pointer;
-  color: #fff;
-  background: linear-gradient(180deg, var(--accent), var(--accent-2));
-  box-shadow: 0 8px 18px rgba(221,58,0,.25);
-  transition: filter .2s, transform .06s;
-}
-.employee-form button:hover { filter: brightness(1.06); }
-.employee-form button:active { transform: translateY(1px); }
-
-/* Helper: Date labels (you already use <label> around date inputs) */
-.employee-form label > input[type="date"] {
-  height: 40px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: opacity 0.15s ease;
 }
 
-/* Responsive form */
-@media (max-width: 860px) {
-  .employee-form { grid-template-columns: 1fr; }
+.ep-add-btn:hover {
+  opacity: 0.85;
 }
 
-/* =========================
-   Table wrapper + table
-   ========================= */
-.employee-table-wrapper {
-  max-height: 480px;
-  overflow: auto;
-  border-radius: var(--radius);
-  background: var(--panel);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
+.ep-add-btn--cancel {
+  background: var(--color-background-primary, #fff);
+  color: var(--color-text-secondary, #666);
+  border-color: var(--color-border-secondary, #ddd);
 }
 
-/* Table base */
-.employee-table {
+.ep-add-btn--cancel:hover {
+  background: var(--color-background-secondary, #f5f5f5);
+  opacity: 1;
+}
+
+/* ── Form Card ── */
+.ep-form-card {
+  background: var(--color-background-primary, #fff);
+  border: 0.5px solid var(--color-border-tertiary, #e5e5e5);
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.ep-form-header {
+  padding-bottom: 12px;
+  margin-bottom: 1rem;
+  border-bottom: 0.5px solid var(--color-border-tertiary, #e5e5e5);
+}
+
+.ep-form-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-text-primary, #111);
+}
+
+.ep-form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.ep-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.ep-label {
+  font-size: 12px;
+  color: var(--color-text-secondary, #666);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.ep-req {
+  color: #E24B4A;
+  font-size: 12px;
+}
+
+.ep-input {
+  font-size: 13px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 0.5px solid var(--color-border-secondary, #ddd);
+  background: var(--color-background-primary, #fff);
+  color: var(--color-text-primary, #111);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
   width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-  min-width: 880px; /* allow horizontal scroll on small screens */
 }
 
-/* Sticky header */
-.employee-table thead {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  background: #f8fafc;
-  color: #0f172a;
-}
-.employee-table th {
-  text-align: left;
-  font-weight: 800;
-  letter-spacing: .2px;
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--border);
-  user-select: none;
+.ep-input:focus {
+  border-color: var(--color-border-primary, #999);
+  box-shadow: 0 0 0 3px rgba(128, 128, 128, 0.1);
 }
 
-/* Rows */
-.employee-table td {
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--border);
-  color: #2b3646;
-  transition: background .2s;
+.ep-input-error {
+  border-color: #E24B4A;
 }
-.employee-table tbody tr:nth-child(odd) { background: #fff; }
-.employee-table tbody tr:nth-child(even) { background: #fcfeff; }
-.employee-table tbody tr:hover { background: #fff6f2; }
 
-/* Action buttons in last column */
-.employee-table td:last-child {
+.ep-input-error:focus {
+  box-shadow: 0 0 0 3px rgba(226, 75, 74, 0.12);
+}
+
+.ep-err-msg {
+  font-size: 11px;
+  color: #A32D2D;
+}
+
+.ep-form-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 0.5px solid var(--color-border-tertiary, #e5e5e5);
+}
+
+.ep-cancel-btn {
+  font-size: 13px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 0.5px solid var(--color-border-secondary, #ddd);
+  background: var(--color-background-primary, #fff);
+  color: var(--color-text-secondary, #666);
+  cursor: pointer;
+}
+
+.ep-cancel-btn:hover {
+  background: var(--color-background-secondary, #f5f5f5);
+}
+
+.ep-submit-btn {
+  font-size: 13px;
+  padding: 8px 20px;
+  border-radius: 8px;
+  border: none;
+  background: var(--color-text-primary, #111);
+  color: var(--color-background-primary, #fff);
+  cursor: pointer;
+  font-weight: 500;
+  transition: opacity 0.15s ease;
+}
+
+.ep-submit-btn:hover {
+  opacity: 0.85;
+}
+
+.ep-submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Toolbar ── */
+.ep-toolbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.ep-search {
+  flex: 1;
+  min-width: 200px;
+  font-size: 13px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: 0.5px solid var(--color-border-secondary, #ddd);
+  background: var(--color-background-primary, #fff);
+  color: var(--color-text-primary, #111);
+  outline: none;
+}
+
+.ep-search:focus {
+  border-color: var(--color-border-primary, #999);
+}
+
+.ep-filter {
+  font-size: 13px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 0.5px solid var(--color-border-secondary, #ddd);
+  background: var(--color-background-primary, #fff);
+  color: var(--color-text-primary, #111);
+  cursor: pointer;
+  outline: none;
+}
+
+.ep-count {
+  font-size: 13px;
+  color: var(--color-text-secondary, #666);
+  margin-left: auto;
   white-space: nowrap;
 }
-.employee-table button {
-  padding: 6px 10px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
+
+/* ── Table ── */
+.ep-table-wrap {
+  background: var(--color-background-primary, #fff);
+  border: 0.5px solid var(--color-border-tertiary, #e5e5e5);
+  border-radius: 12px;
+  overflow: hidden;
+  overflow-x: auto;
+}
+
+.ep-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 700px;
+}
+
+.ep-table th {
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 500;
+  color: var(--color-text-secondary, #666);
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 0.5px solid var(--color-border-tertiary, #e5e5e5);
+  background: var(--color-background-secondary, #f9f9f9);
+  white-space: nowrap;
+}
+
+.ep-table td {
+  padding: 12px 14px;
+  border-bottom: 0.5px solid var(--color-border-tertiary, #e5e5e5);
+  color: var(--color-text-primary, #111);
+  vertical-align: middle;
+}
+
+.ep-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.ep-table tbody tr:hover td {
+  background: var(--color-background-secondary, #f9f9f9);
+}
+
+/* ── Name Cell ── */
+.ep-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ep-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.ep-name {
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--color-text-primary, #111);
+  line-height: 1.3;
+}
+
+.ep-username {
+  font-size: 12px;
+  color: var(--color-text-secondary, #666);
+  line-height: 1.3;
+}
+
+.ep-muted {
+  color: var(--color-text-secondary, #666);
+}
+
+/* ── Role Badges ── */
+.ep-role-badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.ep-role-admin {
+  background: #EEEDFE;
+  color: #3C3489;
+}
+
+.ep-role-emp {
+  background: #E1F5EE;
+  color: #085041;
+}
+
+/* ── Action Buttons ── */
+.ep-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.ep-btn {
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 0.5px solid var(--color-border-secondary, #ddd);
+  background: var(--color-background-primary, #fff);
+  color: var(--color-text-secondary, #666);
   cursor: pointer;
-  margin-right: 6px;
-  color: var(--text);
-  background: #f4f7fa;
-  transition: background .15s, transform .06s, border-color .15s;
-}
-.employee-table button:hover {
-  background: #eef3f8;
-  border-color: #dbe3ec;
-}
-.employee-table button:active { transform: translateY(1px); }
-
-/* Specific colors for edit/delete (you use ✏️ / 🗑️ already) */
-.employee-table button:first-of-type { /* edit */
-  border-color: rgba(16,185,129,.3);
-  color: var(--ok);
-  background: rgba(16,185,129,.08);
-}
-.employee-table button:last-of-type {  /* delete */
-  border-color: rgba(239,68,68,.3);
-  color: var(--danger);
-  background: rgba(239,68,68,.08);
+  font-size: 12px;
+  font-weight: 500;
+  transition: opacity 0.15s ease;
+  white-space: nowrap;
 }
 
-/* Round top corners visually when header sticks */
-.employee-table thead th:first-child { border-top-left-radius: var(--radius); }
-.employee-table thead th:last-child  { border-top-right-radius: var(--radius); }
+.ep-btn:hover {
+  opacity: 0.8;
+}
 
-/* Small screens: make tap targets bigger */
-@media (max-width: 480px) {
-  .add-button { padding: 12px 16px; }
-  .employee-table button { padding: 8px 12px; }
+.ep-btn-edit {
+  border-color: #B5D4F4;
+  color: #185FA5;
+  background: #E6F1FB;
+}
+
+.ep-btn-del {
+  border-color: #F7C1C1;
+  color: #A32D2D;
+  background: #FCEBEB;
+}
+
+/* ── Empty State ── */
+.ep-empty {
+  text-align: center;
+  padding: 2.5rem;
+  color: var(--color-text-secondary, #666);
+  font-size: 14px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 860px) {
+  .ep-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .ep-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ep-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ep-count {
+    margin-left: 0;
+  }
 }

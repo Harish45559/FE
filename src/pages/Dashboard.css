@@ -1,0 +1,484 @@
+/* Dashboard.css */
+
+.dash {
+    padding: 20px;
+    background: #f5f6f8;
+    min-height: 100vh;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* ── Loading ── */
+.dash-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 60vh;
+    gap: 14px;
+    color: #aaa;
+    font-size: 14px;
+}
+
+.dash-spinner {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 3px solid #f0f0f0;
+    border-top-color: #dd3a00;
+    animation: spin .7s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ── Header ── */
+.dash-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.dash-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #111;
+    margin: 0;
+}
+
+.dash-sub {
+    font-size: 13px;
+    color: #aaa;
+    margin-top: 2px;
+}
+
+/* ── Stat cards row ── */
+.dash-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+}
+
+.dash-stat {
+    background: #fff;
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, .06);
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.dash-stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    margin-bottom: 4px;
+    flex-shrink: 0;
+}
+
+.dash-stat-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #aaa;
+    text-transform: uppercase;
+    letter-spacing: .7px;
+}
+
+.dash-stat-value {
+    font-size: 28px;
+    font-weight: 800;
+    color: #111;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+.dash-stat-sub {
+    font-size: 11px;
+    color: #bbb;
+}
+
+/* ── Card base ── */
+.dash-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, .06);
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.dash-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.dash-card-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #111;
+}
+
+.dash-card-tag {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 99px;
+    background: #f5f5f5;
+    color: #888;
+}
+
+.dash-card-tag.green {
+    background: #f0fdf4;
+    color: #16a34a;
+}
+
+.dash-card-tag.red {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+.dash-card-tag.orange {
+    background: #fff1ee;
+    color: #dd3a00;
+}
+
+.dash-empty {
+    text-align: center;
+    padding: 24px 12px;
+    font-size: 13px;
+    color: #ccc;
+}
+
+/* ── Middle row ── */
+.dash-mid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+/* Recent orders */
+.dash-order-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.dash-order-row:last-child {
+    border-bottom: none;
+}
+
+.dash-order-num {
+    font-size: 12px;
+    font-weight: 700;
+    color: #111;
+    min-width: 50px;
+    flex-shrink: 0;
+}
+
+.dash-order-cust {
+    flex: 1;
+    font-size: 12px;
+    color: #555;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dash-pay {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 99px;
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.dash-pay.cash {
+    background: #f0fdf4;
+    color: #16a34a;
+}
+
+.dash-pay.card {
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+.dash-order-amt {
+    font-size: 13px;
+    font-weight: 700;
+    color: #dd3a00;
+    min-width: 54px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+}
+
+/* Top items */
+.dash-item-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.dash-item-row:last-child {
+    border-bottom: none;
+}
+
+.dash-item-rank {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    background: #fff1ee;
+    color: #dd3a00;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.dash-item-name {
+    flex: 1;
+    font-size: 12px;
+    font-weight: 600;
+    color: #111;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dash-item-bar-wrap {
+    width: 80px;
+    height: 6px;
+    background: #f0f0f0;
+    border-radius: 99px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.dash-item-bar {
+    height: 6px;
+    border-radius: 99px;
+    background: #dd3a00;
+    transition: width .3s ease;
+}
+
+.dash-item-count {
+    font-size: 12px;
+    font-weight: 700;
+    color: #dd3a00;
+    min-width: 32px;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+/* ── Bottom row ── */
+.dash-bot {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+}
+
+/* Staff */
+.dash-staff-scroll {
+    max-height: 220px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #f0f0f0 transparent;
+    margin: 0 -4px;
+    padding: 0 4px;
+}
+
+.dash-staff-scroll::-webkit-scrollbar {
+    width: 4px;
+}
+
+.dash-staff-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.dash-staff-scroll::-webkit-scrollbar-thumb {
+    background: #eee;
+    border-radius: 99px;
+}
+
+.dash-staff-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 0;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.dash-staff-row:last-child {
+    border-bottom: none;
+}
+
+.dash-staff-av {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.dash-staff-name {
+    flex: 1;
+    font-size: 12px;
+    font-weight: 600;
+    color: #111;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dash-staff-status {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 99px;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.dash-staff-status.in {
+    background: #f0fdf4;
+    color: #16a34a;
+}
+
+.dash-staff-status.out {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+/* Till */
+.dash-till-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 0;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.dash-till-row:last-child {
+    border-bottom: none;
+}
+
+.dash-till-label {
+    font-size: 12px;
+    color: #777;
+}
+
+.dash-till-val {
+    font-size: 13px;
+    font-weight: 600;
+    color: #111;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Held orders */
+.dash-held-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 0;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.dash-held-row:last-child {
+    border-bottom: none;
+}
+
+.dash-held-num {
+    font-size: 12px;
+    font-weight: 700;
+    color: #dd3a00;
+    min-width: 36px;
+    flex-shrink: 0;
+}
+
+.dash-held-cust {
+    flex: 1;
+    font-size: 12px;
+    color: #555;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dash-held-amt {
+    font-size: 12px;
+    font-weight: 700;
+    color: #111;
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+}
+
+/* Show more button */
+.dash-show-more {
+    width: 100%;
+    margin-top: 8px;
+    padding: 8px;
+    border-radius: 8px;
+    border: none;
+    background: #f9f9f9;
+    color: #dd3a00;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s;
+    text-align: center;
+}
+
+.dash-show-more:hover {
+    background: #fff1ee;
+}
+
+/* ── Responsive ── */
+@media (max-width: 1100px) {
+    .dash-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .dash-bot {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 760px) {
+    .dash-stats {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .dash-mid {
+        grid-template-columns: 1fr;
+    }
+
+    .dash-bot {
+        grid-template-columns: 1fr;
+    }
+}

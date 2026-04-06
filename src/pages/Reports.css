@@ -1,362 +1,338 @@
-/* ================================
-   Reports – Polished, Friendly UI
-   (CSS-only • no JSX changes)
-   ================================ */
+/* Reports.css */
 
-/* ---- Theme tokens ---- */
-:root {
-  --bg: #f5f7fa;
-  --panel: #ffffff;
-  --text: #1f2937;
-  --muted: #64748b;
-  --border: #e5e7eb;
-  --accent: #dd3a00;      /* warm accent */
-  --accent-2: #b92f00;
-  --ok: #10b981;
-  --ok-2: #059669;
-  --warn: #f59e0b;
-  --danger: #ef4444;
-  --radius: 12px;
-  --radius-sm: 10px;
-  --shadow: 0 10px 30px rgba(15, 23, 42, .08);
+.rp-container {
+  padding: 1.5rem 0;
+  max-width: 1100px;
 }
 
-/* ---- Page container ---- */
-.report-container {
-  padding: 20px;
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  display: grid;
-  gap: 14px;
-}
-
-/* ============================================================
-   Filters row: compact, responsive grid with clear spacing
-   ============================================================ */
-.filter-section {
-  display: grid;
-  grid-template-columns: 1fr repeat(2, minmax(160px, 220px)) auto auto;
+/* ── Header ── */
+.rp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
   gap: 10px;
+}
+
+.rp-title {
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--color-text-primary, #111);
+  margin-bottom: 2px;
+}
+
+.rp-subtitle {
+  font-size: 13px;
+  color: var(--color-text-secondary, #666);
+}
+
+.rp-loading {
+  font-size: 13px;
+  color: var(--color-text-secondary, #666);
+  padding: 4px 12px;
+  background: var(--color-background-secondary, #f5f5f5);
+  border-radius: 99px;
+}
+
+/* ── Filters ── */
+.rp-filters {
+  display: flex;
+  gap: 8px;
   align-items: center;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 12px;
-  box-shadow: var(--shadow);
+  flex-wrap: wrap;
+  background: var(--color-background-primary, #fff);
+  border: 0.5px solid var(--color-border-tertiary, #e5e5e5);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 1.25rem;
 }
 
-/* Controls (select, date, button) */
-.filter-section select,
-.filter-section .date-picker,
-.filter-section button {
-  height: 40px;
-  padding: 8px 12px;
-  font-size: 14px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background-color: #fff;
-  transition: border-color .15s, box-shadow .15s, background .2s;
+.rp-select,
+.rp-date {
+  font-size: 13px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 0.5px solid var(--color-border-secondary, #ddd);
+  background: var(--color-background-primary, #fff);
+  color: var(--color-text-primary, #111);
   outline: none;
-}
-
-.filter-section select:focus,
-.filter-section .date-picker:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(221,58,0,.12);
-}
-
-/* Apply button */
-.filter-section .apply-filter-btn {
-  background: linear-gradient(180deg, var(--accent), var(--accent-2));
-  border: none;
-  color: #fff;
-  font-weight: 700;
-  padding: 0 16px;
-  box-shadow: 0 8px 20px rgba(221,58,0,.25);
   cursor: pointer;
 }
-.filter-section .apply-filter-btn:hover { filter: brightness(1.06); }
-.filter-section .apply-filter-btn:active { transform: translateY(1px); }
 
-/* Export buttons live inside .filter-section in JSX */
-.export-buttons {
-  display: inline-flex;
-  gap: 8px;
-  margin: 0; /* tightened; row already spaced */
-  justify-self: end;
+.rp-select:focus,
+.rp-date:focus {
+  border-color: var(--color-border-primary, #999);
 }
-.export-buttons button {
-  height: 40px;
-  padding: 0 14px;
-  border-radius: var(--radius-sm);
+
+.rp-select {
+  min-width: 160px;
+}
+
+.rp-apply-btn {
+  font-size: 13px;
+  padding: 7px 16px;
+  border-radius: 8px;
   border: none;
-  font-weight: 700;
-  color: #fff;
-  background: linear-gradient(180deg, var(--ok), var(--ok-2));
-  transition: filter .2s, transform .06s;
-}
-.export-buttons button:hover { filter: brightness(1.06); }
-.export-buttons button:active { transform: translateY(1px); }
-
-/* ============================================================
-   Table section (card wrapper + table)
-   ============================================================ */
-.table-section {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  overflow: hidden; /* round corners on table scroll */
+  background: var(--color-text-primary, #111);
+  color: var(--color-background-primary, #fff);
+  cursor: pointer;
+  font-weight: 500;
+  transition: opacity 0.15s ease;
 }
 
-/* Table */
-table.report-table {
+.rp-apply-btn:hover {
+  opacity: 0.85;
+}
+
+.rp-exports {
+  margin-left: auto;
+  display: flex;
+  gap: 6px;
+}
+
+.rp-export-btn {
+  font-size: 13px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 0.5px solid var(--color-border-secondary, #ddd);
+  background: var(--color-background-primary, #fff);
+  color: var(--color-text-primary, #111);
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.15s ease;
+}
+
+.rp-export-btn:hover {
+  background: var(--color-background-secondary, #f5f5f5);
+}
+
+.rp-export-csv {
+  border-color: #9FE1CB;
+  color: #085041;
+  background: #E1F5EE;
+}
+
+.rp-export-csv:hover {
+  background: #c8edd9;
+}
+
+/* ── Table ── */
+.rp-table-wrap {
+  background: var(--color-background-primary, #fff);
+  border: 0.5px solid var(--color-border-tertiary, #e5e5e5);
+  border-radius: 12px;
+  overflow: hidden;
+  overflow-x: auto;
+}
+
+.rp-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: 13px;
+  min-width: 780px;
 }
 
-/* Header */
-table.report-table thead th {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  background: #f9fafb;
-  color: #0f172a;
-  font-weight: 800;
-  letter-spacing: .2px;
+.rp-table thead th {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-secondary, #666);
   text-align: left;
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--border);
+  padding: 10px 14px;
+  border-bottom: 0.5px solid var(--color-border-tertiary, #e5e5e5);
+  background: var(--color-background-secondary, #f9f9f9);
+  white-space: nowrap;
+}
+
+.rp-th-sort {
+  cursor: pointer;
   user-select: none;
 }
-table.report-table thead th:hover {
-  background: #f3f6fa;
+
+.rp-th-sort:hover {
+  color: var(--color-text-primary, #111);
 }
 
-/* Cells */
-table.report-table td {
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--border);
-  color: #2b3646;
+.rp-th-center {
+  text-align: center !important;
 }
 
-/* Zebra + hover */
-table.report-table tbody tr:nth-child(odd) { background: #fff; }
-table.report-table tbody tr:nth-child(even) { background: #fcfeff; }
-table.report-table tbody tr:hover { background: #fff6f2; }
-
-/* Empty state row */
-table.report-table tbody td[colspan] {
-  text-align: center;
-  color: var(--muted);
-  padding: 24px 10px;
+.rp-sort-icon {
+  font-size: 11px;
+  color: var(--color-text-secondary, #aaa);
+  margin-left: 4px;
 }
 
-/* Monospace-style alignment for time columns for readability */
-table.report-table td:nth-child(3),
-table.report-table td:nth-child(4),
-table.report-table td:nth-child(5),
-table.report-table td:nth-child(6) {
+.rp-sort-icon.active {
+  color: var(--color-text-primary, #111);
+}
+
+.rp-table td {
+  padding: 11px 14px;
+  border-bottom: 0.5px solid var(--color-border-tertiary, #e5e5e5);
+  color: var(--color-text-primary, #111);
+  vertical-align: middle;
+}
+
+.rp-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.rp-table tbody tr:hover td {
+  background: var(--color-background-secondary, #f9f9f9);
+}
+
+/* ── Name Cell ── */
+.rp-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+.rp-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+/* ── Cell Variants ── */
+.rp-date-cell {
+  color: var(--color-text-secondary, #666);
+  white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
 
-/* Delete icon button (if used elsewhere) */
-.delete-btn {
-  background: none;
-  border: 1px solid transparent;
-  color: var(--danger);
-  font-size: 18px;
-  border-radius: 8px;
-  padding: 4px 6px;
-  cursor: pointer;
-  transition: background .15s, border-color .15s;
-}
-.delete-btn:hover {
-  background: #fee2e2;
-  border-color: #fecaca;
+.rp-time-cell {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
-/* ============================================================
-   Pagination
-   ============================================================ */
-.pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px;
+.rp-muted {
+  color: var(--color-text-secondary, #666);
 }
 
-.pagination button {
-  padding: 8px 12px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: #fff;
-  color: var(--text);
-  font-size: 13px;
-  font-weight: 700;
-  transition: background .15s, transform .06s;
-}
-.pagination button:hover { background: #f3f4f6; }
-.pagination button:disabled {
-  opacity: .55;
-  cursor: not-allowed;
-}
-.pagination .active {
-  background: linear-gradient(180deg, var(--accent), var(--accent-2));
-  border-color: var(--accent-2);
-  color: #fff;
+.rp-hours-cell {
+  white-space: nowrap;
 }
 
-/* The "Page X of Y" span (present in JSX) */
-.pagination span {
-  padding: 6px 10px;
-  color: var(--muted);
-  font-weight: 600;
+.rp-hours-badge {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: #E1F5EE;
+  color: #085041;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
 }
 
-/* ============================================================
-   Hover card for per-day sessions (already in JSX)
-   ============================================================ */
-.hover-card {
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 10px 12px;
-  box-shadow: 0 18px 40px rgba(0,0,0,.12);
-  min-width: 260px;
-}
-.hover-card-title {
-  font-weight: 800;
-  color: #111827;
-  margin-bottom: 8px;
-}
-.hover-card-row {
-  display: grid;
-  grid-template-columns: 72px 60px 1fr;
-  gap: 10px;
-  font-size: 13px;
-  padding: 6px 0;
-  border-bottom: 1px dashed #eef2f6;
-  color: #1f2937;
-}
-.hover-card-row:last-child { border-bottom: 0; }
-.hover-card-row.is-work { color: var(--ok-2); }
-.hover-card-row.is-break { color: var(--danger); }
-
-/* ============================================================
-   Modal (if used by Reports)
-   ============================================================ */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(2, 6, 23, .45);
-  display: grid;
-  place-items: center;
-  z-index: 1000;
-}
-.modal-box {
-  background: #fff;
-  width: min(460px, 92vw);
-  max-height: 80vh;
-  overflow: auto;
-  border-radius: 14px;
-  padding: 18px 16px;
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
+.rp-action-cell {
+  text-align: center;
+  white-space: nowrap;
 }
 
-/* Inline links the page marks as clickable */
-.clickable {
-  cursor: pointer;
-  color: #0ea5e9;
-  text-decoration: underline;
-}
-.clickable:hover { color: #0284c7; }
-
-/* ============================================================
-   Responsiveness
-   ============================================================ */
-@media (max-width: 1024px) {
-  .filter-section {
-    grid-template-columns: 1fr 1fr 1fr auto;
-  }
-}
-@media (max-width: 768px) {
-  .filter-section {
-    grid-template-columns: 1fr 1fr;
-  }
-  .export-buttons { justify-self: start; }
-  table.report-table { font-size: 13px; }
-}
-@media (max-width: 420px) {
-  .filter-section { gap: 8px; }
-  .filter-section select,
-  .filter-section .date-picker,
-  .filter-section button { height: 44px; }
-}
-
-.edit-btn {
-  background: #3b82f6;
-  color: white;
-  border: none;
-  padding: 6px 10px;
+/* ── Row Buttons ── */
+.rp-btn {
+  font-size: 12px;
+  padding: 4px 10px;
   border-radius: 6px;
+  border: 0.5px solid var(--color-border-secondary, #ddd);
   cursor: pointer;
+  font-weight: 500;
+  transition: opacity 0.15s ease;
 }
 
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.rp-btn:hover {
+  opacity: 0.8;
 }
 
-.edit-modal {
-  background: white;
-  padding: 20px;
+.rp-btn-edit {
+  border-color: #F7C1C1;
+  color: #A32D2D;
+  background: #FCEBEB;
+}
+
+.rp-btn-sessions {
+  border-color: #B5D4F4;
+  color: #185FA5;
+  background: #E6F1FB;
+}
+
+/* ── Empty ── */
+.rp-empty {
+  text-align: center;
+  padding: 2.5rem;
+  color: var(--color-text-secondary, #666);
+  font-size: 14px;
+}
+
+/* ── Hover Card ── */
+.rp-hover-card {
+  background: var(--color-background-primary, #fff);
+  border: 0.5px solid var(--color-border-secondary, #ddd);
   border-radius: 10px;
-  width: 300px;
+  padding: 10px 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  min-width: 260px;
+  pointer-events: auto;
+}
+
+.rp-hover-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-secondary, #666);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.rp-hover-body {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 4px;
 }
 
-.modal-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
+.rp-hover-row {
+  display: grid;
+  grid-template-columns: 56px 52px 1fr;
+  gap: 8px;
+  font-size: 13px;
+  padding: 5px 0;
+  border-bottom: 0.5px solid var(--color-border-tertiary, #eee);
+  color: var(--color-text-primary, #111);
 }
 
-.save-btn {
-  background: #22c55e;
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 6px;
+.rp-hover-row:last-child {
+  border-bottom: none;
 }
 
-.cancel-btn {
-  background: #ef4444;
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 6px;
+.rp-hover-row.is-work {
+  color: #085041;
 }
 
-.session-overlay {
+.rp-hover-row.is-break {
+  color: #A32D2D;
+}
+
+.rp-hover-type {
+  font-weight: 500;
+}
+
+.rp-hover-time,
+.rp-hover-dur {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Modal Overlay ── */
+.rp-modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   background: rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: center;
@@ -364,40 +340,190 @@ table.report-table td:nth-child(6) {
   z-index: 1000;
 }
 
-.session-editor {
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
-  width: 600px;
-  max-height: 80vh;
-  overflow: auto;
+.rp-modal {
+  background: var(--color-background-primary, #fff);
+  border-radius: 12px;
+  border: 0.5px solid var(--color-border-tertiary, #e5e5e5);
+  width: min(420px, 92vw);
+  max-height: 85vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
-.session-table {
-  width: 100%;
-  border-collapse: collapse;
+.rp-modal--wide {
+  width: min(640px, 92vw);
 }
 
-.session-table td,
-.session-table th {
-  border: 1px solid #ddd;
-  padding: 8px;
+.rp-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  border-bottom: 0.5px solid var(--color-border-tertiary, #e5e5e5);
 }
 
-.session-btn {
-  background: #6366f1;
-  color: white;
+.rp-modal-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-text-primary, #111);
+}
+
+.rp-modal-close {
+  font-size: 14px;
+  color: var(--color-text-secondary, #666);
+  background: transparent;
   border: none;
-  padding: 5px 10px;
+  cursor: pointer;
+  padding: 4px 6px;
   border-radius: 6px;
+}
+
+.rp-modal-close:hover {
+  background: var(--color-background-secondary, #f5f5f5);
+}
+
+.rp-modal-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rp-modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.rp-modal-label {
+  font-size: 12px;
+  color: var(--color-text-secondary, #666);
+}
+
+.rp-modal-input {
+  font-size: 13px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 0.5px solid var(--color-border-secondary, #ddd);
+  background: var(--color-background-primary, #fff);
+  color: var(--color-text-primary, #111);
+  outline: none;
+  width: 100%;
+}
+
+.rp-modal-input:focus {
+  border-color: var(--color-border-primary, #999);
+}
+
+.rp-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 0.5px solid var(--color-border-tertiary, #e5e5e5);
+}
+
+.rp-modal-cancel {
+  font-size: 13px;
+  padding: 7px 16px;
+  border-radius: 8px;
+  border: 0.5px solid var(--color-border-secondary, #ddd);
+  background: var(--color-background-primary, #fff);
+  color: var(--color-text-secondary, #666);
   cursor: pointer;
 }
 
-.close-btn {
-  margin-top: 10px;
-  background: #ef4444;
-  color: white;
+.rp-modal-cancel:hover {
+  background: var(--color-background-secondary, #f5f5f5);
+}
+
+.rp-modal-save {
+  font-size: 13px;
+  padding: 7px 20px;
+  border-radius: 8px;
   border: none;
-  padding: 8px 12px;
+  background: var(--color-text-primary, #111);
+  color: var(--color-background-primary, #fff);
+  cursor: pointer;
+  font-weight: 500;
+  transition: opacity 0.15s ease;
+}
+
+.rp-modal-save:hover {
+  opacity: 0.85;
+}
+
+/* ── Sessions Table ── */
+.rp-session-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.rp-session-table th {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-secondary, #666);
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 0.5px solid var(--color-border-tertiary, #e5e5e5);
+  background: var(--color-background-secondary, #f9f9f9);
+}
+
+.rp-session-table td {
+  padding: 8px 10px;
+  border-bottom: 0.5px solid var(--color-border-tertiary, #e5e5e5);
+  color: var(--color-text-primary, #111);
+  vertical-align: middle;
+}
+
+.rp-session-table tr:last-child td {
+  border-bottom: none;
+}
+
+.rp-session-saved td {
+  background: rgba(29, 158, 117, 0.06);
+}
+
+.rp-session-num {
+  text-align: center;
+  color: var(--color-text-secondary, #888);
+  width: 32px;
+}
+
+.rp-session-save-btn {
+  font-size: 12px;
+  padding: 5px 12px;
   border-radius: 6px;
+  border: 0.5px solid var(--color-border-secondary, #ddd);
+  background: var(--color-background-primary, #fff);
+  color: var(--color-text-primary, #111);
+  cursor: pointer;
+  font-weight: 500;
+  min-width: 70px;
+  transition: all 0.15s ease;
+}
+
+.rp-session-save-btn.saved {
+  border-color: #9FE1CB;
+  color: #085041;
+  background: #E1F5EE;
+}
+
+.rp-session-save-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .rp-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .rp-exports {
+    margin-left: 0;
+  }
 }
