@@ -78,16 +78,17 @@ const HeldOrders = () => {
               </thead>
               <tbody>
                 {heldOrders.map((order) => (
-                  <tr key={order.id}>
+                  <tr key={order.id} id={`held-row-${order.id}`}>
                     <td>#{order.display_number || order.id}</td>
                     <td>{order.customer_name || "N/A"}</td>
                     <td>{order.items?.length}</td>
                     <td>{order.date}</td>
                     <td>
-                      <button onClick={() => handleResume(order)}>
+                      <button id={`held-resume-${order.id}`} onClick={() => handleResume(order)}>
                         Resume
                       </button>
                       <button
+                        id={`held-delete-${order.id}`}
                         onClick={() => handleDelete(order.id)}
                         style={{ marginLeft: "8px", color: "red" }}
                       >
@@ -98,7 +99,7 @@ const HeldOrders = () => {
                 ))}
               </tbody>
             </table>
-            <button className="clear-btn" onClick={handleClearAll}>
+            <button id="held-btn-clear-all" className="clear-btn" onClick={handleClearAll}>
               Clear All
             </button>
           </>

@@ -398,13 +398,14 @@ const BillingCounter = () => {
     <DashboardLayout>
       {/* Auth Modal */}
       {showAuthModal && (
-        <div className="bc-overlay" onClick={() => setShowAuthModal(false)}>
-          <div className="bc-modal" onClick={(e) => e.stopPropagation()}>
+        <div id="bc-auth-overlay" className="bc-overlay" onClick={() => setShowAuthModal(false)}>
+          <div id="bc-auth-modal" className="bc-modal" onClick={(e) => e.stopPropagation()}>
             <div className="bc-modal-header">
               <span className="bc-modal-title">
                 {tillActionType === "open" ? "Open till" : "Close till"}
               </span>
               <button
+                id="bc-auth-modal-close"
                 className="bc-modal-close"
                 onClick={() => setShowAuthModal(false)}
               >
@@ -415,6 +416,7 @@ const BillingCounter = () => {
               <div className="bc-field">
                 <label className="bc-label">Username</label>
                 <input
+                  id="bc-auth-username"
                   className="bc-input"
                   type="text"
                   placeholder="Enter username"
@@ -425,6 +427,7 @@ const BillingCounter = () => {
               <div className="bc-field">
                 <label className="bc-label">Password</label>
                 <input
+                  id="bc-auth-password"
                   className="bc-input"
                   type="password"
                   placeholder="Enter password"
@@ -436,12 +439,14 @@ const BillingCounter = () => {
             </div>
             <div className="bc-modal-footer">
               <button
+                id="bc-auth-cancel"
                 className="bc-btn-sec"
                 onClick={() => setShowAuthModal(false)}
               >
                 Cancel
               </button>
               <button
+                id="bc-auth-confirm"
                 className={`bc-btn-pri ${tillActionType === "open" ? "green" : "red"}`}
                 onClick={confirmTillAction}
               >
@@ -463,6 +468,7 @@ const BillingCounter = () => {
             {allCategories.map((cat) => (
               <button
                 key={cat}
+                id={`bc-cat-${cat.replace(/\s+/g, "-").toLowerCase()}`}
                 className={`bc-scat${activeCategory === cat ? " active" : ""}`}
                 onClick={() => setActiveCategory(cat)}
               >
@@ -477,6 +483,7 @@ const BillingCounter = () => {
         <div className="bc-center">
           <div className="bc-ctopbar">
             <input
+              id="bc-search"
               className="bc-search"
               type="text"
               placeholder="Search menu items…"
@@ -485,18 +492,21 @@ const BillingCounter = () => {
             />
             <div className="bc-veg-btns">
               <button
+                id="bc-filter-all"
                 className={`bc-vbtn${vegFilter === "all" ? " active" : ""}`}
                 onClick={() => setVegFilter("all")}
               >
                 All
               </button>
               <button
+                id="bc-filter-veg"
                 className={`bc-vbtn${vegFilter === "veg" ? " active" : ""}`}
                 onClick={() => setVegFilter("veg")}
               >
                 🟢 Veg
               </button>
               <button
+                id="bc-filter-nonveg"
                 className={`bc-vbtn${vegFilter === "nonveg" ? " active" : ""}`}
                 onClick={() => setVegFilter("nonveg")}
               >
@@ -514,6 +524,7 @@ const BillingCounter = () => {
                 return (
                   <div
                     key={item.id}
+                    id={`bc-menu-item-${item.id}`}
                     className="bc-card"
                     onClick={() => handleAddItem(item)}
                   >
@@ -521,6 +532,7 @@ const BillingCounter = () => {
                       <div className="bc-card-badge">{inCart.qty}</div>
                     )}
                     <button
+                      id={`bc-fav-${item.id}`}
                       className={`bc-fav${favourites.includes(item.id) ? " on" : ""}`}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -580,6 +592,7 @@ const BillingCounter = () => {
             </div>
             <div className="bc-till-btns">
               <button
+                id="bc-till-open"
                 className="bc-till-btn open"
                 onClick={() => {
                   setTillActionType("open");
@@ -589,6 +602,7 @@ const BillingCounter = () => {
                 Open
               </button>
               <button
+                id="bc-till-close"
                 className="bc-till-btn close"
                 onClick={() => {
                   setTillActionType("close");
@@ -603,6 +617,7 @@ const BillingCounter = () => {
           {/* Meta */}
           <div className="bc-order-meta">
             <select
+              id="bc-order-type"
               className="bc-select"
               value={orderType}
               onChange={(e) => setOrderType(e.target.value)}
@@ -614,6 +629,7 @@ const BillingCounter = () => {
 
           {/* Customer */}
           <input
+            id="bc-customer-name"
             className="bc-cust-inp"
             type="text"
             placeholder="Customer name *"
@@ -632,7 +648,7 @@ const BillingCounter = () => {
             ) : (
               <div className="bc-cart-items">
                 {selectedItems.map((item, index) => (
-                  <div key={index} className="bc-cart-row">
+                  <div key={index} id={`bc-cart-row-${item.id}`} className="bc-cart-row">
                     <img
                       className="bc-cart-img"
                       src={
@@ -652,13 +668,15 @@ const BillingCounter = () => {
                     </div>
                     <div className="bc-qty-ctrl">
                       <button
+                        id={`bc-qty-dec-${item.id}`}
                         className="bc-qty-btn"
                         onClick={() => handleQtyChange(index, -1)}
                       >
                         −
                       </button>
-                      <span className="bc-qty-num">{item.qty}</span>
+                      <span id={`bc-qty-num-${item.id}`} className="bc-qty-num">{item.qty}</span>
                       <button
+                        id={`bc-qty-inc-${item.id}`}
                         className="bc-qty-btn"
                         onClick={() => handleQtyChange(index, 1)}
                       >
@@ -669,6 +687,7 @@ const BillingCounter = () => {
                       £{item.total.toFixed(2)}
                     </span>
                     <button
+                      id={`bc-remove-${item.id}`}
                       className="bc-remove-btn"
                       onClick={() => handleRemoveItem(index)}
                     >
@@ -701,6 +720,7 @@ const BillingCounter = () => {
                   <span className="bc-discount-label">Discount %</span>
                   <div className="bc-discount-ctrl">
                     <button
+                      id="bc-disc-dec"
                       className="bc-disc-btn"
                       onClick={() =>
                         setDiscountPercent((p) => Math.max(0, p - 5))
@@ -709,6 +729,7 @@ const BillingCounter = () => {
                       −
                     </button>
                     <input
+                      id="bc-disc-input"
                       className="bc-disc-input"
                       type="number"
                       min="0"
@@ -725,6 +746,7 @@ const BillingCounter = () => {
                     />
                     <span className="bc-disc-pct">%</span>
                     <button
+                      id="bc-disc-inc"
                       className="bc-disc-btn"
                       onClick={() =>
                         setDiscountPercent((p) => Math.min(100, p + 5))
@@ -752,6 +774,7 @@ const BillingCounter = () => {
           <div className="bc-actions">
             <div className="bc-pay-row">
               <button
+                id="bc-pay-cash"
                 className={`bc-pay-btn${paymentMethod === "Cash" ? " selected" : ""}`}
                 onClick={() => setPaymentMethod("Cash")}
                 disabled={!isTillOpen}
@@ -759,6 +782,7 @@ const BillingCounter = () => {
                 💵 Cash
               </button>
               <button
+                id="bc-pay-card"
                 className={`bc-pay-btn${paymentMethod === "Card" ? " selected" : ""}`}
                 onClick={() => setPaymentMethod("Card")}
                 disabled={!isTillOpen}
@@ -768,6 +792,7 @@ const BillingCounter = () => {
             </div>
             <div className="bc-confirm-row">
               <button
+                id="bc-btn-place-order"
                 className="bc-place-btn"
                 onClick={handlePlaceOrder}
                 disabled={placeDisabled}
@@ -775,6 +800,7 @@ const BillingCounter = () => {
                 Place order
               </button>
               <button
+                id="bc-btn-hold"
                 className="bc-hold-btn"
                 onClick={holdCurrentOrder}
                 disabled={!isTillOpen}
@@ -782,6 +808,7 @@ const BillingCounter = () => {
                 Hold
               </button>
               <button
+                id="bc-btn-clear"
                 className="bc-clear-btn"
                 onClick={clearCurrentOrder}
                 disabled={!isTillOpen}

@@ -204,6 +204,7 @@ const MasterData = () => {
 
             <form className="md-add-form" onSubmit={handleCategorySubmit}>
               <input
+                id="md-cat-input"
                 className="md-input md-input--flex"
                 value={newCategory}
                 onChange={(e) => {
@@ -212,7 +213,7 @@ const MasterData = () => {
                 }}
                 placeholder="New category name"
               />
-              <button type="submit" className="md-add-btn">
+              <button id="md-cat-add-btn" type="submit" className="md-add-btn">
                 Add
               </button>
             </form>
@@ -224,10 +225,11 @@ const MasterData = () => {
                 <li className="md-cat-empty">No categories yet</li>
               )}
               {categories.map((cat) => (
-                <li key={cat.id} className="md-cat-item">
+                <li key={cat.id} id={`md-cat-row-${cat.id}`} className="md-cat-item">
                   {editingCategoryId === cat.id ? (
                     <>
                       <input
+                        id={`md-cat-edit-input-${cat.id}`}
                         className="md-input md-input--flex"
                         value={editingCategoryName}
                         onChange={(e) => setEditingCategoryName(e.target.value)}
@@ -235,6 +237,7 @@ const MasterData = () => {
                       />
                       <div className="md-row-actions">
                         <button
+                          id={`md-cat-save-${cat.id}`}
                           className="md-action-btn md-action-btn--save"
                           type="button"
                           onClick={() => handleSaveCategory(cat.id)}
@@ -242,6 +245,7 @@ const MasterData = () => {
                           ✓
                         </button>
                         <button
+                          id={`md-cat-cancel-${cat.id}`}
                           className="md-action-btn md-action-btn--cancel"
                           type="button"
                           onClick={() => setEditingCategoryId(null)}
@@ -255,6 +259,7 @@ const MasterData = () => {
                       <span className="md-cat-name">{cat.name}</span>
                       <div className="md-row-actions">
                         <button
+                          id={`md-cat-edit-${cat.id}`}
                           className="md-action-btn md-action-btn--edit"
                           type="button"
                           onClick={() => handleEditCategory(cat)}
@@ -262,6 +267,7 @@ const MasterData = () => {
                           Edit
                         </button>
                         <button
+                          id={`md-cat-del-${cat.id}`}
                           className="md-action-btn md-action-btn--del"
                           type="button"
                           onClick={() => handleDeleteCategory(cat.id)}
@@ -286,6 +292,7 @@ const MasterData = () => {
             {/* Add item form — single row */}
             <form className="md-item-form" onSubmit={handleItemSubmit}>
               <input
+                id="md-item-name-input"
                 className="md-input md-input--flex"
                 value={newItem.name}
                 onChange={(e) =>
@@ -295,6 +302,7 @@ const MasterData = () => {
                 required
               />
               <input
+                id="md-item-price-input"
                 className="md-input md-input--price"
                 type="number"
                 value={newItem.price}
@@ -305,6 +313,7 @@ const MasterData = () => {
                 required
               />
               <select
+                id="md-item-category-select"
                 className="md-input md-input--cat"
                 value={newItem.categoryId}
                 onChange={(e) =>
@@ -320,6 +329,7 @@ const MasterData = () => {
                 ))}
               </select>
               <select
+                id="md-item-veg-select"
                 className="md-input md-input--veg"
                 value={newItem.veg ? "veg" : "nonveg"}
                 onChange={(e) =>
@@ -329,7 +339,7 @@ const MasterData = () => {
                 <option value="veg">Veg</option>
                 <option value="nonveg">Non-Veg</option>
               </select>
-              <button type="submit" className="md-add-btn">
+              <button id="md-item-add-btn" type="submit" className="md-add-btn">
                 Add item
               </button>
             </form>
@@ -337,6 +347,7 @@ const MasterData = () => {
             {/* Filters — single row */}
             <div className="md-filters">
               <input
+                id="md-filter-search"
                 className="md-input md-input--flex"
                 placeholder="Search by name…"
                 value={filters.q}
@@ -346,6 +357,7 @@ const MasterData = () => {
                 }}
               />
               <select
+                id="md-filter-category"
                 className="md-input md-input--cat"
                 value={filters.category}
                 onChange={(e) => {
@@ -361,6 +373,7 @@ const MasterData = () => {
                 ))}
               </select>
               <select
+                id="md-filter-veg"
                 className="md-input md-input--veg"
                 value={filters.veg}
                 onChange={(e) => {
@@ -373,6 +386,7 @@ const MasterData = () => {
                 <option value="nonveg">Non-veg only</option>
               </select>
               <input
+                id="md-filter-min-price"
                 className="md-input md-input--price"
                 type="number"
                 placeholder="Min £"
@@ -383,6 +397,7 @@ const MasterData = () => {
                 }}
               />
               <input
+                id="md-filter-max-price"
                 className="md-input md-input--price"
                 type="number"
                 placeholder="Max £"
@@ -393,6 +408,7 @@ const MasterData = () => {
                 }}
               />
               <button
+                id="md-filter-clear"
                 className="md-clear-btn"
                 type="button"
                 onClick={clearFilters}
@@ -424,7 +440,7 @@ const MasterData = () => {
                     </tr>
                   ) : (
                     pagedMenuItems.map((item) => (
-                      <tr key={item.id}>
+                      <tr key={item.id} id={`md-item-row-${item.id}`}>
                         {editingItemId === item.id ? (
                           <>
                             <td>
@@ -473,6 +489,7 @@ const MasterData = () => {
                             <td>
                               <div className="md-row-actions md-row-actions--center">
                                 <button
+                                  id={`md-item-save-${item.id}`}
                                   className="md-action-btn md-action-btn--save"
                                   type="button"
                                   onClick={() => handleSaveItem(item.id)}
@@ -480,6 +497,7 @@ const MasterData = () => {
                                   ✓
                                 </button>
                                 <button
+                                  id={`md-item-cancel-${item.id}`}
                                   className="md-action-btn md-action-btn--cancel"
                                   type="button"
                                   onClick={() => setEditingItemId(null)}
@@ -514,6 +532,7 @@ const MasterData = () => {
                             <td>
                               <div className="md-row-actions md-row-actions--center">
                                 <button
+                                  id={`md-item-edit-${item.id}`}
                                   className="md-action-btn md-action-btn--edit"
                                   type="button"
                                   onClick={() => handleEditItem(item)}
@@ -521,6 +540,7 @@ const MasterData = () => {
                                   Edit
                                 </button>
                                 <button
+                                  id={`md-item-del-${item.id}`}
                                   className="md-action-btn md-action-btn--del"
                                   type="button"
                                   onClick={() => handleDeleteItem(item.id)}
