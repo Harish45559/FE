@@ -211,23 +211,25 @@ const Attendance = () => {
               </div>
             </div>
 
-            <div className="att-keypad">
+            <div className="att-keypad" id="att-keypad">
               {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
                 <button
                   key={n}
+                  id={`att-key-${n}`}
                   className="att-kb"
                   onClick={() => handleNumberClick(n.toString())}
                 >
                   {n}
                 </button>
               ))}
-              <button className="att-kb att-kb-special" onClick={handleClear}>
+              <button id="att-key-clear" className="att-kb att-kb-special" onClick={handleClear}>
                 C
               </button>
-              <button className="att-kb" onClick={() => handleNumberClick("0")}>
+              <button id="att-key-0" className="att-kb" onClick={() => handleNumberClick("0")}>
                 0
               </button>
               <button
+                id="att-key-backspace"
                 className="att-kb att-kb-special"
                 onClick={handleBackspace}
               >
@@ -237,6 +239,7 @@ const Attendance = () => {
 
             <div className="att-action-btns">
               <button
+                id="att-btn-clock-in"
                 className="att-abtn att-in"
                 disabled={isLoading}
                 onClick={() => {
@@ -247,6 +250,7 @@ const Attendance = () => {
                 ✔ Clock In
               </button>
               <button
+                id="att-btn-clock-out"
                 className="att-abtn att-out"
                 disabled={isLoading}
                 onClick={() => {
@@ -266,6 +270,7 @@ const Attendance = () => {
                   <div className="att-admin-field">
                     <label>Clock in</label>
                     <input
+                      id="att-admin-clock-in"
                       type="datetime-local"
                       value={manualClockIn}
                       onChange={(e) => setManualClockIn(e.target.value)}
@@ -274,12 +279,14 @@ const Attendance = () => {
                   <div className="att-admin-field">
                     <label>Clock out</label>
                     <input
+                      id="att-admin-clock-out"
                       type="datetime-local"
                       value={manualClockOut}
                       onChange={(e) => setManualClockOut(e.target.value)}
                     />
                   </div>
                   <button
+                    id="att-btn-fix-attendance"
                     className="att-abtn att-fix"
                     onClick={handleManualSubmit}
                   >
@@ -294,6 +301,7 @@ const Attendance = () => {
           <div className="att-right">
             <div className="att-right-header">
               <input
+                id="att-search"
                 className="att-search"
                 placeholder="Search employees…"
                 onChange={(e) => {
@@ -321,6 +329,7 @@ const Attendance = () => {
                 return (
                   <div
                     key={emp.id}
+                    id={`att-emp-card-${emp.id}`}
                     className={`att-card ${getStatusClass(emp.attendance_status)}${selectedEmployee?.id === emp.id ? " att-card-selected" : ""}`}
                     onClick={() => {
                       setSelectedEmployee(emp);

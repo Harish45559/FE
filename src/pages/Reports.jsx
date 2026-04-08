@@ -385,6 +385,7 @@ export default function Reports() {
         {/* Filters */}
         <div className="rp-filters">
           <select
+            id="rp-employee-select"
             className="rp-select"
             value={selectedEmployee}
             onChange={(e) => setSelectedEmployee(e.target.value)}
@@ -398,24 +399,27 @@ export default function Reports() {
           </select>
 
           <input
+            id="rp-from-date"
             type="date"
             className="rp-date"
             value={fromDate}
             onChange={(e) => setFromDate(e.target.value)}
           />
           <input
+            id="rp-to-date"
             type="date"
             className="rp-date"
             value={toDate}
             onChange={(e) => setToDate(e.target.value)}
           />
 
-          <button className="rp-apply-btn" onClick={fetchReports}>
+          <button id="rp-btn-apply" className="rp-apply-btn" onClick={fetchReports}>
             Apply
           </button>
 
           <div className="rp-exports">
             <button
+              id="rp-btn-export-csv"
               className="rp-export-btn rp-export-csv"
               onClick={() => handleDownload("csv")}
             >
@@ -465,6 +469,7 @@ export default function Reports() {
                 pageRows.map((r) => (
                   <tr
                     key={`${r.employeeId}-${r.date}`}
+                    id={`rp-row-${r.employeeId}-${r.date}`}
                     onMouseEnter={(e) => {
                       cancelClose();
                       setHoverSessions(r.sessions);
@@ -499,6 +504,7 @@ export default function Reports() {
                     <td className="rp-time-cell rp-muted">{r.breakTotal}</td>
                     <td className="rp-action-cell">
                       <button
+                        id={`rp-btn-edit-${r.employeeId}-${r.date}`}
                         className="rp-btn rp-btn-edit"
                         title="Edit attendance"
                         onClick={() => openEditModal(r)}
@@ -508,6 +514,7 @@ export default function Reports() {
                     </td>
                     <td className="rp-action-cell">
                       <button
+                        id={`rp-btn-sessions-${r.employeeId}-${r.date}`}
                         className="rp-btn rp-btn-sessions"
                         title="View sessions"
                         onClick={() => openSessions(r)}
@@ -576,6 +583,7 @@ export default function Reports() {
             <div className="rp-modal-header">
               <span className="rp-modal-title">Edit attendance</span>
               <button
+                id="rp-edit-modal-close"
                 className="rp-modal-close"
                 onClick={() => setEditingRecord(null)}
               >
@@ -586,6 +594,7 @@ export default function Reports() {
               <div className="rp-modal-field">
                 <label className="rp-modal-label">Clock in</label>
                 <input
+                  id="rp-edit-clock-in"
                   className="rp-modal-input"
                   type="datetime-local"
                   value={editClockIn}
@@ -595,6 +604,7 @@ export default function Reports() {
               <div className="rp-modal-field">
                 <label className="rp-modal-label">Clock out</label>
                 <input
+                  id="rp-edit-clock-out"
                   className="rp-modal-input"
                   type="datetime-local"
                   value={editClockOut}
@@ -604,12 +614,13 @@ export default function Reports() {
             </div>
             <div className="rp-modal-footer">
               <button
+                id="rp-edit-modal-cancel"
                 className="rp-modal-cancel"
                 onClick={() => setEditingRecord(null)}
               >
                 Cancel
               </button>
-              <button className="rp-modal-save" onClick={updateAttendance}>
+              <button id="rp-edit-modal-save" className="rp-modal-save" onClick={updateAttendance}>
                 Save changes
               </button>
             </div>
@@ -626,7 +637,7 @@ export default function Reports() {
           >
             <div className="rp-modal-header">
               <span className="rp-modal-title">Daily sessions</span>
-              <button className="rp-modal-close" onClick={closeSessionModal}>
+              <button id="rp-sessions-modal-close" className="rp-modal-close" onClick={closeSessionModal}>
                 ✕
               </button>
             </div>
@@ -652,6 +663,7 @@ export default function Reports() {
                       return (
                         <tr
                           key={s.id}
+                          id={`rp-session-row-${s.id}`}
                           className={isSaved ? "rp-session-saved" : ""}
                         >
                           <td className="rp-session-num">{i + 1}</td>
@@ -697,6 +709,7 @@ export default function Reports() {
                           </td>
                           <td>
                             <button
+                              id={`rp-session-save-${s.id}`}
                               className={`rp-session-save-btn${isSaved ? " saved" : ""}`}
                               disabled={isSaving}
                               onClick={() => updateSession(s)}
@@ -716,7 +729,7 @@ export default function Reports() {
               )}
             </div>
             <div className="rp-modal-footer">
-              <button className="rp-modal-save" onClick={closeSessionModal}>
+              <button id="rp-sessions-modal-done" className="rp-modal-save" onClick={closeSessionModal}>
                 Done
               </button>
             </div>

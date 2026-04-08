@@ -259,6 +259,7 @@ const Employees = () => {
             <p className="ep-subtitle">Manage your team members</p>
           </div>
           <button
+            id="ep-btn-add-employee"
             className={`ep-add-btn${formVisible ? " ep-add-btn--cancel" : ""}`}
             onClick={() =>
               formVisible ? handleCancel() : setFormVisible(true)
@@ -379,6 +380,7 @@ const Employees = () => {
               </div>
               <div className="ep-form-footer">
                 <button
+                  id="ep-btn-form-cancel"
                   type="button"
                   className="ep-cancel-btn"
                   onClick={handleCancel}
@@ -386,6 +388,7 @@ const Employees = () => {
                   Cancel
                 </button>
                 <button
+                  id="ep-btn-form-submit"
                   type="submit"
                   className="ep-submit-btn"
                   disabled={loading}
@@ -404,6 +407,7 @@ const Employees = () => {
         {/* Toolbar */}
         <div className="ep-toolbar">
           <input
+            id="ep-search"
             className="ep-search"
             type="text"
             placeholder="Search by name, email or username…"
@@ -411,6 +415,7 @@ const Employees = () => {
             onChange={(e) => setSearch(e.target.value)}
           />
           <select
+            id="ep-role-filter"
             className="ep-filter"
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
@@ -451,7 +456,7 @@ const Employees = () => {
                     idx,
                   );
                   return (
-                    <tr key={emp.id}>
+                    <tr key={emp.id} id={`ep-emp-row-${emp.id}`}>
                       <td>
                         <div className="ep-name-cell">
                           <div
@@ -486,12 +491,14 @@ const Employees = () => {
                       <td>
                         <div className="ep-actions">
                           <button
+                            id={`ep-btn-edit-${emp.id}`}
                             className="ep-btn ep-btn-edit"
                             onClick={() => handleEdit(emp)}
                           >
                             Edit
                           </button>
                           <button
+                            id={`ep-btn-delete-${emp.id}`}
                             className="ep-btn ep-btn-del"
                             onClick={() => handleDelete(emp.id)}
                           >

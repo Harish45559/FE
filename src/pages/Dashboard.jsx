@@ -147,20 +147,20 @@ const Dashboard = () => {
 
         {/* Stat cards */}
         <div className="dash-stats">
-          <div className="dash-stat">
+          <div id="dash-stat-revenue" className="dash-stat">
             <div className="dash-stat-icon" style={{ background: "#fff1ee" }}>
               💰
             </div>
             <div className="dash-stat-label">Today's Revenue</div>
-            <div className="dash-stat-value">£{totalRevenue.toFixed(2)}</div>
+            <div id="dash-stat-revenue-value" className="dash-stat-value">£{totalRevenue.toFixed(2)}</div>
             <div className="dash-stat-sub">{totalOrders} orders placed</div>
           </div>
-          <div className="dash-stat">
+          <div id="dash-stat-orders" className="dash-stat">
             <div className="dash-stat-icon" style={{ background: "#f0fdf4" }}>
               🧾
             </div>
             <div className="dash-stat-label">Orders Today</div>
-            <div className="dash-stat-value">{totalOrders}</div>
+            <div id="dash-stat-orders-value" className="dash-stat-value">{totalOrders}</div>
             <div className="dash-stat-sub">
               {
                 todayOrders.filter(
@@ -176,20 +176,20 @@ const Dashboard = () => {
               card
             </div>
           </div>
-          <div className="dash-stat">
+          <div id="dash-stat-avg" className="dash-stat">
             <div className="dash-stat-icon" style={{ background: "#eff6ff" }}>
               🛒
             </div>
             <div className="dash-stat-label">Avg Order Value</div>
-            <div className="dash-stat-value">£{avgOrder.toFixed(2)}</div>
+            <div id="dash-stat-avg-value" className="dash-stat-value">£{avgOrder.toFixed(2)}</div>
             <div className="dash-stat-sub">per order today</div>
           </div>
-          <div className="dash-stat">
+          <div id="dash-stat-staff" className="dash-stat">
             <div className="dash-stat-icon" style={{ background: "#fefce8" }}>
               👥
             </div>
             <div className="dash-stat-label">Staff Clocked In</div>
-            <div className="dash-stat-value">{clockedIn}</div>
+            <div id="dash-stat-staff-value" className="dash-stat-value">{clockedIn}</div>
             <div className="dash-stat-sub">of {employees.length} employees</div>
           </div>
         </div>
@@ -206,7 +206,7 @@ const Dashboard = () => {
               <div className="dash-empty">No orders today yet</div>
             ) : (
               recentOrders.map((o) => (
-                <div key={o.id} className="dash-order-row">
+                <div key={o.id} id={`dash-order-row-${o.id}`} className="dash-order-row">
                   <span className="dash-order-num">#{o.order_number}</span>
                   <span className="dash-order-cust">
                     {o.customer_name}
@@ -267,7 +267,7 @@ const Dashboard = () => {
             ) : (
               <div className="dash-staff-scroll">
                 {employees.map((emp, i) => (
-                  <div key={emp.id} className="dash-staff-row">
+                  <div key={emp.id} id={`dash-staff-row-${emp.id}`} className="dash-staff-row">
                     <div
                       className="dash-staff-av"
                       style={{
@@ -291,7 +291,7 @@ const Dashboard = () => {
           </div>
 
           {/* Till summary */}
-          <div className="dash-card">
+          <div id="dash-till-summary" className="dash-card">
             <div className="dash-card-header">
               <span className="dash-card-title">Till Summary</span>
               <span className={`dash-card-tag ${tillOpen ? "green" : "red"}`}>

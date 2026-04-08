@@ -113,7 +113,8 @@ const PreviousOrders = () => {
 
   const calcSubtotal = (ord) =>
     (ord?.items ?? []).reduce(
-      (s, it) => s + Number(it.total ?? (it.price ?? 0) * (it.qty ?? 0)),
+      (s, it) =>
+        s + Number(it.total ?? (it.price ?? 0) * (it.qty ?? it.quantity ?? 0)),
       0,
     );
 
@@ -390,7 +391,7 @@ const PreviousOrders = () => {
               <tbody>
                 {(activeOrder.items || []).map((it, idx) => {
                   const price = Number(it.price ?? 0);
-                  const qty = Number(it.qty ?? 0);
+                  const qty = Number(it.qty ?? it.quantity ?? 0);
                   const total = Number(it.total ?? price * qty);
                   return (
                     <tr key={idx}>
@@ -420,7 +421,7 @@ const PreviousOrders = () => {
               const vatIncluded = calcIncluded(grand, 20);
               const svcIncluded = calcIncluded(grand, 8);
               const totalQty = (activeOrder.items || []).reduce(
-                (s, it) => s + Number(it.qty ?? 0),
+                (s, it) => s + Number(it.qty ?? it.quantity ?? 0),
                 0,
               );
               return (

@@ -56,24 +56,23 @@ const EndOfDaySales = () => {
   const [ordersPage, setOrdersPage] = useState(1);
   const [ordersPageSize, setOrdersPageSize] = useState(PAGE_SIZE);
 
-  const todayISO = DateTime.now().toISODate();
-
   const activeRange = useMemo(() => {
-    if (filterMode === "today") return { from: todayISO, to: todayISO };
+    const today = DateTime.now().toISODate();
+    if (filterMode === "today") return { from: today, to: today };
     if (filterMode === "weekly")
       return {
         from: DateTime.now().minus({ days: 6 }).toISODate(),
-        to: todayISO,
+        to: today,
       };
     if (filterMode === "monthly")
       return {
         from: DateTime.now().startOf("month").toISODate(),
-        to: todayISO,
+        to: today,
       };
     if (filterMode === "custom" && fromDate && toDate)
       return { from: fromDate, to: toDate };
-    return { from: todayISO, to: todayISO };
-  }, [filterMode, fromDate, toDate, todayISO]);
+    return { from: today, to: today };
+  }, [filterMode, fromDate, toDate]);
 
   useEffect(() => {
     const load = async () => {
