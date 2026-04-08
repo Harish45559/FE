@@ -7,6 +7,7 @@ import "./DashboardLayout.css";
 
 const DashboardLayout = ({ children }) => {
   const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const [user, setUser] = useState(() =>
     JSON.parse(localStorage.getItem("user")),
@@ -42,7 +43,30 @@ const DashboardLayout = ({ children }) => {
 
   return (
     <div className="dl-layout">
-      <aside className="dl-sidebar">
+      {/* Mobile overlay */}
+      {menuOpen && (
+        <div className="dl-overlay" onClick={() => setMenuOpen(false)} />
+      )}
+      {/* Mobile top bar */}
+      <div className="dl-topbar">
+        <button className="dl-hamburger" onClick={() => setMenuOpen((o) => !o)}>
+          <span />
+          <span />
+          <span />
+        </button>
+        <div className="dl-logo dl-logo--topbar">
+          <img
+            src="/bg-chili.png"
+            alt="Mirchi Mafiya"
+            className="dl-logo-img"
+          />
+          <span className="dl-brand">Mirchi Mafiya</span>
+        </div>
+      </div>
+      <aside className={`dl-sidebar${menuOpen ? " dl-sidebar--open" : ""}`}>
+        <button className="dl-sidebar-close" onClick={() => setMenuOpen(false)}>
+          ✕
+        </button>
         {/* Logo */}
         <div className="dl-logo">
           <img
@@ -66,6 +90,7 @@ const DashboardLayout = ({ children }) => {
                 className={({ isActive }) =>
                   `dl-item${isActive ? " active" : ""}`
                 }
+                onClick={() => setMenuOpen(false)}
               >
                 <span className="dl-item-icon">📊</span>
                 <span className="dl-item-label">Dashboard</span>
@@ -77,6 +102,7 @@ const DashboardLayout = ({ children }) => {
                 className={({ isActive }) =>
                   `dl-item${isActive ? " active" : ""}`
                 }
+                onClick={() => setMenuOpen(false)}
               >
                 <span className="dl-item-icon">👥</span>
                 <span className="dl-item-label">Employees</span>
@@ -86,6 +112,7 @@ const DashboardLayout = ({ children }) => {
                 className={({ isActive }) =>
                   `dl-item${isActive ? " active" : ""}`
                 }
+                onClick={() => setMenuOpen(false)}
               >
                 <span className="dl-item-icon">📈</span>
                 <span className="dl-item-label">Reports</span>
@@ -95,6 +122,7 @@ const DashboardLayout = ({ children }) => {
                 className={({ isActive }) =>
                   `dl-item${isActive ? " active" : ""}`
                 }
+                onClick={() => setMenuOpen(false)}
               >
                 <span className="dl-item-icon">🗂️</span>
                 <span className="dl-item-label">Master Data</span>
@@ -104,6 +132,7 @@ const DashboardLayout = ({ children }) => {
                 className={({ isActive }) =>
                   `dl-item${isActive ? " active" : ""}`
                 }
+                onClick={() => setMenuOpen(false)}
               >
                 <span className="dl-item-icon">📊</span>
                 <span className="dl-item-label">EOD Sales</span>
@@ -115,6 +144,7 @@ const DashboardLayout = ({ children }) => {
                 className={({ isActive }) =>
                   `dl-item${isActive ? " active" : ""}`
                 }
+                onClick={() => setMenuOpen(false)}
               >
                 <span className="dl-item-icon">⏳</span>
                 <span className="dl-item-label">Held Orders</span>
@@ -124,6 +154,7 @@ const DashboardLayout = ({ children }) => {
                 className={({ isActive }) =>
                   `dl-item${isActive ? " active" : ""}`
                 }
+                onClick={() => setMenuOpen(false)}
               >
                 <span className="dl-item-icon">💵</span>
                 <span className="dl-item-label">Billing Counter</span>
@@ -133,6 +164,7 @@ const DashboardLayout = ({ children }) => {
                 className={({ isActive }) =>
                   `dl-item${isActive ? " active" : ""}`
                 }
+                onClick={() => setMenuOpen(false)}
               >
                 <span className="dl-item-icon">📜</span>
                 <span className="dl-item-label">Previous Orders</span>
@@ -143,6 +175,7 @@ const DashboardLayout = ({ children }) => {
           <NavLink
             to="/attendance"
             className={({ isActive }) => `dl-item${isActive ? " active" : ""}`}
+            onClick={() => setMenuOpen(false)}
           >
             <span className="dl-item-icon">⏰</span>
             <span className="dl-item-label">Attendance</span>

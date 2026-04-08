@@ -34,6 +34,7 @@ const Attendance = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [manualClockIn, setManualClockIn] = useState("");
   const [manualClockOut, setManualClockOut] = useState("");
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState(
     DateTime.now().setZone("Europe/London"),
   );
@@ -43,7 +44,6 @@ const Attendance = () => {
   const user = JSON.parse(localStorage.getItem("user"));
   const isAdmin = user?.role === "admin";
 
-  // Live clock — separate from data fetch
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(DateTime.now().setZone("Europe/London"));
@@ -51,7 +51,6 @@ const Attendance = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Fetch employees once
   useEffect(() => {
     if (hasFetched.current) return;
     hasFetched.current = true;
@@ -102,6 +101,7 @@ const Attendance = () => {
       const empId = selectedEmployee.id;
       setPin("");
       setSelectedEmployee(null);
+      setSheetOpen(false);
       actionTypeRef.current = null;
       setEmployees((prev) =>
         prev.map((emp) =>
@@ -139,6 +139,12 @@ const Attendance = () => {
     }
   };
 
+  const handleEmployeeSelect = (emp) => {
+    setSelectedEmployee(emp);
+    setPin("");
+    setSheetOpen(true);
+  };
+
   const getStatusClass = (status) => {
     if (status === "Clocked In") return "att-clocked-in";
     if (status === "Clocked Out") return "att-clocked-out";
@@ -159,11 +165,114 @@ const Attendance = () => {
     (e) => e.id === selectedEmployee?.id,
   );
 
+  // Keypad JSX — reused in both desktop and mobile sheet
+  const KeypadSection = (
+    <>
+      <div className="att-sel-area">
+        {selectedEmployee ? (
+          <div className="att-sel-emp">
+            <div
+              className="att-sel-av"
+              style={{ background: getAvatarColor(selectedIndex) }}
+            >
+              {getInitials(
+                selectedEmployee.first_name,
+                selectedEmployee.last_name,
+              )}
+            </div>
+            <span className="att-sel-name">
+              {selectedEmployee.first_name} {selectedEmployee.last_name}
+            </span>
+          </div>
+        ) : (
+          <span className="att-sel-placeholder">Select an employee</span>
+        )}
+        <div className="att-pin-row">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className={`att-pin-dot${pin[i] ? " filled" : ""}`} />
+          ))}
+        </div>
+      </div>
+
+      <div className="att-keypad">
+        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
+          <button
+            key={n}
+            className="att-kb"
+            onClick={() => handleNumberClick(n.toString())}
+          >
+            {n}
+          </button>
+        ))}
+        <button className="att-kb att-kb-special" onClick={handleClear}>
+          C
+        </button>
+        <button className="att-kb" onClick={() => handleNumberClick("0")}>
+          0
+        </button>
+        <button className="att-kb att-kb-special" onClick={handleBackspace}>
+          ⌫
+        </button>
+      </div>
+
+      <div className="att-action-btns">
+        <button
+          className="att-abtn att-in"
+          disabled={isLoading}
+          onClick={() => {
+            actionTypeRef.current = "clock_in";
+            handleSubmit();
+          }}
+        >
+          ✔ Clock In
+        </button>
+        <button
+          className="att-abtn att-out"
+          disabled={isLoading}
+          onClick={() => {
+            actionTypeRef.current = "clock_out";
+            handleSubmit();
+          }}
+        >
+          ⏺ Clock Out
+        </button>
+      </div>
+
+      {isAdmin && (
+        <>
+          <div className="att-divider" />
+          <div className="att-admin-section">
+            <div className="att-admin-title">⚙ Admin correction</div>
+            <div className="att-admin-field">
+              <label>Clock in</label>
+              <input
+                type="datetime-local"
+                value={manualClockIn}
+                onChange={(e) => setManualClockIn(e.target.value)}
+              />
+            </div>
+            <div className="att-admin-field">
+              <label>Clock out</label>
+              <input
+                type="datetime-local"
+                value={manualClockOut}
+                onChange={(e) => setManualClockOut(e.target.value)}
+              />
+            </div>
+            <button className="att-abtn att-fix" onClick={handleManualSubmit}>
+              Fix attendance
+            </button>
+          </div>
+        </>
+      )}
+    </>
+  );
+
   return (
     <DashboardLayout>
       <div className="att-wrap">
         <div className="att-panel">
-          {/* ══ LEFT — keypad ══ */}
+          {/* ══ LEFT — keypad (desktop only) ══ */}
           <div className="att-left">
             <div className="att-header">
               <h1 className="att-title">Attendance</h1>
@@ -181,127 +290,25 @@ const Attendance = () => {
                 </div>
               </div>
             </div>
-
-            <div className="att-sel-area">
-              {selectedEmployee ? (
-                <div className="att-sel-emp">
-                  <div
-                    className="att-sel-av"
-                    style={{ background: getAvatarColor(selectedIndex) }}
-                  >
-                    {getInitials(
-                      selectedEmployee.first_name,
-                      selectedEmployee.last_name,
-                    )}
-                  </div>
-                  <span className="att-sel-name">
-                    {selectedEmployee.first_name} {selectedEmployee.last_name}
-                  </span>
-                </div>
-              ) : (
-                <span className="att-sel-placeholder">Select an employee</span>
-              )}
-              <div className="att-pin-row">
-                {[0, 1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    className={`att-pin-dot${pin[i] ? " filled" : ""}`}
-                  />
-                ))}
-              </div>
-            </div>
-
-            <div className="att-keypad" id="att-keypad">
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
-                <button
-                  key={n}
-                  id={`att-key-${n}`}
-                  className="att-kb"
-                  onClick={() => handleNumberClick(n.toString())}
-                >
-                  {n}
-                </button>
-              ))}
-              <button id="att-key-clear" className="att-kb att-kb-special" onClick={handleClear}>
-                C
-              </button>
-              <button id="att-key-0" className="att-kb" onClick={() => handleNumberClick("0")}>
-                0
-              </button>
-              <button
-                id="att-key-backspace"
-                className="att-kb att-kb-special"
-                onClick={handleBackspace}
-              >
-                ⌫
-              </button>
-            </div>
-
-            <div className="att-action-btns">
-              <button
-                id="att-btn-clock-in"
-                className="att-abtn att-in"
-                disabled={isLoading}
-                onClick={() => {
-                  actionTypeRef.current = "clock_in";
-                  handleSubmit();
-                }}
-              >
-                ✔ Clock In
-              </button>
-              <button
-                id="att-btn-clock-out"
-                className="att-abtn att-out"
-                disabled={isLoading}
-                onClick={() => {
-                  actionTypeRef.current = "clock_out";
-                  handleSubmit();
-                }}
-              >
-                ⏺ Clock Out
-              </button>
-            </div>
-
-            {isAdmin && (
-              <>
-                <div className="att-divider" />
-                <div className="att-admin-section">
-                  <div className="att-admin-title">⚙ Admin correction</div>
-                  <div className="att-admin-field">
-                    <label>Clock in</label>
-                    <input
-                      id="att-admin-clock-in"
-                      type="datetime-local"
-                      value={manualClockIn}
-                      onChange={(e) => setManualClockIn(e.target.value)}
-                    />
-                  </div>
-                  <div className="att-admin-field">
-                    <label>Clock out</label>
-                    <input
-                      id="att-admin-clock-out"
-                      type="datetime-local"
-                      value={manualClockOut}
-                      onChange={(e) => setManualClockOut(e.target.value)}
-                    />
-                  </div>
-                  <button
-                    id="att-btn-fix-attendance"
-                    className="att-abtn att-fix"
-                    onClick={handleManualSubmit}
-                  >
-                    Fix attendance
-                  </button>
-                </div>
-              </>
-            )}
+            {KeypadSection}
           </div>
 
           {/* ══ RIGHT — employee list ══ */}
           <div className="att-right">
+            {/* Mobile header */}
+            <div className="att-mobile-header">
+              <h1 className="att-title">Attendance</h1>
+              <div className="att-clock">
+                <span className="att-clock-time">
+                  {currentTime.toFormat("HH:mm")}
+                </span>
+                <span className="att-clock-secs">
+                  :{currentTime.toFormat("ss")}
+                </span>
+              </div>
+            </div>
             <div className="att-right-header">
               <input
-                id="att-search"
                 className="att-search"
                 placeholder="Search employees…"
                 onChange={(e) => {
@@ -329,12 +336,8 @@ const Attendance = () => {
                 return (
                   <div
                     key={emp.id}
-                    id={`att-emp-card-${emp.id}`}
                     className={`att-card ${getStatusClass(emp.attendance_status)}${selectedEmployee?.id === emp.id ? " att-card-selected" : ""}`}
-                    onClick={() => {
-                      setSelectedEmployee(emp);
-                      setPin("");
-                    }}
+                    onClick={() => handleEmployeeSelect(emp)}
                   >
                     <div
                       className="att-avatar"
@@ -359,6 +362,22 @@ const Attendance = () => {
           </div>
         </div>
       </div>
+
+      {/* ══ MOBILE BOTTOM SHEET ══ */}
+      {sheetOpen && (
+        <div className="att-sheet-overlay" onClick={() => setSheetOpen(false)}>
+          <div className="att-sheet" onClick={(e) => e.stopPropagation()}>
+            <div className="att-sheet-handle" />
+            <button
+              className="att-sheet-close"
+              onClick={() => setSheetOpen(false)}
+            >
+              ✕
+            </button>
+            {KeypadSection}
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 };
