@@ -55,9 +55,27 @@ const BillingCounter = () => {
   });
 
   useEffect(() => {
+    // Optimistic local state while API loads
     if (localStorage.getItem("isTillOpen") === "true") setIsTillOpen(true);
     const tu = localStorage.getItem("tillOpenedBy");
     if (tu) setTillOpenedBy(tu);
+
+    // Fetch authoritative till state from backend
+    api
+      .get("/till/status")
+      .then((res) => {
+        const open = !!res.data.open;
+        setIsTillOpen(open);
+        localStorage.setItem("isTillOpen", open ? "true" : "false");
+        const by = res.data.opened_by || "";
+        setTillOpenedBy(open ? by : "");
+        if (open) localStorage.setItem("tillOpenedBy", by);
+        else localStorage.removeItem("tillOpenedBy");
+      })
+      .catch(() => {
+        // Silently fall back to localStorage value already set above
+      });
+
     fetchMenu();
     fetchCategories();
     fetchLastOrderNumber();
@@ -206,10 +224,10 @@ const BillingCounter = () => {
     const rows = items
       .map(
         (it) =>
-          `<tr><td>${it.name}</td><td style="text-align:right">£${Number(it.price).toFixed(2)}</td><td style="text-align:right">${it.qty}</td><td style="text-align:right">£${Number(it.total).toFixed(2)}</td></tr>`,
+          `<tr><td>${it.name}</td><td style="text-align:right">£${Number(it.price).toFixed(2)}</td><td style="text-align:right">${it.qty ?? it.quantity ?? 0}</td><td style="text-align:right">£${Number(it.total).toFixed(2)}</td></tr>`,
       )
       .join("");
-    return `<div class="bill-section"><div class="receipt-header"><h2>Mirchi Mafiya</h2><p>Cumberland Street, LU1 3BW, Luton</p><p>Phone: +447440086046</p><p>dtsretaillimited@gmail.com</p><p>Order Type: ${otype}</p><p><strong>Customer:</strong> ${cname || "N/A"}</p><p><strong>Order No:</strong> #${onum ?? "—"}</p><p><strong>Paid By:</strong> ${pay}</p><hr /><p>Date: ${odate || "—"}</p><hr /></div><table class="receipt-table"><thead><tr><th>Product</th><th style="text-align:right">Price</th><th style="text-align:right">Qty</th><th style="text-align:right">Total</th></tr></thead><tbody>${rows}</tbody></table><div class="receipt-summary"><p><strong>Total Qty:</strong> ${items.reduce((s, it) => s + Number(it.qty || 0), 0)}</p><p><strong>Sub Total:</strong> £ ${totals.subtotal.toFixed(2)}</p><p><strong>Paid By:</strong> ${pay}</p><p>VAT (20%): £${totals.vat.toFixed(2)}</p><p>Service Charge (8%): £${totals.service.toFixed(2)}</p>${totals.discount > 0 ? `<p><strong>Discount (${totals.discountPct}%):</strong> -£${totals.discount.toFixed(2)}</p>` : ""}<p class="grand-total"><strong>Grand Total:</strong> £ ${totals.grand.toFixed(2)}</p><p>Staff: ${staffName ? `(${staffName})` : ""}</p><hr /></div></div>`;
+    return `<div class="bill-section"><div class="receipt-header"><h2>Mirchi Mafiya</h2><p>Cumberland Street, LU1 3BW, Luton</p><p>Phone: +447440086046</p><p>dtsretaillimited@gmail.com</p><p>Order Type: ${otype}</p><p><strong>Customer:</strong> ${cname || "N/A"}</p><p><strong>Order No:</strong> #${onum ?? "—"}</p><p><strong>Paid By:</strong> ${pay}</p><hr /><p>Date: ${odate || "—"}</p><hr /></div><table class="receipt-table"><thead><tr><th>Product</th><th style="text-align:right">Price</th><th style="text-align:right">Qty</th><th style="text-align:right">Total</th></tr></thead><tbody>${rows}</tbody></table><div class="receipt-summary"><p><strong>Total Qty:</strong> ${items.reduce((s, it) => s + Number(it.qty ?? it.quantity ?? 0), 0)}</p><p><strong>Sub Total:</strong> £ ${totals.subtotal.toFixed(2)}</p><p><strong>Paid By:</strong> ${pay}</p><p>VAT (20%): £${totals.vat.toFixed(2)}</p><p>Service Charge (8%): £${totals.service.toFixed(2)}</p>${totals.discount > 0 ? `<p><strong>Discount (${totals.discountPct}%):</strong> -£${totals.discount.toFixed(2)}</p>` : ""}<p class="grand-total"><strong>Grand Total:</strong> £ ${totals.grand.toFixed(2)}</p><p>Staff: ${staffName ? `(${staffName})` : ""}</p><hr /></div></div>`;
   };
 
   const printReceipt = (html, title = "Receipt") => {
@@ -243,7 +261,7 @@ const BillingCounter = () => {
     if (!customerName.trim()) return toast.error("Customer name is required.");
     const payload = {
       customer_name: customerName,
-      server_name: serverName,
+      server_name: tillOpenedBy || serverName,
       order_type: orderType,
       items: selectedItems.map((item) => ({
         name: item.name,
@@ -332,26 +350,36 @@ const BillingCounter = () => {
         const role = res.data.role || "staff";
         localStorage.setItem("userRole", role);
         setUserRole(role);
+
         if (tillActionType === "open") {
+          await api.post("/till/open", { opened_by: authUsername });
           setIsTillOpen(true);
           localStorage.setItem("isTillOpen", "true");
           setTillOpenedBy(authUsername);
           localStorage.setItem("tillOpenedBy", authUsername);
+          toast.success("Till opened.");
         } else {
+          await api.post("/till/close", { closed_by: authUsername });
           setIsTillOpen(false);
           localStorage.setItem("isTillOpen", "false");
           toast.info("Till closed.");
           setTillOpenedBy("");
           localStorage.removeItem("tillOpenedBy");
         }
+
         setShowAuthModal(false);
         setAuthUsername("");
         setAuthPassword("");
       } else {
         toast.error("Invalid credentials");
       }
-    } catch {
-      toast.error("Failed to authenticate");
+    } catch (err) {
+      const msg = err?.response?.data?.error;
+      if (msg) {
+        toast.error(msg); // e.g. "Till is already open"
+      } else {
+        toast.error("Failed to authenticate");
+      }
     }
   };
 
@@ -398,14 +426,13 @@ const BillingCounter = () => {
     <DashboardLayout>
       {/* Auth Modal */}
       {showAuthModal && (
-        <div id="bc-auth-overlay" className="bc-overlay" onClick={() => setShowAuthModal(false)}>
-          <div id="bc-auth-modal" className="bc-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="bc-overlay" onClick={() => setShowAuthModal(false)}>
+          <div className="bc-modal" onClick={(e) => e.stopPropagation()}>
             <div className="bc-modal-header">
               <span className="bc-modal-title">
                 {tillActionType === "open" ? "Open till" : "Close till"}
               </span>
               <button
-                id="bc-auth-modal-close"
                 className="bc-modal-close"
                 onClick={() => setShowAuthModal(false)}
               >
@@ -416,7 +443,6 @@ const BillingCounter = () => {
               <div className="bc-field">
                 <label className="bc-label">Username</label>
                 <input
-                  id="bc-auth-username"
                   className="bc-input"
                   type="text"
                   placeholder="Enter username"
@@ -427,7 +453,6 @@ const BillingCounter = () => {
               <div className="bc-field">
                 <label className="bc-label">Password</label>
                 <input
-                  id="bc-auth-password"
                   className="bc-input"
                   type="password"
                   placeholder="Enter password"
@@ -439,14 +464,12 @@ const BillingCounter = () => {
             </div>
             <div className="bc-modal-footer">
               <button
-                id="bc-auth-cancel"
                 className="bc-btn-sec"
                 onClick={() => setShowAuthModal(false)}
               >
                 Cancel
               </button>
               <button
-                id="bc-auth-confirm"
                 className={`bc-btn-pri ${tillActionType === "open" ? "green" : "red"}`}
                 onClick={confirmTillAction}
               >
@@ -468,7 +491,6 @@ const BillingCounter = () => {
             {allCategories.map((cat) => (
               <button
                 key={cat}
-                id={`bc-cat-${cat.replace(/\s+/g, "-").toLowerCase()}`}
                 className={`bc-scat${activeCategory === cat ? " active" : ""}`}
                 onClick={() => setActiveCategory(cat)}
               >
@@ -483,7 +505,6 @@ const BillingCounter = () => {
         <div className="bc-center">
           <div className="bc-ctopbar">
             <input
-              id="bc-search"
               className="bc-search"
               type="text"
               placeholder="Search menu items…"
@@ -492,21 +513,18 @@ const BillingCounter = () => {
             />
             <div className="bc-veg-btns">
               <button
-                id="bc-filter-all"
                 className={`bc-vbtn${vegFilter === "all" ? " active" : ""}`}
                 onClick={() => setVegFilter("all")}
               >
                 All
               </button>
               <button
-                id="bc-filter-veg"
                 className={`bc-vbtn${vegFilter === "veg" ? " active" : ""}`}
                 onClick={() => setVegFilter("veg")}
               >
                 🟢 Veg
               </button>
               <button
-                id="bc-filter-nonveg"
                 className={`bc-vbtn${vegFilter === "nonveg" ? " active" : ""}`}
                 onClick={() => setVegFilter("nonveg")}
               >
@@ -524,7 +542,6 @@ const BillingCounter = () => {
                 return (
                   <div
                     key={item.id}
-                    id={`bc-menu-item-${item.id}`}
                     className="bc-card"
                     onClick={() => handleAddItem(item)}
                   >
@@ -532,7 +549,6 @@ const BillingCounter = () => {
                       <div className="bc-card-badge">{inCart.qty}</div>
                     )}
                     <button
-                      id={`bc-fav-${item.id}`}
                       className={`bc-fav${favourites.includes(item.id) ? " on" : ""}`}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -592,7 +608,6 @@ const BillingCounter = () => {
             </div>
             <div className="bc-till-btns">
               <button
-                id="bc-till-open"
                 className="bc-till-btn open"
                 onClick={() => {
                   setTillActionType("open");
@@ -602,7 +617,6 @@ const BillingCounter = () => {
                 Open
               </button>
               <button
-                id="bc-till-close"
                 className="bc-till-btn close"
                 onClick={() => {
                   setTillActionType("close");
@@ -617,7 +631,6 @@ const BillingCounter = () => {
           {/* Meta */}
           <div className="bc-order-meta">
             <select
-              id="bc-order-type"
               className="bc-select"
               value={orderType}
               onChange={(e) => setOrderType(e.target.value)}
@@ -629,7 +642,6 @@ const BillingCounter = () => {
 
           {/* Customer */}
           <input
-            id="bc-customer-name"
             className="bc-cust-inp"
             type="text"
             placeholder="Customer name *"
@@ -648,7 +660,7 @@ const BillingCounter = () => {
             ) : (
               <div className="bc-cart-items">
                 {selectedItems.map((item, index) => (
-                  <div key={index} id={`bc-cart-row-${item.id}`} className="bc-cart-row">
+                  <div key={index} className="bc-cart-row">
                     <img
                       className="bc-cart-img"
                       src={
@@ -668,15 +680,13 @@ const BillingCounter = () => {
                     </div>
                     <div className="bc-qty-ctrl">
                       <button
-                        id={`bc-qty-dec-${item.id}`}
                         className="bc-qty-btn"
                         onClick={() => handleQtyChange(index, -1)}
                       >
                         −
                       </button>
-                      <span id={`bc-qty-num-${item.id}`} className="bc-qty-num">{item.qty}</span>
+                      <span className="bc-qty-num">{item.qty}</span>
                       <button
-                        id={`bc-qty-inc-${item.id}`}
                         className="bc-qty-btn"
                         onClick={() => handleQtyChange(index, 1)}
                       >
@@ -687,7 +697,6 @@ const BillingCounter = () => {
                       £{item.total.toFixed(2)}
                     </span>
                     <button
-                      id={`bc-remove-${item.id}`}
                       className="bc-remove-btn"
                       onClick={() => handleRemoveItem(index)}
                     >
@@ -720,7 +729,6 @@ const BillingCounter = () => {
                   <span className="bc-discount-label">Discount %</span>
                   <div className="bc-discount-ctrl">
                     <button
-                      id="bc-disc-dec"
                       className="bc-disc-btn"
                       onClick={() =>
                         setDiscountPercent((p) => Math.max(0, p - 5))
@@ -729,7 +737,6 @@ const BillingCounter = () => {
                       −
                     </button>
                     <input
-                      id="bc-disc-input"
                       className="bc-disc-input"
                       type="number"
                       min="0"
@@ -746,7 +753,6 @@ const BillingCounter = () => {
                     />
                     <span className="bc-disc-pct">%</span>
                     <button
-                      id="bc-disc-inc"
                       className="bc-disc-btn"
                       onClick={() =>
                         setDiscountPercent((p) => Math.min(100, p + 5))
@@ -774,7 +780,6 @@ const BillingCounter = () => {
           <div className="bc-actions">
             <div className="bc-pay-row">
               <button
-                id="bc-pay-cash"
                 className={`bc-pay-btn${paymentMethod === "Cash" ? " selected" : ""}`}
                 onClick={() => setPaymentMethod("Cash")}
                 disabled={!isTillOpen}
@@ -782,7 +787,6 @@ const BillingCounter = () => {
                 💵 Cash
               </button>
               <button
-                id="bc-pay-card"
                 className={`bc-pay-btn${paymentMethod === "Card" ? " selected" : ""}`}
                 onClick={() => setPaymentMethod("Card")}
                 disabled={!isTillOpen}
@@ -792,7 +796,6 @@ const BillingCounter = () => {
             </div>
             <div className="bc-confirm-row">
               <button
-                id="bc-btn-place-order"
                 className="bc-place-btn"
                 onClick={handlePlaceOrder}
                 disabled={placeDisabled}
@@ -800,7 +803,6 @@ const BillingCounter = () => {
                 Place order
               </button>
               <button
-                id="bc-btn-hold"
                 className="bc-hold-btn"
                 onClick={holdCurrentOrder}
                 disabled={!isTillOpen}
@@ -808,7 +810,6 @@ const BillingCounter = () => {
                 Hold
               </button>
               <button
-                id="bc-btn-clear"
                 className="bc-clear-btn"
                 onClick={clearCurrentOrder}
                 disabled={!isTillOpen}
@@ -860,7 +861,9 @@ const BillingCounter = () => {
                     <td style={{ textAlign: "right" }}>
                       £{item.price.toFixed(2)}
                     </td>
-                    <td style={{ textAlign: "right" }}>{item.qty}</td>
+                    <td style={{ textAlign: "right" }}>
+                      {item.qty ?? item.quantity ?? 0}
+                    </td>
                     <td style={{ textAlign: "right" }}>
                       £{item.total.toFixed(2)}
                     </td>

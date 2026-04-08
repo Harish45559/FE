@@ -113,7 +113,8 @@ const PreviousOrders = () => {
 
   const calcSubtotal = (ord) =>
     (ord?.items ?? []).reduce(
-      (s, it) => s + Number(it.total ?? (it.price ?? 0) * (it.qty ?? 0)),
+      (s, it) =>
+        s + Number(it.total ?? (it.price ?? 0) * (it.qty ?? it.quantity ?? 0)),
       0,
     );
 
@@ -159,7 +160,6 @@ const PreviousOrders = () => {
         {/* ── Controls ── */}
         <div className="po-controls">
           <input
-            id="po-search"
             className="po-search"
             type="text"
             placeholder="Search by customer, order no. or payment…"
@@ -170,7 +170,6 @@ const PreviousOrders = () => {
             }}
           />
           <input
-            id="po-date"
             className="po-date"
             type="date"
             value={date}
@@ -180,7 +179,6 @@ const PreviousOrders = () => {
             }}
           />
           <button
-            id="po-btn-clear"
             className="po-clear"
             onClick={() => {
               setSearch("");
@@ -221,7 +219,7 @@ const PreviousOrders = () => {
                   </tr>
                 ) : (
                   pageData.map((o) => (
-                    <tr key={o.id} id={`po-row-${o.id}`}>
+                    <tr key={o.id}>
                       <td>
                         <div className="po-order-num">#{o.order_number}</div>
                         <div className="po-order-sub">
@@ -256,7 +254,6 @@ const PreviousOrders = () => {
                       </td>
                       <td>
                         <button
-                          id={`po-print-${o.id}`}
                           className="po-print-btn"
                           title="View / Print Receipt"
                           onClick={() => openReceipt(o)}
@@ -280,7 +277,6 @@ const PreviousOrders = () => {
             </span>
             <div className="po-foot-right">
               <select
-                id="po-page-size"
                 className="po-page-size"
                 value={pageSize}
                 onChange={(e) => {
@@ -296,7 +292,6 @@ const PreviousOrders = () => {
               </select>
               <div className="po-pages">
                 <button
-                  id="po-pag-prev"
                   className="po-pg"
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
@@ -325,7 +320,6 @@ const PreviousOrders = () => {
                   </React.Fragment>
                 ))}
                 <button
-                  id="po-pag-next"
                   className="po-pg"
                   onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
                   disabled={page === pageCount || pageCount === 0}
@@ -349,11 +343,10 @@ const PreviousOrders = () => {
                 marginBottom: 12,
               }}
             >
-              <button id="po-receipt-print" className="print-btn" onClick={handlePrint}>
+              <button className="print-btn" onClick={handlePrint}>
                 🖨️ Print
               </button>
               <button
-                id="po-receipt-close"
                 className="close-preview-btn"
                 onClick={() => {
                   setShowReceipt(false);
@@ -398,7 +391,7 @@ const PreviousOrders = () => {
               <tbody>
                 {(activeOrder.items || []).map((it, idx) => {
                   const price = Number(it.price ?? 0);
-                  const qty = Number(it.qty ?? 0);
+                  const qty = Number(it.qty ?? it.quantity ?? 0);
                   const total = Number(it.total ?? price * qty);
                   return (
                     <tr key={idx}>
@@ -428,7 +421,7 @@ const PreviousOrders = () => {
               const vatIncluded = calcIncluded(grand, 20);
               const svcIncluded = calcIncluded(grand, 8);
               const totalQty = (activeOrder.items || []).reduce(
-                (s, it) => s + Number(it.qty ?? 0),
+                (s, it) => s + Number(it.qty ?? it.quantity ?? 0),
                 0,
               );
               return (

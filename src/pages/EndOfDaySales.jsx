@@ -56,24 +56,23 @@ const EndOfDaySales = () => {
   const [ordersPage, setOrdersPage] = useState(1);
   const [ordersPageSize, setOrdersPageSize] = useState(PAGE_SIZE);
 
-  const todayISO = DateTime.now().toISODate();
-
   const activeRange = useMemo(() => {
-    if (filterMode === "today") return { from: todayISO, to: todayISO };
+    const today = DateTime.now().toISODate();
+    if (filterMode === "today") return { from: today, to: today };
     if (filterMode === "weekly")
       return {
         from: DateTime.now().minus({ days: 6 }).toISODate(),
-        to: todayISO,
+        to: today,
       };
     if (filterMode === "monthly")
       return {
         from: DateTime.now().startOf("month").toISODate(),
-        to: todayISO,
+        to: today,
       };
     if (filterMode === "custom" && fromDate && toDate)
       return { from: fromDate, to: toDate };
-    return { from: todayISO, to: todayISO };
-  }, [filterMode, fromDate, toDate, todayISO]);
+    return { from: today, to: today };
+  }, [filterMode, fromDate, toDate]);
 
   useEffect(() => {
     const load = async () => {
@@ -258,7 +257,6 @@ const EndOfDaySales = () => {
             ].map(({ key, label }) => (
               <button
                 key={key}
-                id={`eod-chip-${key}`}
                 className={`eod-chip${filterMode === key ? " active" : ""}`}
                 onClick={() => setFilterMode(key)}
               >
@@ -269,7 +267,6 @@ const EndOfDaySales = () => {
 
           <div className="eod-custom-range">
             <input
-              id="eod-from-date"
               type="date"
               className="eod-date-inp"
               value={fromDate}
@@ -277,16 +274,15 @@ const EndOfDaySales = () => {
             />
             <span className="eod-sep">to</span>
             <input
-              id="eod-to-date"
               type="date"
               className="eod-date-inp"
               value={toDate}
               onChange={(e) => setToDate(e.target.value)}
             />
-            <button id="eod-btn-apply" className="eod-apply-btn" onClick={applyCustom}>
+            <button className="eod-apply-btn" onClick={applyCustom}>
               Apply
             </button>
-            <button id="eod-btn-reset" className="eod-apply-btn" onClick={resetFilters}>
+            <button className="eod-apply-btn" onClick={resetFilters}>
               Reset
             </button>
           </div>
@@ -294,26 +290,26 @@ const EndOfDaySales = () => {
 
         {/* ── Metric Cards ── */}
         <div className="eod-metrics">
-          <div id="eod-metric-total" className="eod-metric-card">
+          <div className="eod-metric-card">
             <div className="eod-metric-label">Total sales</div>
-            <div id="eod-metric-total-value" className="eod-metric-value">{fmt(summary.totalSales)}</div>
+            <div className="eod-metric-value">{fmt(summary.totalSales)}</div>
             <div className="eod-metric-sub">
               {orders.length} orders · avg {fmt(avgOrder)}
             </div>
           </div>
-          <div id="eod-metric-cash" className="eod-metric-card">
+          <div className="eod-metric-card">
             <div className="eod-metric-label">Cash sales</div>
-            <div id="eod-metric-cash-value" className="eod-metric-value">{fmt(summary.cashSales)}</div>
+            <div className="eod-metric-value">{fmt(summary.cashSales)}</div>
             <div className="eod-metric-sub">{cashPct}% of total</div>
             <span className="eod-badge eod-badge-green">Cash</span>
           </div>
-          <div id="eod-metric-card" className="eod-metric-card">
+          <div className="eod-metric-card">
             <div className="eod-metric-label">Card sales</div>
-            <div id="eod-metric-card-value" className="eod-metric-value">{fmt(summary.cardSales)}</div>
+            <div className="eod-metric-value">{fmt(summary.cardSales)}</div>
             <div className="eod-metric-sub">{cardPct}% of total</div>
             <span className="eod-badge eod-badge-blue">Card</span>
           </div>
-          <div id="eod-metric-bestseller" className="eod-metric-card">
+          <div className="eod-metric-card">
             <div className="eod-metric-label">Best seller</div>
             <div className="eod-metric-value eod-metric-value--sm">
               {topItem ? topItem.name : "—"}
@@ -335,7 +331,6 @@ const EndOfDaySales = () => {
           ].map(({ key, label }) => (
             <button
               key={key}
-              id={`eod-tab-${key}`}
               className={`eod-tab${tab === key ? " active" : ""}`}
               onClick={() => setTab(key)}
             >
@@ -445,14 +440,12 @@ const EndOfDaySales = () => {
               </div>
               <div className="eod-chart-toggle">
                 <button
-                  id="eod-chart-bar"
                   className={`eod-ctab${chartType === "bar" ? " active" : ""}`}
                   onClick={() => setChartType("bar")}
                 >
                   Bar
                 </button>
                 <button
-                  id="eod-chart-line"
                   className={`eod-ctab${chartType === "line" ? " active" : ""}`}
                   onClick={() => setChartType("line")}
                 >
@@ -482,7 +475,6 @@ const EndOfDaySales = () => {
               </span>
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                 <select
-                  id="eod-payment-filter"
                   className="eod-date-inp"
                   value={paymentFilter}
                   onChange={(e) => {
@@ -495,7 +487,6 @@ const EndOfDaySales = () => {
                   <option value="Card">Card only</option>
                 </select>
                 <select
-                  id="eod-page-size"
                   className="eod-date-inp"
                   value={ordersPageSize}
                   onChange={(e) => {
@@ -562,7 +553,6 @@ const EndOfDaySales = () => {
               </span>
               <div className="eod-pag-btns">
                 <button
-                  id="eod-pag-first"
                   className="eod-pag-btn"
                   onClick={() => setOrdersPage(1)}
                   disabled={ordersPage === 1}
@@ -570,18 +560,16 @@ const EndOfDaySales = () => {
                   ⏮
                 </button>
                 <button
-                  id="eod-pag-prev"
                   className="eod-pag-btn"
                   onClick={() => setOrdersPage((p) => Math.max(1, p - 1))}
                   disabled={ordersPage === 1}
                 >
                   ◀
                 </button>
-                <span id="eod-pag-label" className="eod-pag-label">
+                <span className="eod-pag-label">
                   Page {ordersPage} / {ordersPageCount}
                 </span>
                 <button
-                  id="eod-pag-next"
                   className="eod-pag-btn"
                   onClick={() =>
                     setOrdersPage((p) => Math.min(ordersPageCount, p + 1))
@@ -591,7 +579,6 @@ const EndOfDaySales = () => {
                   ▶
                 </button>
                 <button
-                  id="eod-pag-last"
                   className="eod-pag-btn"
                   onClick={() => setOrdersPage(ordersPageCount)}
                   disabled={ordersPage === ordersPageCount}
