@@ -39,6 +39,40 @@ const EMPTY_FORM = {
   pin: "",
 };
 
+const Field = ({
+  name,
+  label,
+  type = "text",
+  required,
+  placeholder,
+  children,
+  form,
+  errors,
+  editingId,
+  onChange,
+}) => (
+  <div className="ep-field">
+    <label className="ep-label" htmlFor={name}>
+      {label}
+      {required && <span className="ep-req">*</span>}
+    </label>
+    {children || (
+      <input
+        id={name}
+        className={`ep-input${errors[name] ? " ep-input-error" : ""}`}
+        type={type}
+        name={name}
+        value={form[name]}
+        onChange={onChange}
+        placeholder={placeholder}
+        required={required && !editingId}
+        maxLength={name === "pin" ? 4 : undefined}
+      />
+    )}
+    {errors[name] && <span className="ep-err-msg">{errors[name]}</span>}
+  </div>
+);
+
 const Employees = () => {
   const navigate = useNavigate();
   const [employees, setEmployees] = useState([]);
@@ -219,36 +253,6 @@ const Employees = () => {
     });
   }, [employees, search, roleFilter]);
 
-  const Field = ({
-    name,
-    label,
-    type = "text",
-    required,
-    placeholder,
-    children,
-  }) => (
-    <div className="ep-field">
-      <label className="ep-label" htmlFor={name}>
-        {label}
-        {required && <span className="ep-req">*</span>}
-      </label>
-      {children || (
-        <input
-          id={name}
-          className={`ep-input${errors[name] ? " ep-input-error" : ""}`}
-          type={type}
-          name={name}
-          value={form[name]}
-          onChange={handleChange}
-          placeholder={placeholder}
-          required={required && !editingId}
-          maxLength={name === "pin" ? 4 : undefined}
-        />
-      )}
-      {errors[name] && <span className="ep-err-msg">{errors[name]}</span>}
-    </div>
-  );
-
   return (
     <DashboardLayout>
       <div className="ep-container">
@@ -259,7 +263,6 @@ const Employees = () => {
             <p className="ep-subtitle">Manage your team members</p>
           </div>
           <button
-            id="ep-btn-add-employee"
             className={`ep-add-btn${formVisible ? " ep-add-btn--cancel" : ""}`}
             onClick={() =>
               formVisible ? handleCancel() : setFormVisible(true)
@@ -284,18 +287,30 @@ const Employees = () => {
                   label="First name"
                   required
                   placeholder="Ahmed"
+                  form={form}
+                  errors={errors}
+                  editingId={editingId}
+                  onChange={handleChange}
                 />
                 <Field
                   name="last_name"
                   label="Last name"
                   required
                   placeholder="Ali"
+                  form={form}
+                  errors={errors}
+                  editingId={editingId}
+                  onChange={handleChange}
                 />
                 <Field
                   name="username"
                   label="Username"
                   required
                   placeholder="ahmed.ali"
+                  form={form}
+                  errors={errors}
+                  editingId={editingId}
+                  onChange={handleChange}
                 />
                 <Field
                   name="password"
@@ -307,6 +322,10 @@ const Employees = () => {
                       ? "Leave blank to keep current"
                       : "Min 6 characters"
                   }
+                  form={form}
+                  errors={errors}
+                  editingId={editingId}
+                  onChange={handleChange}
                 />
                 <Field
                   name="email"
@@ -314,18 +333,30 @@ const Employees = () => {
                   type="email"
                   required
                   placeholder="ahmed@example.com"
+                  form={form}
+                  errors={errors}
+                  editingId={editingId}
+                  onChange={handleChange}
                 />
                 <Field
                   name="phone"
                   label="Phone"
                   required
                   placeholder="9876543210"
+                  form={form}
+                  errors={errors}
+                  editingId={editingId}
+                  onChange={handleChange}
                 />
                 <Field
                   name="address"
                   label="Address"
                   required
                   placeholder="123 Main Street"
+                  form={form}
+                  errors={errors}
+                  editingId={editingId}
+                  onChange={handleChange}
                 />
                 <Field
                   name="pin"
@@ -333,21 +364,50 @@ const Employees = () => {
                   type="password"
                   required={!editingId}
                   placeholder="••••"
+                  form={form}
+                  errors={errors}
+                  editingId={editingId}
+                  onChange={handleChange}
                 />
                 <Field
                   name="brp"
                   label="BRP number"
                   required
                   placeholder="ZA123456"
+                  form={form}
+                  errors={errors}
+                  editingId={editingId}
+                  onChange={handleChange}
                 />
-                <Field name="dob" label="Date of birth" type="date" required />
+                <Field
+                  name="dob"
+                  label="Date of birth"
+                  type="date"
+                  required
+                  form={form}
+                  errors={errors}
+                  editingId={editingId}
+                  onChange={handleChange}
+                />
                 <Field
                   name="joining_date"
                   label="Joining date"
                   type="date"
                   required
+                  form={form}
+                  errors={errors}
+                  editingId={editingId}
+                  onChange={handleChange}
                 />
-                <Field name="gender" label="Gender" required>
+                <Field
+                  name="gender"
+                  label="Gender"
+                  required
+                  form={form}
+                  errors={errors}
+                  editingId={editingId}
+                  onChange={handleChange}
+                >
                   <select
                     id="gender"
                     name="gender"
@@ -365,7 +425,15 @@ const Employees = () => {
                     <span className="ep-err-msg">{errors.gender}</span>
                   )}
                 </Field>
-                <Field name="role" label="Role" required>
+                <Field
+                  name="role"
+                  label="Role"
+                  required
+                  form={form}
+                  errors={errors}
+                  editingId={editingId}
+                  onChange={handleChange}
+                >
                   <select
                     id="role"
                     name="role"
@@ -380,7 +448,6 @@ const Employees = () => {
               </div>
               <div className="ep-form-footer">
                 <button
-                  id="ep-btn-form-cancel"
                   type="button"
                   className="ep-cancel-btn"
                   onClick={handleCancel}
@@ -388,7 +455,6 @@ const Employees = () => {
                   Cancel
                 </button>
                 <button
-                  id="ep-btn-form-submit"
                   type="submit"
                   className="ep-submit-btn"
                   disabled={loading}
@@ -407,7 +473,6 @@ const Employees = () => {
         {/* Toolbar */}
         <div className="ep-toolbar">
           <input
-            id="ep-search"
             className="ep-search"
             type="text"
             placeholder="Search by name, email or username…"
@@ -415,7 +480,6 @@ const Employees = () => {
             onChange={(e) => setSearch(e.target.value)}
           />
           <select
-            id="ep-role-filter"
             className="ep-filter"
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
@@ -456,7 +520,7 @@ const Employees = () => {
                     idx,
                   );
                   return (
-                    <tr key={emp.id} id={`ep-emp-row-${emp.id}`}>
+                    <tr key={emp.id}>
                       <td>
                         <div className="ep-name-cell">
                           <div
@@ -491,14 +555,12 @@ const Employees = () => {
                       <td>
                         <div className="ep-actions">
                           <button
-                            id={`ep-btn-edit-${emp.id}`}
                             className="ep-btn ep-btn-edit"
                             onClick={() => handleEdit(emp)}
                           >
                             Edit
                           </button>
                           <button
-                            id={`ep-btn-delete-${emp.id}`}
                             className="ep-btn ep-btn-del"
                             onClick={() => handleDelete(emp.id)}
                           >
