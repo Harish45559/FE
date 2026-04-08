@@ -402,9 +402,17 @@
   flex-shrink: 0;
 }
 
-.att-dot.green { background: #22c55e; }
-.att-dot.red { background: #ef4444; }
-.att-dot.gray { background: #ccc; }
+.att-dot.green {
+  background: #22c55e;
+}
+
+.att-dot.red {
+  background: #ef4444;
+}
+
+.att-dot.gray {
+  background: #ccc;
+}
 
 @media (max-width: 600px) {
   .att-wrap {
@@ -422,5 +430,133 @@
     width: 100%;
     border-right: none;
     border-bottom: 1px solid #f0f0f0;
+  }
+}
+
+/* ══════════ MOBILE HEADER (hidden on desktop) ══════════ */
+.att-mobile-header {
+  display: none;
+}
+
+/* ══════════ BOTTOM SHEET ══════════ */
+.att-sheet-overlay {
+  display: none;
+}
+
+/* ══════════ MOBILE ══════════ */
+@media (max-width: 768px) {
+  .att-wrap {
+    padding: 0;
+    height: auto;
+    min-height: calc(100vh - 52px);
+  }
+
+  .att-panel {
+    border-radius: 0;
+    flex-direction: column;
+    box-shadow: none;
+  }
+
+  /* Hide desktop keypad on mobile */
+  .att-left {
+    display: none;
+  }
+
+  /* Full width employee list */
+  .att-right {
+    padding: 12px;
+    overflow: visible;
+    min-height: calc(100vh - 52px);
+  }
+
+  /* Show mobile header */
+  .att-mobile-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  /* Bigger employee cards on mobile */
+  .att-grid {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 10px;
+    overflow: visible;
+    flex: none;
+  }
+
+  .att-card {
+    padding: 14px 8px;
+  }
+
+  /* Bottom sheet overlay */
+  .att-sheet-overlay {
+    display: flex;
+    align-items: flex-end;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .45);
+    z-index: 500;
+  }
+
+  .att-sheet {
+    background: #fff;
+    width: 100%;
+    border-radius: 20px 20px 0 0;
+    padding: 12px 20px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    animation: slideUp .25s ease;
+  }
+
+  @keyframes slideUp {
+    from {
+      transform: translateY(100%);
+    }
+
+    to {
+      transform: translateY(0);
+    }
+  }
+
+  .att-sheet-handle {
+    width: 36px;
+    height: 4px;
+    background: #e0e0e0;
+    border-radius: 2px;
+    margin: 0 auto 4px;
+    flex-shrink: 0;
+  }
+
+  .att-sheet-close {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    background: #f5f5f5;
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    font-size: 13px;
+    cursor: pointer;
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Bigger keypad buttons in sheet */
+  .att-kb {
+    height: 56px;
+    font-size: 22px;
+  }
+
+  .att-abtn {
+    height: 52px;
+    font-size: 15px;
   }
 }
