@@ -295,7 +295,7 @@ const Attendance = () => {
 
           {/* ══ RIGHT — employee list ══ */}
           <div className="att-right">
-            {/* Mobile headersssss */}
+            {/* Mobile headers */}
             <div className="att-mobile-header">
               <h1 className="att-title">Attendance</h1>
               <div className="att-clock">
