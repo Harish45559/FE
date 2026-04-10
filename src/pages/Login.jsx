@@ -40,6 +40,7 @@ const Login = () => {
       const res = await api.post("/auth/login", form);
 
       const { token, role, username } = res.data || {};
+      console.log("role from server:", role);
 
       if (!token || !role) {
         setError("Login failed: invalid server response");
