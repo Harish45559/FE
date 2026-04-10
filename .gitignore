@@ -33,3 +33,6 @@ build/
 coverage/
 .env
 .env.*
+
+# Claude Code
+.claude/
