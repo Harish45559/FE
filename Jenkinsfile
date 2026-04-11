@@ -1,12 +1,6 @@
 pipeline {
     agent any
 
-    environment {
-        NODE_VERSION = '20'
-        APP_DIR      = '/var/www/attendance_fe'
-        PM2_APP_NAME = 'attendance-fe'
-    }
-
     stages {
 
         stage('Checkout') {
@@ -17,42 +11,29 @@ pipeline {
 
         stage('Install') {
             steps {
-                sh 'npm ci'
-            }
-        }
-
-        stage('Lint') {
-            steps {
-                sh 'npm run lint'
+                bat 'npm install'
             }
         }
 
         stage('Build') {
             steps {
-                sh 'npm run build'
+                bat 'npm run build'
             }
         }
 
-        stage('Deploy') {
-            when {
-                branch 'main'
-            }
+        stage('Deploy to Render') {
             steps {
-                sh '''
-                    rm -rf ${APP_DIR}/dist
-                    cp -r dist ${APP_DIR}/dist
-                    pm2 restart ${PM2_APP_NAME} || pm2 serve ${APP_DIR}/dist 3000 --name ${PM2_APP_NAME} --spa
-                '''
+                bat 'curl "%RENDER_FE_DEPLOY_HOOK%"'
             }
         }
     }
 
     post {
         success {
-            echo "FE pipeline passed — deployed to ${APP_DIR}"
+            echo 'FE pipeline passed — deployed to Render'
         }
         failure {
-            echo "FE pipeline FAILED — check logs above"
+            echo 'FE pipeline FAILED — Render was NOT deployed'
         }
     }
 }
