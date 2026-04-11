@@ -36,3 +36,10 @@ coverage/
 
 # Claude Code
 .claude/
+# Selenium / pytest
+selenium_tests/**/__pycache__/
+selenium_tests/__pycache__/
+selenium_tests/report.html
+selenium_tests/screenshots/
+**/*.pyc
+**/*.pyo
