@@ -32,6 +32,10 @@ const PreviousOrders = () => {
   const [date, setDate] = useState("");
   const [showReceipt, setShowReceipt] = useState(false);
   const [activeOrder, setActiveOrder] = useState(null);
+  const [markingReady, setMarkingReady] = useState(null);
+  const [qrModal, setQrModal] = useState(null); // { qrCode, pagerUrl, orderNumber, customerName }
+  const [qrLoading, setQrLoading] = useState(null); // order id being loaded
+  const [receiptQR, setReceiptQR] = useState(null); // QR data URL for the currently printing receipt
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -56,6 +60,8 @@ const PreviousOrders = () => {
           final_amount: Number(o.final_amount ?? o.grand_total ?? o.total ?? 0),
           date: o.date ?? o.created_at ?? o.createdAt ?? "",
           order_type: o.order_type ?? o.orderType ?? o.type ?? "",
+          pager_token: o.pager_token ?? null,
+          pager_status: o.pager_status ?? null,
         }));
         norm.sort((a, b) => {
           const ta = a.date ? new Date(a.date).getTime() : 0;
@@ -121,15 +127,70 @@ const PreviousOrders = () => {
   const calcIncluded = (amount, percent) =>
     (Number(amount) * percent) / (100 + percent);
 
-  const openReceipt = (ord) => {
+  const markPagerReady = async (order) => {
+    if (!order.pager_token) return;
+    setMarkingReady(order.id);
+    try {
+      await api.put(`/pager/mark-ready/${order.pager_token}`);
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === order.id ? { ...o, pager_status: "ready" } : o
+        )
+      );
+    } catch (err) {
+      console.error("Failed to mark pager ready", err);
+    } finally {
+      setMarkingReady(null);
+    }
+  };
+
+  const showQR = async (order) => {
+    setQrLoading(order.id);
+    try {
+      const res = await api.post(`/pager/generate/${order.id}`);
+      setQrModal(res.data);
+      // Always update token in local state — each generate call creates a fresh token in DB
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === order.id
+            ? { ...o, pager_token: res.data.token, pager_status: o.pager_status === "ready" ? "ready" : "waiting" }
+            : o
+        )
+      );
+    } catch (err) {
+      console.error("Failed to load QR", err);
+    } finally {
+      setQrLoading(null);
+    }
+  };
+
+  const openReceipt = async (ord) => {
+    // Fetch QR first so it's ready before print fires
+    let qr = null;
+    try {
+      const res = await api.post(`/pager/generate/${ord.id}`);
+      qr = res.data.qrCode;
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === ord.id
+            ? { ...o, pager_token: res.data.token, pager_status: o.pager_status === "ready" ? "ready" : "waiting" }
+            : o
+        )
+      );
+    } catch (_) {
+      // QR is optional — receipt still prints without it
+    }
+    setReceiptQR(qr);
     setActiveOrder(ord);
     setShowReceipt(true);
     window.onafterprint = () => {
       window.onafterprint = null;
       setShowReceipt(false);
       setActiveOrder(null);
+      setReceiptQR(null);
     };
-    setTimeout(() => window.print(), 200);
+    // 600ms: enough for React to render + base64 img to decode before print dialog
+    setTimeout(() => window.print(), 600);
   };
 
   const handlePrint = () => {
@@ -201,19 +262,20 @@ const PreviousOrders = () => {
                   <th>Items</th>
                   <th>Payment</th>
                   <th>Total</th>
+                  <th>Pager</th>
                   <th>Print</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="po-empty">
+                    <td colSpan={7} className="po-empty">
                       Loading orders…
                     </td>
                   </tr>
                 ) : pageData.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="po-empty">
+                    <td colSpan={7} className="po-empty">
                       No orders found.
                     </td>
                   </tr>
@@ -251,6 +313,52 @@ const PreviousOrders = () => {
                         <span className="po-amount">
                           £{(o.final_amount || calcSubtotal(o)).toFixed(2)}
                         </span>
+                      </td>
+                      <td style={{ whiteSpace: "nowrap" }}>
+                        <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
+                          {/* QR view button — show for all orders */}
+                          <button
+                            onClick={() => showQR(o)}
+                            disabled={qrLoading === o.id}
+                            title="Show pager QR code"
+                            style={{
+                              background: qrLoading === o.id ? "#ccc" : "#7c3aed",
+                              color: "#fff", border: "none", borderRadius: 6,
+                              padding: "5px 9px", fontWeight: 700, fontSize: "0.8rem",
+                              cursor: qrLoading === o.id ? "not-allowed" : "pointer",
+                            }}
+                          >
+                            {qrLoading === o.id ? "…" : "📱 QR"}
+                          </button>
+
+                          {/* Mark ready — only when waiting */}
+                          {o.pager_status === "waiting" && (
+                            <button
+                              onClick={() => markPagerReady(o)}
+                              disabled={markingReady === o.id}
+                              title="Notify customer their order is ready"
+                              style={{
+                                background: markingReady === o.id ? "#ccc" : "#f97316",
+                                color: "#fff", border: "none", borderRadius: 6,
+                                padding: "5px 9px", fontWeight: 700, fontSize: "0.8rem",
+                                cursor: markingReady === o.id ? "not-allowed" : "pointer",
+                              }}
+                            >
+                              {markingReady === o.id ? "…" : "🔔 Ready"}
+                            </button>
+                          )}
+
+                          {/* Already notified badge */}
+                          {o.pager_status === "ready" && (
+                            <span style={{
+                              background: "#22c55e", color: "#fff",
+                              borderRadius: 6, padding: "4px 8px",
+                              fontSize: "0.78rem", fontWeight: 700,
+                            }}>
+                              ✓ Done
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td>
                         <button
@@ -331,6 +439,68 @@ const PreviousOrders = () => {
           </div>
         </div>
       </div>
+
+      {/* ── QR Modal ── */}
+      {qrModal && (
+        <div
+          style={{
+            position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)",
+            display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999,
+          }}
+          onClick={() => setQrModal(null)}
+        >
+          <div
+            style={{
+              background: "#fff", borderRadius: 20, padding: "32px 28px",
+              maxWidth: 360, width: "90%", textAlign: "center",
+              boxShadow: "0 8px 40px rgba(0,0,0,0.18)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ fontSize: "1.6rem", marginBottom: 4 }}>📱</div>
+            <h3 style={{ margin: "0 0 4px", color: "#1a1a1a", fontSize: "1.1rem" }}>
+              Pager QR — Order #{qrModal.orderNumber}
+            </h3>
+            <p style={{ color: "#888", fontSize: "0.83rem", marginBottom: 14 }}>
+              {qrModal.customerName}
+            </p>
+            <img
+              src={qrModal.qrCode}
+              alt="Pager QR"
+              style={{ width: 210, height: 210, borderRadius: 10, border: "1px solid #eee" }}
+            />
+            <p style={{ fontSize: "0.72rem", color: "#bbb", marginTop: 8, wordBreak: "break-all" }}>
+              {qrModal.pagerUrl}
+            </p>
+            <div style={{ display: "flex", gap: 10, marginTop: 18 }}>
+              <button
+                onClick={() => {
+                  const w = window.open("", "_blank");
+                  w.document.write(`<img src="${qrModal.qrCode}" style="width:280px;display:block;margin:20px auto"/><p style="text-align:center;font-family:sans-serif;color:#555">Order #${qrModal.orderNumber} · ${qrModal.customerName}</p>`);
+                  w.print();
+                }}
+                style={{
+                  flex: 1, padding: "10px 0", background: "#f3f4f6",
+                  border: "none", borderRadius: 8, fontWeight: 600,
+                  cursor: "pointer", fontSize: "0.88rem",
+                }}
+              >
+                🖨️ Print
+              </button>
+              <button
+                onClick={() => setQrModal(null)}
+                style={{
+                  flex: 1, padding: "10px 0", background: "#7c3aed", color: "#fff",
+                  border: "none", borderRadius: 8, fontWeight: 700,
+                  cursor: "pointer", fontSize: "0.88rem",
+                }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Receipt Portal ── */}
       {showReceipt && activeOrder && (
@@ -453,6 +623,23 @@ const PreviousOrders = () => {
                 </div>
               );
             })()}
+
+            {/* QR code section */}
+            {receiptQR && (
+              <div style={{ textAlign: "center", marginTop: 8, paddingTop: 6, borderTop: "1px dashed #bbb" }}>
+                <p style={{ fontSize: 10, fontFamily: "Courier New, monospace", fontWeight: 700, marginBottom: 4 }}>
+                  📱 Scan to track your order
+                </p>
+                <img
+                  src={receiptQR}
+                  alt="Track order QR"
+                  style={{ width: 130, height: 130 }}
+                />
+                <p style={{ fontSize: 9, fontFamily: "Courier New, monospace", marginTop: 4, color: "#555" }}>
+                  We'll notify you when it's ready!
+                </p>
+              </div>
+            )}
           </div>
         </ReceiptPortal>
       )}
