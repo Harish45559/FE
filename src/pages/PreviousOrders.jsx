@@ -33,6 +33,7 @@ const PreviousOrders = () => {
   const [showReceipt, setShowReceipt] = useState(false);
   const [activeOrder, setActiveOrder] = useState(null);
   const [markingReady, setMarkingReady] = useState(null);
+  const [completing, setCompleting] = useState(null);
   const [qrModal, setQrModal] = useState(null); // { qrCode, pagerUrl, orderNumber, customerName }
   const [qrLoading, setQrLoading] = useState(null); // order id being loaded
   const [receiptQR, setReceiptQR] = useState(null); // QR data URL for the currently printing receipt
@@ -145,6 +146,23 @@ const PreviousOrders = () => {
       console.error("Failed to mark pager ready", err);
     } finally {
       setMarkingReady(null);
+    }
+  };
+
+  const completeOrder = async (order) => {
+    if (!order.pager_token) return;
+    setCompleting(order.id);
+    try {
+      await api.put(`/pager/complete/${order.pager_token}`);
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === order.id ? { ...o, pager_status: "done" } : o
+        )
+      );
+    } catch (err) {
+      console.error("Failed to complete order", err);
+    } finally {
+      setCompleting(null);
     }
   };
 
@@ -318,47 +336,101 @@ const PreviousOrders = () => {
                           £{(o.final_amount || calcSubtotal(o)).toFixed(2)}
                         </span>
                       </td>
-                      <td style={{ whiteSpace: "nowrap" }}>
-                        <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
-                          {/* QR view button — show for all orders */}
-                          <button
-                            onClick={() => showQR(o)}
-                            disabled={qrLoading === o.id}
-                            title="Show pager QR code"
-                            style={{
-                              background: qrLoading === o.id ? "#ccc" : "#7c3aed",
-                              color: "#fff", border: "none", borderRadius: 6,
-                              padding: "5px 9px", fontWeight: 700, fontSize: "0.8rem",
-                              cursor: qrLoading === o.id ? "not-allowed" : "pointer",
-                            }}
-                          >
-                            {qrLoading === o.id ? "…" : "📱 QR"}
-                          </button>
+                      <td>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 5, minWidth: 120 }}>
 
-                          {/* Ring button — shown when pager is active (waiting or ready) */}
-                          {(o.pager_status === "waiting" || o.pager_status === "ready") && (
+                          {/* ── Status pill ── */}
+                          {!o.pager_status && (
+                            <span style={{ fontSize: "0.72rem", color: "#bbb", fontStyle: "italic" }}>No pager</span>
+                          )}
+                          {o.pager_status === "waiting" && (
+                            <span style={{
+                              display: "inline-flex", alignItems: "center", gap: 4,
+                              padding: "3px 9px", borderRadius: 20, fontSize: "0.73rem", fontWeight: 700,
+                              background: "#fff7ed", color: "#ea580c", border: "1px solid #fed7aa",
+                              width: "fit-content",
+                            }}>
+                              <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#f97316", display: "inline-block", animation: "pagerPulse 1.2s ease-in-out infinite" }} />
+                              Waiting
+                            </span>
+                          )}
+                          {o.pager_status === "ready" && (
+                            <span style={{
+                              display: "inline-flex", alignItems: "center", gap: 4,
+                              padding: "3px 9px", borderRadius: 20, fontSize: "0.73rem", fontWeight: 700,
+                              background: "#f0fdf4", color: "#16a34a", border: "1px solid #bbf7d0",
+                              width: "fit-content",
+                            }}>
+                              🔔 Notified{o.ring_count > 1 ? ` ×${o.ring_count}` : ""}
+                            </span>
+                          )}
+                          {o.pager_status === "done" && (
+                            <span style={{
+                              display: "inline-flex", alignItems: "center", gap: 4,
+                              padding: "3px 9px", borderRadius: 20, fontSize: "0.73rem", fontWeight: 700,
+                              background: "#f5f3ff", color: "#7c3aed", border: "1px solid #ddd6fe",
+                              width: "fit-content",
+                            }}>
+                              ✅ Delivered
+                            </span>
+                          )}
+
+                          {/* ── Action buttons row ── */}
+                          <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+
+                            {/* QR — always shown */}
                             <button
-                              onClick={() => markPagerReady(o)}
-                              disabled={markingReady === o.id}
-                              title={o.pager_status === "ready" ? "Ring again for remaining items" : "Notify customer their order is ready"}
+                              onClick={() => showQR(o)}
+                              disabled={qrLoading === o.id}
+                              title="Show / print pager QR"
                               style={{
-                                background: markingReady === o.id
-                                  ? "#ccc"
-                                  : o.pager_status === "ready"
-                                  ? "#16a34a"
-                                  : "#f97316",
-                                color: "#fff", border: "none", borderRadius: 6,
-                                padding: "5px 9px", fontWeight: 700, fontSize: "0.8rem",
-                                cursor: markingReady === o.id ? "not-allowed" : "pointer",
+                                background: qrLoading === o.id ? "#e5e7eb" : "#ede9fe",
+                                color: qrLoading === o.id ? "#aaa" : "#7c3aed",
+                                border: "1px solid #ddd6fe", borderRadius: 7,
+                                padding: "4px 8px", fontWeight: 700, fontSize: "0.75rem",
+                                cursor: qrLoading === o.id ? "not-allowed" : "pointer",
                               }}
                             >
-                              {markingReady === o.id
-                                ? "…"
-                                : o.pager_status === "ready"
-                                ? "🔔 Ring Again"
-                                : "🔔 Ready"}
+                              {qrLoading === o.id ? "…" : "📱 QR"}
                             </button>
-                          )}
+
+                            {/* Ring / Ring Again */}
+                            {(o.pager_status === "waiting" || o.pager_status === "ready") && (
+                              <button
+                                onClick={() => markPagerReady(o)}
+                                disabled={markingReady === o.id}
+                                title={o.pager_status === "ready" ? "Ring again for remaining items" : "Notify customer their order is ready"}
+                                style={{
+                                  background: markingReady === o.id ? "#e5e7eb" : o.pager_status === "ready" ? "#dcfce7" : "#fff7ed",
+                                  color: markingReady === o.id ? "#aaa" : o.pager_status === "ready" ? "#16a34a" : "#ea580c",
+                                  border: `1px solid ${o.pager_status === "ready" ? "#bbf7d0" : "#fed7aa"}`,
+                                  borderRadius: 7, padding: "4px 8px",
+                                  fontWeight: 700, fontSize: "0.75rem",
+                                  cursor: markingReady === o.id ? "not-allowed" : "pointer",
+                                }}
+                              >
+                                {markingReady === o.id ? "…" : o.pager_status === "ready" ? "🔔 Again" : "🔔 Ring"}
+                              </button>
+                            )}
+
+                            {/* Done — all items delivered */}
+                            {(o.pager_status === "waiting" || o.pager_status === "ready") && (
+                              <button
+                                onClick={() => completeOrder(o)}
+                                disabled={completing === o.id}
+                                title="All items given — mark order complete"
+                                style={{
+                                  background: completing === o.id ? "#e5e7eb" : "#f0fdf4",
+                                  color: completing === o.id ? "#aaa" : "#15803d",
+                                  border: "1px solid #bbf7d0", borderRadius: 7,
+                                  padding: "4px 8px", fontWeight: 700, fontSize: "0.75rem",
+                                  cursor: completing === o.id ? "not-allowed" : "pointer",
+                                }}
+                              >
+                                {completing === o.id ? "…" : "✓ Done"}
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </td>
                       <td>
