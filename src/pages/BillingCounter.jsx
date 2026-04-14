@@ -59,6 +59,7 @@ const BillingCounter = () => {
   const [pagerModal, setPagerModal] = useState(false);
   const [pagerData, setPagerData] = useState(null);
   const [pagerLoading, setPagerLoading] = useState(false);
+  const [isPlacing, setIsPlacing] = useState(false);
 
   useEffect(() => {
     // Optimistic local state while API loads
@@ -290,10 +291,12 @@ const BillingCounter = () => {
   };
 
   const handlePlaceOrder = async () => {
+    if (isPlacing) return; // prevent double-submit
     if (!isTillOpen) return toast.error("Open the till first.");
     if (!selectedItems.length) return toast.error("Add items first.");
     if (!paymentMethod) return toast.error("Select a payment method.");
     if (!customerName.trim()) return toast.error("Customer name is required.");
+    setIsPlacing(true);
     const payload = {
       customer_name: customerName,
       server_name: tillOpenedBy || serverName,
@@ -368,6 +371,8 @@ const BillingCounter = () => {
       // or click "New Order" before clearing the counter.
     } catch (err) {
       toast.error(err?.response?.data?.error || "Failed to place order");
+    } finally {
+      setIsPlacing(false);
     }
   };
 
@@ -476,7 +481,7 @@ const BillingCounter = () => {
   };
 
   const placeDisabled =
-    !isTillOpen || !paymentMethod || selectedItems.length === 0;
+    isPlacing || !isTillOpen || !paymentMethod || selectedItems.length === 0;
 
   return (
     <DashboardLayout>
@@ -860,7 +865,7 @@ const BillingCounter = () => {
                 onClick={handlePlaceOrder}
                 disabled={placeDisabled}
               >
-                Place order
+                {isPlacing ? "Placing…" : "Place order"}
               </button>
               <button
                 className="bc-hold-btn"
