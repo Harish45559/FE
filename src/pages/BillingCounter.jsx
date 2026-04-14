@@ -230,55 +230,122 @@ const BillingCounter = () => {
   };
 
   const renderReceiptHTML = (data) => {
-    const {
-      orderNumber: onum,
-      orderType: otype,
-      customerName: cname,
-      paymentMethod: pay,
-      orderDate: odate,
-      items,
-      totals,
-      staffName,
-      pagerQR,
-    } = data;
-    const rows = items
-      .map(
-        (it) =>
-          `<tr><td>${it.name}</td><td style="text-align:right">£${Number(it.price).toFixed(2)}</td><td style="text-align:right">${it.qty ?? it.quantity ?? 0}</td><td style="text-align:right">£${Number(it.total).toFixed(2)}</td></tr>`,
-      )
-      .join("");
+    const { orderNumber: onum, orderType: otype, customerName: cname, paymentMethod: pay, orderDate: odate, items, totals, staffName, pagerQR } = data;
+
+    // Item rows for customer copy — qty X name, price, total (bold + highlighted)
+    const itemRows = items.map((it) => {
+      const qty = it.qty ?? it.quantity ?? 0;
+      const price = Number(it.price).toFixed(2);
+      const total = Number(it.total).toFixed(2);
+      return `<tr>
+        <td style="font-weight:800;font-size:12px;padding:2mm 0">${qty} x ${it.name}</td>
+        <td style="text-align:right;font-weight:700;font-size:12px">£${price}</td>
+        <td style="text-align:right;font-weight:800;font-size:12px">£${total}</td>
+      </tr>`;
+    }).join("");
+
     const qrSection = pagerQR
-      ? `<div style="text-align:center;margin-top:4mm;padding-top:3mm;border-top:1px dashed #bbb"><p style="font-size:10px;margin-bottom:2mm;font-weight:700">📱 Scan to track your order</p><img src="${pagerQR}" style="width:120px;height:120px;" /><p style="font-size:9px;margin-top:2mm;color:#555">We'll notify you when it's ready!</p></div>`
-      : "";
-    return `<div class="bill-section"><div class="receipt-header"><h2>Mirchi Mafiya</h2><p>Cumberland Street, LU1 3BW, Luton</p><p>Phone: +447440086046</p><p>dtsretaillimited@gmail.com</p><p>Order Type: ${otype}</p><p><strong>Customer:</strong> ${cname || "N/A"}</p><p><strong>Order No:</strong> #${onum ?? "—"}</p><p><strong>Paid By:</strong> ${pay}</p><hr /><p>Date: ${odate || "—"}</p><hr /></div><table class="receipt-table"><thead><tr><th>Product</th><th style="text-align:right">Price</th><th style="text-align:right">Qty</th><th style="text-align:right">Total</th></tr></thead><tbody>${rows}</tbody></table><div class="receipt-summary"><p><strong>Total Qty:</strong> ${items.reduce((s, it) => s + Number(it.qty ?? it.quantity ?? 0), 0)}</p><p><strong>Sub Total:</strong> £ ${totals.subtotal.toFixed(2)}</p><p><strong>Paid By:</strong> ${pay}</p><p>VAT (20%): £${totals.vat.toFixed(2)}</p><p>Service Charge (8%): £${totals.service.toFixed(2)}</p>${totals.discount > 0 ? `<p><strong>Discount (${totals.discountPct}%):</strong> -£${totals.discount.toFixed(2)}</p>` : ""}<p class="grand-total"><strong>Grand Total:</strong> £ ${totals.grand.toFixed(2)}</p><p>Staff: ${staffName ? `(${staffName})` : ""}</p><hr /></div>${qrSection}</div>`;
+      ? `<div style="text-align:center;margin-top:4mm;padding-top:3mm;border-top:1px dashed #bbb">
+           <p style="font-size:10px;margin-bottom:2mm;font-weight:700">📱 Scan to track your order</p>
+           <img src="${pagerQR}" style="width:120px;height:120px;" />
+           <p style="font-size:9px;margin-top:2mm;color:#555">We'll speak &amp; notify you when it's ready!</p>
+         </div>` : "";
+
+    // ── CUSTOMER COPY ──────────────────────────────────────────────
+    const customerCopy = `
+      <div class="bill-section">
+        <div class="receipt-header">
+          <h2>Mirchi Mafiya</h2>
+          <p class="light">Cumberland Street, LU1 3BW, Luton</p>
+          <p class="light">Phone: +447440086046</p>
+          <p class="light">dtsretaillimited@gmail.com</p>
+        </div>
+        <hr/>
+        <p class="highlight-row">ORDER #${onum ?? "—"}</p>
+        <p class="highlight-row">${cname || "N/A"}</p>
+        <p class="light" style="margin:1mm 0">Type: <strong>${otype}</strong></p>
+        <p class="highlight-pay">Paid: ${pay}</p>
+        <p class="light">Date: ${odate || "—"}</p>
+        <hr/>
+        <table class="receipt-table">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th style="text-align:right">Price</th>
+              <th style="text-align:right">Total</th>
+            </tr>
+          </thead>
+          <tbody>${itemRows}</tbody>
+        </table>
+        <hr/>
+        <div class="receipt-summary">
+          <p class="light">Sub Total: £${totals.subtotal.toFixed(2)}</p>
+          ${totals.discount > 0 ? `<p class="light">Discount (${totals.discountPct}%): -£${totals.discount.toFixed(2)}</p>` : ""}
+          <p class="light">VAT (20%): £${totals.vat.toFixed(2)}</p>
+          <p class="light">Service (8%): £${totals.service.toFixed(2)}</p>
+          <p class="grand-total">TOTAL: £${totals.grand.toFixed(2)}</p>
+          <p class="light">Staff: ${staffName || "—"}</p>
+        </div>
+        ${qrSection}
+        <p style="text-align:center;margin-top:3mm;font-size:9px;color:#888">Thank you for visiting Mirchi Mafia!</p>
+      </div>`;
+
+    // ── KITCHEN COPY ───────────────────────────────────────────────
+    const kitchenRows = items.map((it) => {
+      const qty = it.qty ?? it.quantity ?? 0;
+      return `<tr><td style="font-size:14px;font-weight:900;padding:2mm 0">${qty} X ${it.name.toUpperCase()}</td></tr>`;
+    }).join("");
+
+    const kitchenCopy = `
+      <div class="bill-section kitchen">
+        <div style="text-align:center;margin-bottom:3mm">
+          <h2 style="font-size:14px;margin:0">KITCHEN</h2>
+          <div style="font-size:22px;font-weight:900;letter-spacing:1px;margin:2mm 0">#${onum ?? "—"}</div>
+          <div style="font-size:15px;font-weight:800">${(otype || "").toUpperCase()}</div>
+          <div style="font-size:13px;font-weight:700;margin-top:1mm">${cname || ""}</div>
+        </div>
+        <hr/>
+        <table class="receipt-table" style="width:100%">
+          <tbody>${kitchenRows}</tbody>
+        </table>
+        <hr/>
+        <p style="text-align:center;font-size:10px;color:#888">${odate || ""}</p>
+      </div>`;
+
+    // Both copies in one print job — page break between them
+    return `${customerCopy}<div class="page-break"></div>${kitchenCopy}`;
   };
 
   const printReceipt = (html, title = "Receipt") => {
     const w = window.open("", "_blank", "width=420,height=640");
-    const styles = `<style>@page{size:80mm auto;margin:0}html,body{margin:0;padding:0}body{font-family:'Courier New',monospace;background:#fff;color:#000}.bill-section{width:72mm;max-width:72mm;padding:6mm 4mm;margin:0 auto;font-size:11px;line-height:1.12;font-weight:600}.bill-section strong{font-weight:800}.receipt-header{text-align:center;margin-bottom:2mm}.receipt-header h2{font-size:13px;margin:0 0 1.5mm;font-weight:800}.receipt-header p{margin:1mm 0}.receipt-table{width:100%;font-size:11px;border-collapse:collapse;margin-top:2mm}.receipt-table th,.receipt-table td{padding:1mm 0;text-align:left;border-bottom:1px dashed #bbb;font-weight:600}.receipt-summary p{margin:1mm 0}hr{border:0;border-top:1px dashed #bbb;margin:2mm 0}</style>`;
-    if (!w) {
-      window.print();
-      return;
-    }
+    const styles = `<style>
+      @page { size: 80mm auto; margin: 0; }
+      html, body { margin: 0; padding: 0; }
+      body { font-family: 'Courier New', monospace; background: #fff; color: #000; }
+      .bill-section { width: 72mm; max-width: 72mm; padding: 5mm 4mm; margin: 0 auto; font-size: 11px; line-height: 1.3; }
+      .receipt-header { text-align: center; margin-bottom: 2mm; }
+      .receipt-header h2 { font-size: 15px; margin: 0 0 1mm; font-weight: 900; letter-spacing: 1px; }
+      .light { font-weight: 400; font-size: 10px; color: #555; margin: 0.8mm 0; }
+      .highlight-row { font-size: 14px; font-weight: 900; margin: 1.5mm 0; letter-spacing: 0.5px; }
+      .highlight-pay { font-size: 12px; font-weight: 800; margin: 1mm 0; }
+      .receipt-table { width: 100%; border-collapse: collapse; margin: 1mm 0; }
+      .receipt-table th { font-size: 10px; font-weight: 600; color: #555; text-align: left; padding: 1mm 0; border-bottom: 1px solid #000; }
+      .receipt-table td { vertical-align: top; }
+      .receipt-summary { margin-top: 1mm; }
+      .receipt-summary .light { margin: 0.8mm 0; }
+      .grand-total { font-size: 14px; font-weight: 900; margin: 2mm 0 1mm; border-top: 2px solid #000; padding-top: 1mm; }
+      .kitchen { border-top: 3px dashed #000; }
+      hr { border: 0; border-top: 1px dashed #888; margin: 2mm 0; }
+      .page-break { page-break-after: always; }
+    </style>`;
+    if (!w) { window.print(); return; }
     w.document.open();
-    w.document.write(
-      `<!doctype html><html><head><meta charset="utf-8"/><title>${title}</title>${styles}</head><body>${html}</body></html>`,
-    );
+    w.document.write(`<!doctype html><html><head><meta charset="utf-8"/><title>${title}</title>${styles}</head><body>${html}</body></html>`);
     w.document.close();
-    const doPrint = () => {
-      try {
-        w.focus();
-        w.print();
-      } finally {
-        w.close();
-      }
-    };
+    const doPrint = () => { try { w.focus(); w.print(); } finally { w.close(); } };
     const triggerPrint = () => {
       const imgs = w.document.getElementsByTagName("img");
-      if (imgs.length === 0) {
-        setTimeout(doPrint, 50);
-        return;
-      }
+      if (imgs.length === 0) { setTimeout(doPrint, 50); return; }
       let loaded = 0;
       const onLoad = () => { if (++loaded >= imgs.length) setTimeout(doPrint, 50); };
       Array.from(imgs).forEach((img) => {
