@@ -62,6 +62,7 @@ const PreviousOrders = () => {
           order_type: o.order_type ?? o.orderType ?? o.type ?? "",
           pager_token: o.pager_token ?? null,
           pager_status: o.pager_status ?? null,
+          ring_count: o.ring_count ?? 0,
         }));
         norm.sort((a, b) => {
           const ta = a.date ? new Date(a.date).getTime() : 0;
@@ -131,10 +132,13 @@ const PreviousOrders = () => {
     if (!order.pager_token) return;
     setMarkingReady(order.id);
     try {
-      await api.put(`/pager/mark-ready/${order.pager_token}`);
+      const res = await api.put(`/pager/mark-ready/${order.pager_token}`);
+      const newRingCount = res.data?.ringCount ?? (order.ring_count || 0) + 1;
       setOrders((prev) =>
         prev.map((o) =>
-          o.id === order.id ? { ...o, pager_status: "ready" } : o
+          o.id === order.id
+            ? { ...o, pager_status: "ready", ring_count: newRingCount }
+            : o
         )
       );
     } catch (err) {
@@ -331,32 +335,29 @@ const PreviousOrders = () => {
                             {qrLoading === o.id ? "…" : "📱 QR"}
                           </button>
 
-                          {/* Mark ready — only when waiting */}
-                          {o.pager_status === "waiting" && (
+                          {/* Ring button — shown when pager is active (waiting or ready) */}
+                          {(o.pager_status === "waiting" || o.pager_status === "ready") && (
                             <button
                               onClick={() => markPagerReady(o)}
                               disabled={markingReady === o.id}
-                              title="Notify customer their order is ready"
+                              title={o.pager_status === "ready" ? "Ring again for remaining items" : "Notify customer their order is ready"}
                               style={{
-                                background: markingReady === o.id ? "#ccc" : "#f97316",
+                                background: markingReady === o.id
+                                  ? "#ccc"
+                                  : o.pager_status === "ready"
+                                  ? "#16a34a"
+                                  : "#f97316",
                                 color: "#fff", border: "none", borderRadius: 6,
                                 padding: "5px 9px", fontWeight: 700, fontSize: "0.8rem",
                                 cursor: markingReady === o.id ? "not-allowed" : "pointer",
                               }}
                             >
-                              {markingReady === o.id ? "…" : "🔔 Ready"}
+                              {markingReady === o.id
+                                ? "…"
+                                : o.pager_status === "ready"
+                                ? "🔔 Ring Again"
+                                : "🔔 Ready"}
                             </button>
-                          )}
-
-                          {/* Already notified badge */}
-                          {o.pager_status === "ready" && (
-                            <span style={{
-                              background: "#22c55e", color: "#fff",
-                              borderRadius: 6, padding: "4px 8px",
-                              fontSize: "0.78rem", fontWeight: 700,
-                            }}>
-                              ✓ Done
-                            </span>
                           )}
                         </div>
                       </td>
