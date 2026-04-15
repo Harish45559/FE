@@ -63,14 +63,21 @@ const CustomerForgotPassword = () => {
           </>
         ) : (
           <div style={{ textAlign: "center" }}>
-            <p style={{ color: "#6effc2", fontSize: "0.92rem", marginBottom: "18px", lineHeight: "1.6" }}>
-              ✅ A password reset link has been generated.<br />
-              Click below to set your new password.
-            </p>
-            {resetToken && (
-              <button className="btn-primary" onClick={goToReset}>
-                Continue to Reset Password →
-              </button>
+            {resetToken ? (
+              <>
+                <p style={{ color: "#6effc2", fontSize: "0.92rem", marginBottom: "18px", lineHeight: "1.6" }}>
+                  ✅ Reset link generated.<br />
+                  Click below to set your new password.
+                </p>
+                <button className="btn-primary" onClick={goToReset}>
+                  Continue to Reset Password →
+                </button>
+              </>
+            ) : (
+              <p style={{ color: "#6effc2", fontSize: "0.92rem", marginBottom: "18px", lineHeight: "1.6" }}>
+                ✅ Password reset email sent.<br />
+                Please check your inbox and click the link to reset your password.
+              </p>
             )}
           </div>
         )}
