@@ -1,13 +1,62 @@
 // DashboardLayout.jsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate, NavLink } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import api from "../services/api";
 import "./DashboardLayout.css";
+
+// ── Module-level AudioContext (persists across re-renders) ────────────────────
+let _dlAudioCtx = null;
+function getDlAudioCtx() {
+  if (!_dlAudioCtx || _dlAudioCtx.state === "closed") {
+    _dlAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  return _dlAudioCtx;
+}
+
+function playDlNewOrderSound() {
+  try {
+    const ctx = getDlAudioCtx();
+    if (ctx.state === "suspended") return;
+    const master = ctx.createGain();
+    master.gain.value = 0.5;
+    master.connect(ctx.destination);
+    const note = (freq, start, dur) => {
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.connect(g); g.connect(master);
+      osc.type = "sine"; osc.frequency.value = freq;
+      g.gain.setValueAtTime(0, ctx.currentTime + start);
+      g.gain.linearRampToValueAtTime(0.85, ctx.currentTime + start + 0.025);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur);
+      osc.start(ctx.currentTime + start);
+      osc.stop(ctx.currentTime + start + dur + 0.05);
+    };
+    note(784, 0.0, 0.18); note(988, 0.18, 0.18);
+    note(1175, 0.36, 0.18); note(1568, 0.54, 0.4);
+    note(1175, 0.96, 0.15); note(1568, 1.14, 0.5);
+  } catch {}
+}
+
+function sendDlNewOrderNotif(count) {
+  if ("Notification" in window && Notification.permission === "granted") {
+    try {
+      new Notification(`🛎️ ${count} new online order${count > 1 ? "s" : ""}!`, {
+        body: "Go to Online Orders to accept.",
+        icon: "/bg-chili.png",
+        requireInteraction: true,
+      });
+    } catch {}
+  }
+}
 
 const DashboardLayout = ({ children }) => {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [pendingOnlineCount, setPendingOnlineCount] = useState(0);
+  const prevPendingRef = useRef(null);
+  const soundLoopRef = useRef(null);
 
   const [user, setUser] = useState(() =>
     JSON.parse(localStorage.getItem("user")),
@@ -20,6 +69,56 @@ const DashboardLayout = ({ children }) => {
     }, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  // Unlock AudioContext + request notification permission on first click anywhere
+  useEffect(() => {
+    const unlock = () => {
+      try {
+        const ctx = getDlAudioCtx();
+        if (ctx.state === "suspended") ctx.resume().catch(() => {});
+      } catch {}
+      if ("Notification" in window && Notification.permission === "default") {
+        Notification.requestPermission();
+      }
+      document.removeEventListener("click", unlock, true);
+    };
+    document.addEventListener("click", unlock, true);
+    return () => document.removeEventListener("click", unlock, true);
+  }, []);
+
+  // Poll pending online orders every 10s — works on ANY staff page
+  const fetchPendingOnline = useCallback(async () => {
+    const u = JSON.parse(localStorage.getItem("user"));
+    if (!u || u.role !== "admin") return;
+    try {
+      const res = await api.get("/orders/online/pending");
+      const count = (res.data.orders || []).length;
+      setPendingOnlineCount(count);
+
+      if (prevPendingRef.current !== null && count > prevPendingRef.current) {
+        const newCount = count - prevPendingRef.current;
+        sendDlNewOrderNotif(newCount);
+        playDlNewOrderSound();
+        if (!soundLoopRef.current) {
+          soundLoopRef.current = setInterval(playDlNewOrderSound, 4500);
+        }
+      }
+      if (count === 0 && soundLoopRef.current) {
+        clearInterval(soundLoopRef.current);
+        soundLoopRef.current = null;
+      }
+      prevPendingRef.current = count;
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    fetchPendingOnline();
+    const interval = setInterval(fetchPendingOnline, 10000);
+    return () => {
+      clearInterval(interval);
+      if (soundLoopRef.current) clearInterval(soundLoopRef.current);
+    };
+  }, [fetchPendingOnline]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -104,6 +203,9 @@ const DashboardLayout = ({ children }) => {
               >
                 <span className="dl-item-icon">🌐</span>
                 <span className="dl-item-label">Online Orders</span>
+                {pendingOnlineCount > 0 && (
+                  <span className="dl-pending-badge">{pendingOnlineCount}</span>
+                )}
               </NavLink>
               <NavLink
                 to="/customers"
