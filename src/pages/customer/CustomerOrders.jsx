@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import customerApi from "../../services/customerApi";
 import CustomerLayout from "../../components/CustomerLayout";
 import "./CustomerOrders.css";
@@ -11,74 +11,15 @@ const ORDER_STATUS = {
   completed: { label: "Delivered ✓", color: "#aaa", icon: "✅", short: "Delivered" },
 };
 
-// ── Play a cheerful customer notification sound ───────────────────────────────
-function playReadySound() {
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const master = ctx.createGain();
-    master.gain.value = 0.5;
-    master.connect(ctx.destination);
-    const note = (f, s, d) => {
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.connect(g); g.connect(master);
-      o.type = "sine"; o.frequency.value = f;
-      g.gain.setValueAtTime(0, ctx.currentTime + s);
-      g.gain.linearRampToValueAtTime(0.9, ctx.currentTime + s + 0.03);
-      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + s + d);
-      o.start(ctx.currentTime + s); o.stop(ctx.currentTime + s + d + 0.05);
-    };
-    note(1047, 0.00, 0.2);   // C6
-    note(1319, 0.22, 0.2);   // E6
-    note(1568, 0.44, 0.4);   // G6 hold
-  } catch {}
-}
-
-// ── Show browser notification ─────────────────────────────────────────────────
-function showNotification(title, body) {
-  if ("Notification" in window && Notification.permission === "granted") {
-    new Notification(title, { body, icon: "/logo2.png", requireInteraction: true });
-  }
-}
-
 const CustomerOrders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const prevStatusMapRef = useRef({}); // { [orderId]: order_status }
 
-  // Request notification permission once
-  useEffect(() => {
-    if ("Notification" in window && Notification.permission === "default") {
-      Notification.requestPermission();
-    }
-  }, []);
-
+  // Display-only polling — notifications/speech handled globally by CustomerLayout
   const fetchOrders = useCallback(async () => {
     try {
       const res = await customerApi.get("/customer/orders");
-      const fresh = res.data.orders || [];
-
-      // Detect status changes
-      fresh.forEach((order) => {
-        const prev = prevStatusMapRef.current[order.id];
-        const curr = order.order_status;
-        if (prev && prev !== curr) {
-          // Notify on any status change
-          if (curr === "accepted") {
-            playReadySound();
-            showNotification("🍳 Order Accepted!", `Your order #${order.order_number} is being prepared. Ready at ${order.estimated_ready || "soon"}.`);
-          } else if (curr === "completed" || curr === "ready") {
-            playReadySound();
-            playReadySound(); // play twice for emphasis
-            showNotification("🔔 Order Ready!", `Your order #${order.order_number} is ready for collection!`);
-          } else if (curr === "rejected") {
-            showNotification("❌ Order Rejected", `Sorry, your order #${order.order_number} was rejected. Please contact us.`);
-          }
-        }
-        prevStatusMapRef.current[order.id] = curr;
-      });
-
-      setOrders(fresh);
+      setOrders(res.data.orders || []);
     } catch {}
     finally {
       setLoading(false);
@@ -87,7 +28,6 @@ const CustomerOrders = () => {
 
   useEffect(() => {
     fetchOrders();
-    // Poll every 12 seconds
     const interval = setInterval(fetchOrders, 12000);
     return () => clearInterval(interval);
   }, [fetchOrders]);

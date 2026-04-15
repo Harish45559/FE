@@ -40,32 +40,6 @@ function requestNotifPermission() {
   }
 }
 
-// ── Announce order ready via speech + browser notification ───────────────────
-function announceOrderReady(orderNumber) {
-  if ("Notification" in window && Notification.permission === "granted") {
-    try {
-      new Notification("🔔 Order Ready for Collection!", {
-        body: `Order ${orderNumber} is ready. Please inform the customer.`,
-        icon: "/logo2.png",
-        requireInteraction: true,
-      });
-    } catch {}
-  }
-
-  if ("speechSynthesis" in window) {
-    try {
-      window.speechSynthesis.cancel();
-      const msg = new SpeechSynthesisUtterance(
-        `Order ${orderNumber} is ready for collection. Please collect your order. Order ${orderNumber} is ready.`,
-      );
-      msg.rate = 0.88;
-      msg.pitch = 1.05;
-      msg.volume = 1;
-      window.speechSynthesis.speak(msg);
-    } catch {}
-  }
-}
-
 // ── Uber Eats-style ascending ding (uses shared unlocked AudioContext) ────────
 function playNewOrderSound() {
   try {
@@ -98,6 +72,103 @@ function playNewOrderSound() {
     note(1175, 0.96, 0.15); // D6
     note(1568, 1.14, 0.5); // G6 — final
   } catch {}
+}
+
+// ── Auto-print receipt on Accept (customer copy + kitchen copy) ───────────────
+function printOnlineReceipt(order) {
+  const items = order.items || [];
+  const onum = order.order_number;
+  const cname = order.customer_name;
+  const otype = order.order_type || "";
+  const odate = order.date || new Date().toLocaleDateString("en-GB");
+  const pay = order.payment_method || "";
+  const total = parseFloat(order.final_amount).toFixed(2);
+  const pickup = order.pickup_time || "";
+  const ready = order.estimated_ready || "";
+
+  const itemRows = items.map((it) => {
+    const qty = it.qty || 1;
+    return `<div class="item-row"><span class="item-name">${qty}x ${it.name}</span><span class="item-price">£${(it.price * qty).toFixed(2)}</span></div>`;
+  }).join("");
+
+  const kitchenRows = items.map((it) => {
+    const qty = it.qty || 1;
+    return `<tr><td style="font-size:14px;font-weight:900;padding:2mm 0">${qty} X ${it.name.toUpperCase()}</td></tr>`;
+  }).join("");
+
+  const customerCopy = `
+    <div class="bill-section">
+      <div class="receipt-header">
+        <h2>Mirchi Mafiya</h2>
+        <p class="light">Cumberland Street, LU1 3BW, Luton</p>
+        <p class="light">Phone: +447440086046</p>
+      </div>
+      <hr/>
+      <p class="highlight-row">ONLINE ORDER #${onum}</p>
+      <p class="highlight-row">${cname}</p>
+      <p class="light">Type: ${otype}</p>
+      ${pickup ? `<p class="highlight-row" style="font-size:11px">Pickup: ${pickup}</p>` : ""}
+      ${ready ? `<p class="highlight-row" style="font-size:11px">Ready by: ${ready}</p>` : ""}
+      <p class="light">Date: ${odate}</p>
+      <hr/>
+      <p class="items-label">Items</p>
+      <div class="items-block">${itemRows}</div>
+      <hr/>
+      <div class="receipt-summary">
+        <div class="summary-row grand-total"><span>TOTAL</span><span>£${total}</span></div>
+        <div class="summary-row highlight-pay"><span>Payment</span><span>${pay}</span></div>
+      </div>
+      <p style="text-align:center;margin-top:3mm;font-size:9px;color:#111">Thank you for your order!</p>
+    </div>`;
+
+  const kitchenCopy = `
+    <div class="bill-section kitchen">
+      <div style="text-align:center;margin-bottom:3mm">
+        <h2 style="font-size:14px;margin:0">KITCHEN — ONLINE</h2>
+        <div style="font-size:22px;font-weight:900;letter-spacing:1px;margin:2mm 0">#${onum}</div>
+        <div style="font-size:15px;font-weight:800">${otype.toUpperCase()}</div>
+        ${pickup ? `<div style="font-size:13px;font-weight:700;margin-top:1mm">Pickup: ${pickup}</div>` : ""}
+        ${ready ? `<div style="font-size:13px;font-weight:700">Ready: ${ready}</div>` : ""}
+        <div style="font-size:13px;font-weight:700;margin-top:1mm">${cname}</div>
+      </div>
+      <hr/>
+      <table style="width:100%"><tbody>${kitchenRows}</tbody></table>
+      <hr/>
+      <p style="text-align:center;font-size:10px;color:#111">${odate}</p>
+    </div>`;
+
+  const styles = `<style>
+    @page { size: 80mm auto; margin: 0; }
+    html, body { margin: 0; padding: 0; }
+    body { font-family: 'Courier New', monospace; background: #fff; color: #000; }
+    .bill-section { width: 72mm; max-width: 72mm; padding: 5mm 4mm; margin: 0 auto; font-size: 11px; line-height: 1.4; }
+    .receipt-header { text-align: center; margin-bottom: 2mm; }
+    .receipt-header h2 { font-size: 15px; margin: 0 0 1mm; font-weight: 900; letter-spacing: 1px; }
+    .light { font-weight: 400; font-size: 10px; color: #111; margin: 0.5mm 0; }
+    .highlight-row { font-size: 13px; font-weight: 900; margin: 1mm 0; letter-spacing: 0.3px; }
+    .items-label { font-size: 9px; font-weight: 700; color: #333; text-transform: uppercase; letter-spacing: .8px; margin: 1.5mm 0 1mm; }
+    .items-block { display: flex; flex-direction: column; gap: 1mm; margin-bottom: 1mm; }
+    .item-row { display: flex; justify-content: space-between; align-items: baseline; gap: 4px; }
+    .item-name { font-size: 12px; font-weight: 900; flex: 1; }
+    .item-price { font-size: 12px; font-weight: 900; white-space: nowrap; }
+    .receipt-summary { margin-top: 1mm; }
+    .summary-row { display: flex; justify-content: space-between; margin: 0.6mm 0; }
+    .grand-total { font-size: 13px; font-weight: 900; border-top: 2px solid #000; padding-top: 1mm; margin-top: 1mm; }
+    .highlight-pay { font-size: 12px; font-weight: 900; }
+    .kitchen { border-top: 3px dashed #000; }
+    hr { border: 0; border-top: 1px dashed #333; margin: 2mm 0; }
+    .page-break { page-break-after: always; break-after: page; height: 0; display: block; }
+  </style>`;
+
+  const html = `${customerCopy}<div class="page-break"></div>${kitchenCopy}`;
+  const w = window.open("", "_blank", "width=420,height=640");
+  if (!w) return;
+  w.document.open();
+  w.document.write(`<!doctype html><html><head><meta charset="utf-8"/><title>Receipt #${onum}</title>${styles}</head><body>${html}</body></html>`);
+  w.document.close();
+  const doPrint = () => { try { w.focus(); w.print(); } finally { w.close(); } };
+  if (w.document.readyState === "complete") setTimeout(doPrint, 50);
+  else w.onload = () => setTimeout(doPrint, 50);
 }
 
 // ── Receipt Modal ─────────────────────────────────────────────────────────────
@@ -194,7 +265,6 @@ const OnlineOrders = () => {
   const [readyAnnounced, setReadyAnnounced] = useState({}); // tracks which orders had "ready" announced
   const [inAppAlert, setInAppAlert] = useState(false);
   const prevPendingCountRef = useRef(null);
-  const soundLoopRef = useRef(null);
 
   // ── Handle tap-to-enable audio (required on mobile) ──────────────────────
   const handleEnableAudio = async () => {
@@ -238,38 +308,15 @@ const OnlineOrders = () => {
     return () => clearInterval(interval);
   }, [fetchOrders]);
 
-  // ── Sound loop + in-app alert when pending orders exist ─────────────────────
+  // ── In-app alert banner when new pending orders arrive ──────────────────────
   useEffect(() => {
-    const pendingCount = orders.filter(
-      (o) => o.order_status === "pending",
-    ).length;
-
-    // Show in-app banner when count goes up — fires on iOS too (no Web Notifications there)
+    const pendingCount = orders.filter((o) => o.order_status === "pending").length;
     if (prevPendingCountRef.current !== null && pendingCount > prevPendingCountRef.current) {
       setInAppAlert(true);
     }
+    if (pendingCount === 0) setInAppAlert(false);
     prevPendingCountRef.current = pendingCount;
-
-    if (pendingCount > 0) {
-      if (!soundLoopRef.current) {
-        playNewOrderSound();
-        soundLoopRef.current = setInterval(playNewOrderSound, 4500);
-      }
-    } else {
-      if (soundLoopRef.current) {
-        clearInterval(soundLoopRef.current);
-        soundLoopRef.current = null;
-      }
-      setInAppAlert(false);
-    }
   }, [orders]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (soundLoopRef.current) clearInterval(soundLoopRef.current);
-    };
-  }, []);
 
   const handleToggleOnline = async () => {
     // Any button press is a user gesture — unlock audio silently
@@ -299,11 +346,15 @@ const OnlineOrders = () => {
     const minutes = selectedMinutes[id] ?? 20;
     setActionLoading((prev) => ({ ...prev, [id]: true }));
     try {
-      await api.patch(`/orders/online/${id}/accept`, { minutes });
+      const res = await api.patch(`/orders/online/${id}/accept`, { minutes });
+      const estimatedReady = res.data.estimated_ready;
+      const order = orders.find((o) => o.id === id);
       setOrders((prev) =>
-        prev.map((o) => (o.id === id ? { ...o, order_status: "accepted" } : o)),
+        prev.map((o) => (o.id === id ? { ...o, order_status: "accepted", estimated_ready: estimatedReady } : o)),
       );
       setAccepting((prev) => ({ ...prev, [id]: false }));
+      // Auto-print receipt (customer copy + kitchen copy) on accept
+      if (order) printOnlineReceipt({ ...order, estimated_ready: estimatedReady });
     } catch {
     } finally {
       setActionLoading((prev) => ({ ...prev, [id]: false }));
@@ -323,7 +374,8 @@ const OnlineOrders = () => {
     }
   };
 
-  // ── Staff taps "Order Ready" → updates DB status to "ready" + fires speech/notification ──
+  // ── Staff taps "Order Ready" → updates DB status to "ready" ─────────────────
+  // Speech + notification fires on the CUSTOMER'S screen via CustomerLayout polling
   const handleNotifyReady = async (order) => {
     try {
       await api.patch(`/orders/online/${order.id}/ready`);
@@ -331,8 +383,6 @@ const OnlineOrders = () => {
         prev.map((o) => (o.id === order.id ? { ...o, order_status: "ready" } : o)),
       );
     } catch {}
-    // Fire speech + browser notification regardless of API success
-    announceOrderReady(order.order_number);
     setReadyAnnounced((prev) => ({ ...prev, [order.id]: true }));
   };
 
@@ -353,10 +403,12 @@ const OnlineOrders = () => {
   };
 
   const pendingCount = orders.filter((o) => o.order_status === "pending").length;
-  const readyCount   = orders.filter((o) => o.order_status === "ready").length;
-  const filtered = orders.filter((o) =>
-    filter === "all" ? true : o.order_status === filter,
-  );
+  // "accepted" tab shows both accepted and ready orders
+  const filtered = orders.filter((o) => {
+    if (filter === "all") return true;
+    if (filter === "accepted") return o.order_status === "accepted" || o.order_status === "ready";
+    return o.order_status === filter;
+  });
 
   // ── ALL tab: table ──────────────────────────────────────────────────────────
   const renderAllTable = () => (
@@ -648,7 +700,7 @@ const OnlineOrders = () => {
 
         {/* ── Tabs ── */}
         <div className="oo-tabs">
-          {["pending", "accepted", "ready", "rejected", "all"].map((tab) => (
+          {["pending", "accepted", "rejected", "all"].map((tab) => (
             <button
               key={tab}
               className={`oo-tab ${filter === tab ? "active" : ""}`}
@@ -657,9 +709,6 @@ const OnlineOrders = () => {
               {tab === "all" ? "All" : tab.charAt(0).toUpperCase() + tab.slice(1)}
               {tab === "pending" && pendingCount > 0 && (
                 <span className="oo-tab-dot">{pendingCount}</span>
-              )}
-              {tab === "ready" && readyCount > 0 && (
-                <span className="oo-tab-dot" style={{ background: "#80d4ff", color: "#000" }}>{readyCount}</span>
               )}
             </button>
           ))}

@@ -130,6 +130,19 @@
   text-overflow: ellipsis;
 }
 
+.dl-pending-badge {
+  background: #ef4444;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 10px;
+  padding: 1px 7px;
+  min-width: 20px;
+  text-align: center;
+  line-height: 18px;
+  flex-shrink: 0;
+}
+
 /* Footer */
 .dl-footer {
   padding: 10px 8px 14px;

@@ -42,8 +42,8 @@ const OrderConfirmation = () => {
     <CustomerLayout>
       <div className="oc-wrapper">
         <div className="oc-icon">✅</div>
-        <h1 className="oc-title">Order Placed!</h1>
-        <p className="oc-sub">Your order has been received and is being prepared.</p>
+        <h1 className="oc-title">Order Received!</h1>
+        <p className="oc-sub">We've got your order — our team will confirm it shortly. You'll see the status update in My Orders.</p>
 
         <div className="c-card oc-card">
           <div className="oc-row">
