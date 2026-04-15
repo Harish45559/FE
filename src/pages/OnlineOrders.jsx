@@ -430,10 +430,12 @@ const OnlineOrders = () => {
   };
 
   const pendingCount = orders.filter((o) => o.order_status === "pending").length;
-  const readyCount   = orders.filter((o) => o.order_status === "ready").length;
-  const filtered = orders.filter((o) =>
-    filter === "all" ? true : o.order_status === filter,
-  );
+  // "accepted" tab shows both accepted and ready orders
+  const filtered = orders.filter((o) => {
+    if (filter === "all") return true;
+    if (filter === "accepted") return o.order_status === "accepted" || o.order_status === "ready";
+    return o.order_status === filter;
+  });
 
   // ── ALL tab: table ──────────────────────────────────────────────────────────
   const renderAllTable = () => (
@@ -725,7 +727,7 @@ const OnlineOrders = () => {
 
         {/* ── Tabs ── */}
         <div className="oo-tabs">
-          {["pending", "accepted", "ready", "rejected", "all"].map((tab) => (
+          {["pending", "accepted", "rejected", "all"].map((tab) => (
             <button
               key={tab}
               className={`oo-tab ${filter === tab ? "active" : ""}`}
@@ -734,9 +736,6 @@ const OnlineOrders = () => {
               {tab === "all" ? "All" : tab.charAt(0).toUpperCase() + tab.slice(1)}
               {tab === "pending" && pendingCount > 0 && (
                 <span className="oo-tab-dot">{pendingCount}</span>
-              )}
-              {tab === "ready" && readyCount > 0 && (
-                <span className="oo-tab-dot" style={{ background: "#80d4ff", color: "#000" }}>{readyCount}</span>
               )}
             </button>
           ))}
