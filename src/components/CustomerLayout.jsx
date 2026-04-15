@@ -61,6 +61,7 @@ const CustomerLayout = ({ children }) => {
   const { itemCount } = useCart();
   const user = JSON.parse(localStorage.getItem("customer_user") || "{}");
   const prevStatusRef = useRef({}); // { [orderId]: order_status }
+  const pendingAlertRef = useRef(null); // holds alert data when tab is backgrounded
   const [orderAlert, setOrderAlert] = useState(false); // badge on My Orders tab
 
   // Unlock AudioContext + speech + notifications on first tap
@@ -82,6 +83,27 @@ const CustomerLayout = ({ children }) => {
     return () => document.removeEventListener("click", unlock, true);
   }, []);
 
+  // When customer returns to the tab, fire any speech that was held back
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.hidden) return;
+      // Re-unlock AudioContext (released when tab went to background)
+      try {
+        const ctx = getCustAudioCtx();
+        if (ctx.state === "suspended") ctx.resume().catch(() => {});
+      } catch {}
+      if (pendingAlertRef.current) {
+        const { soundType, msg, repeat } = pendingAlertRef.current;
+        pendingAlertRef.current = null;
+        playCustSound(soundType);
+        speakCust(msg);
+        if (repeat) setTimeout(() => speakCust(msg), 2800);
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, []);
+
   // Clear the alert badge when customer opens My Orders
   useEffect(() => {
     if (location.pathname === "/customer/orders") setOrderAlert(false);
@@ -100,14 +122,26 @@ const CustomerLayout = ({ children }) => {
         if (prev && prev !== curr) {
           setOrderAlert(true);
           if (curr === "accepted") {
-            playCustSound("accepted");
-            speakCust(`Your order number ${order.order_number} has been accepted and is being prepared. It will be ready at ${order.estimated_ready || "soon"}.`);
+            const msg = `Your order number ${order.order_number} has been accepted and is being prepared. It will be ready at ${order.estimated_ready || "soon"}.`;
             showCustNotif("👨‍🍳 Order Accepted!", `#${order.order_number} is being prepared — ready at ${order.estimated_ready || "soon"}.`);
+            if (document.hidden) {
+              // Tab in background — hold speech until customer returns
+              pendingAlertRef.current = { soundType: "accepted", msg, repeat: false };
+            } else {
+              playCustSound("accepted");
+              speakCust(msg);
+            }
           } else if (curr === "ready") {
-            playCustSound("ready");
-            speakCust(`Your order number ${order.order_number} is ready for collection. Please come to the counter.`);
-            speakCust(`Your order number ${order.order_number} is ready for collection. Please come to the counter.`);
+            const msg = `Your order number ${order.order_number} is ready for collection. Please come to the counter.`;
             showCustNotif("🔔 Order Ready!", `#${order.order_number} is ready — please collect at the counter!`);
+            if (document.hidden) {
+              // Tab in background — hold speech until customer returns
+              pendingAlertRef.current = { soundType: "ready", msg, repeat: true };
+            } else {
+              playCustSound("ready");
+              speakCust(msg);
+              setTimeout(() => speakCust(msg), 2800);
+            }
           } else if (curr === "rejected") {
             showCustNotif("❌ Order Rejected", `Sorry, order #${order.order_number} was rejected. Please contact us.`);
           }
