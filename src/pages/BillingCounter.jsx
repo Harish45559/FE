@@ -272,9 +272,9 @@ const BillingCounter = () => {
         <div style="text-align:center;margin-top:4mm;padding-top:3mm;border-top:1px dashed #bbb">
           <p style="font-size:10px;margin-bottom:2mm;font-weight:700">📱 Scan to track your order</p>
           <img src="${pagerQR}" style="width:120px;height:120px;" />
-          <p style="font-size:9px;margin-top:2mm;color:#555">We'll notify you when it's ready!</p>
+          <p style="font-size:9px;margin-top:2mm;color:#111">We'll notify you when it's ready!</p>
         </div>` : ""}
-        <p style="text-align:center;margin-top:3mm;font-size:9px;color:#888">Thank you for visiting Mirchi Mafiya!</p>
+        <p style="text-align:center;margin-top:3mm;font-size:9px;color:#111">Thank you for visiting Mirchi Mafiya!</p>
       </div>`;
 
     // ── KITCHEN COPY ───────────────────────────────────────────────
@@ -296,7 +296,7 @@ const BillingCounter = () => {
           <tbody>${kitchenRows}</tbody>
         </table>
         <hr/>
-        <p style="text-align:center;font-size:10px;color:#888">${odate || ""}</p>
+        <p style="text-align:center;font-size:10px;color:#111">${odate || ""}</p>
       </div>`;
 
     // Both copies in one print job — page break between them
@@ -312,9 +312,9 @@ const BillingCounter = () => {
       .bill-section { width: 72mm; max-width: 72mm; padding: 5mm 4mm; margin: 0 auto; font-size: 11px; line-height: 1.4; }
       .receipt-header { text-align: center; margin-bottom: 2mm; }
       .receipt-header h2 { font-size: 15px; margin: 0 0 1mm; font-weight: 900; letter-spacing: 1px; }
-      .light { font-weight: 400; font-size: 10px; color: #555; margin: 0.5mm 0; }
+      .light { font-weight: 400; font-size: 10px; color: #111; margin: 0.5mm 0; }
       .highlight-row { font-size: 13px; font-weight: 900; margin: 1mm 0; letter-spacing: 0.3px; }
-      .items-label { font-size: 9px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: .8px; margin: 1.5mm 0 1mm; }
+      .items-label { font-size: 9px; font-weight: 700; color: #333; text-transform: uppercase; letter-spacing: .8px; margin: 1.5mm 0 1mm; }
       .items-block { display: flex; flex-direction: column; gap: 1mm; margin-bottom: 1mm; }
       .item-row { display: flex; justify-content: space-between; align-items: baseline; gap: 4px; }
       .item-name { font-size: 12px; font-weight: 900; flex: 1; }
@@ -324,8 +324,8 @@ const BillingCounter = () => {
       .grand-total { font-size: 13px; font-weight: 900; border-top: 2px solid #000; padding-top: 1mm; margin-top: 1mm; }
       .highlight-pay { font-size: 12px; font-weight: 900; }
       .kitchen { border-top: 3px dashed #000; }
-      hr { border: 0; border-top: 1px dashed #888; margin: 2mm 0; }
-      .page-break { page-break-after: always; }
+      hr { border: 0; border-top: 1px dashed #333; margin: 2mm 0; }
+      .page-break { page-break-after: always; break-after: page; height: 0; display: block; }
     </style>`;
     if (!w) { window.print(); return; }
     w.document.open();
