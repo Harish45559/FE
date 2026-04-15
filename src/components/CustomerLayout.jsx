@@ -1,13 +1,127 @@
-import React from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useCart } from "../hooks/useCart";
+import customerApi from "../services/customerApi";
 import "./CustomerLayout.css";
+
+// ── Module-level AudioContext — shared, unlocked on first tap ─────────────────
+let _custAudioCtx = null;
+function getCustAudioCtx() {
+  if (!_custAudioCtx || _custAudioCtx.state === "closed") {
+    _custAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  return _custAudioCtx;
+}
+
+function playCustSound(type) {
+  try {
+    const ctx = getCustAudioCtx();
+    if (ctx.state === "suspended") return;
+    const master = ctx.createGain();
+    master.gain.value = 0.5;
+    master.connect(ctx.destination);
+    const note = (f, s, d) => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.connect(g); g.connect(master);
+      o.type = "sine"; o.frequency.value = f;
+      g.gain.setValueAtTime(0, ctx.currentTime + s);
+      g.gain.linearRampToValueAtTime(0.9, ctx.currentTime + s + 0.03);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + s + d);
+      o.start(ctx.currentTime + s); o.stop(ctx.currentTime + s + d + 0.05);
+    };
+    if (type === "ready") {
+      note(1047, 0.00, 0.2); note(1319, 0.22, 0.2);
+      note(1568, 0.44, 0.4); note(1319, 0.86, 0.15); note(1568, 1.04, 0.5);
+    } else {
+      note(1047, 0.00, 0.2); note(1319, 0.22, 0.35);
+    }
+  } catch {}
+}
+
+function speakCust(msg) {
+  if (!("speechSynthesis" in window)) return;
+  try {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(msg);
+    u.volume = 1; u.rate = 0.88; u.pitch = 1.05;
+    window.speechSynthesis.speak(u);
+  } catch {}
+}
+
+function showCustNotif(title, body) {
+  if ("Notification" in window && Notification.permission === "granted") {
+    try { new Notification(title, { body, icon: "/logo2.png", requireInteraction: true }); } catch {}
+  }
+}
 
 const CustomerLayout = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { itemCount } = useCart();
   const user = JSON.parse(localStorage.getItem("customer_user") || "{}");
+  const prevStatusRef = useRef({}); // { [orderId]: order_status }
+  const [orderAlert, setOrderAlert] = useState(false); // badge on My Orders tab
+
+  // Unlock AudioContext + speech + notifications on first tap
+  useEffect(() => {
+    const unlock = () => {
+      try {
+        const ctx = getCustAudioCtx();
+        if (ctx.state === "suspended") ctx.resume().catch(() => {});
+      } catch {}
+      if ("speechSynthesis" in window) {
+        try { const s = new SpeechSynthesisUtterance(""); s.volume = 0; window.speechSynthesis.speak(s); } catch {}
+      }
+      if ("Notification" in window && Notification.permission === "default") {
+        Notification.requestPermission();
+      }
+      document.removeEventListener("click", unlock, true);
+    };
+    document.addEventListener("click", unlock, true);
+    return () => document.removeEventListener("click", unlock, true);
+  }, []);
+
+  // Clear the alert badge when customer opens My Orders
+  useEffect(() => {
+    if (location.pathname === "/customer/orders") setOrderAlert(false);
+  }, [location.pathname]);
+
+  // Poll orders globally — works on any customer page
+  const pollOrders = useCallback(async () => {
+    const token = localStorage.getItem("customer_token");
+    if (!token) return;
+    try {
+      const res = await customerApi.get("/customer/orders");
+      const orders = res.data.orders || [];
+      orders.forEach((order) => {
+        const prev = prevStatusRef.current[order.id];
+        const curr = order.order_status;
+        if (prev && prev !== curr) {
+          setOrderAlert(true);
+          if (curr === "accepted") {
+            playCustSound("accepted");
+            speakCust(`Your order number ${order.order_number} has been accepted and is being prepared. It will be ready at ${order.estimated_ready || "soon"}.`);
+            showCustNotif("👨‍🍳 Order Accepted!", `#${order.order_number} is being prepared — ready at ${order.estimated_ready || "soon"}.`);
+          } else if (curr === "ready") {
+            playCustSound("ready");
+            speakCust(`Your order number ${order.order_number} is ready for collection. Please come to the counter.`);
+            speakCust(`Your order number ${order.order_number} is ready for collection. Please come to the counter.`);
+            showCustNotif("🔔 Order Ready!", `#${order.order_number} is ready — please collect at the counter!`);
+          } else if (curr === "rejected") {
+            showCustNotif("❌ Order Rejected", `Sorry, order #${order.order_number} was rejected. Please contact us.`);
+          }
+        }
+        prevStatusRef.current[order.id] = curr;
+      });
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    pollOrders();
+    const interval = setInterval(pollOrders, 12000);
+    return () => clearInterval(interval);
+  }, [pollOrders]);
 
   const handleLogout = () => {
     localStorage.removeItem("customer_token");
@@ -33,7 +147,7 @@ const CustomerLayout = ({ children }) => {
             Menu
           </Link>
           <Link to="/customer/orders" className={`cl-link ${isActive("/customer/orders") ? "active" : ""}`}>
-            My Orders
+            My Orders{orderAlert && <span className="cl-order-dot" />}
           </Link>
           <Link to="/customer/profile" className={`cl-link ${isActive("/customer/profile") ? "active" : ""}`}>
             Profile
@@ -60,7 +174,9 @@ const CustomerLayout = ({ children }) => {
         </Link>
 
         <Link to="/customer/orders" className={`cl-tab ${isActive("/customer/orders") ? "cl-tab-active" : ""}`}>
-          <span className="cl-tab-icon">📋</span>
+          <span className="cl-tab-icon" style={{ position: "relative" }}>
+            📋{orderAlert && <span className="cl-tab-badge cl-order-alert-dot" />}
+          </span>
           <span className="cl-tab-label">My Orders</span>
         </Link>
 
