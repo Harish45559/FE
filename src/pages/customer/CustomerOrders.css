@@ -1,0 +1,189 @@
+/* ── List container ── */
+.co-list {
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.07);
+}
+
+/* ── Each order row ── */
+.co-card {
+  display: flex;
+  flex-direction: column;
+  border-left: 3px solid #555;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  background: rgba(255,255,255,0.025);
+  transition: background 0.15s;
+}
+
+.co-card:last-child { border-bottom: none; }
+.co-card:hover      { background: rgba(255,255,255,0.045); }
+
+/* Status left-border colours */
+.co-card.co-status-pending   { border-left-color: #ffa048; }
+.co-card.co-status-accepted  { border-left-color: #6effc2; }
+.co-card.co-status-rejected  { border-left-color: #ff8888; }
+.co-card.co-status-ready     { border-left-color: #80d4ff; }
+.co-card.co-status-completed { border-left-color: #555; }
+
+.co-card-ready { background: rgba(0,200,100,0.035); }
+.co-card-done  { opacity: 0.72; }
+
+/* ── Top row: order # · type · status ── */
+.co-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px 6px;
+  flex-wrap: wrap;
+}
+
+.co-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.co-number {
+  font-weight: 800;
+  font-size: 0.92rem;
+  color: #FFD166;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.co-type-pill {
+  font-size: 0.68rem;
+  background: rgba(255,106,0,0.1);
+  color: #FF6A00;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-weight: 700;
+  border: 1px solid rgba(255,106,0,0.18);
+  white-space: nowrap;
+}
+
+.co-status-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 16px;
+  border: 1.5px solid;
+  white-space: nowrap;
+}
+
+/* ── Meta row ── */
+.co-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 0.74rem;
+  color: #666;
+  flex-wrap: wrap;
+  padding: 0 14px 6px;
+}
+
+/* ── Info Banner (compact inline strip) ── */
+.co-info-banner {
+  margin: 0 14px 6px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  border: 1px solid;
+}
+
+.co-banner-pending {
+  background: rgba(255,160,0,0.05);
+  border-color: rgba(255,160,0,0.2);
+  color: #ffa048;
+  font-style: italic;
+}
+.co-banner-accepted {
+  background: rgba(0,200,100,0.06);
+  border-color: rgba(0,200,100,0.25);
+  color: #6effc2;
+}
+.co-banner-ready {
+  background: rgba(0,200,100,0.1);
+  border-color: rgba(0,200,100,0.4);
+  color: #6effc2;
+  text-align: center;
+  animation: co-pulse 1.4s ease-in-out infinite;
+}
+@keyframes co-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0,200,100,0.12); }
+  50%       { box-shadow: 0 0 10px 4px rgba(0,200,100,0.18); }
+}
+.co-banner-done {
+  background: rgba(255,255,255,0.02);
+  border-color: rgba(255,255,255,0.07);
+  color: #555;
+  text-align: center;
+}
+.co-banner-rejected {
+  background: rgba(220,58,0,0.06);
+  border-color: rgba(220,58,0,0.25);
+  color: #ff8888;
+  text-align: center;
+}
+
+/* ── Items list ── */
+.co-items {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0 14px 6px;
+  background: rgba(0,0,0,0.15);
+  border-radius: 6px;
+  padding: 6px 10px;
+}
+
+.co-item-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+}
+
+.co-item-name  { flex: 1; color: #aaa; }
+.co-item-qty   { color: #666; min-width: 24px; font-size: 0.74rem; }
+.co-item-price { color: #FFD166; font-weight: 700; min-width: 46px; text-align: right; }
+
+/* ── Footer: total + receipt ── */
+.co-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 14px 10px;
+  border-top: 1px solid rgba(255,255,255,0.04);
+  margin-top: 2px;
+}
+
+.co-total { font-size: 0.98rem; font-weight: 800; color: #FFD166; }
+
+.co-receipt-btn {
+  padding: 5px 12px !important;
+  font-size: 0.74rem !important;
+}
+
+/* ── Loading / Empty ── */
+.co-loading, .co-empty {
+  text-align: center;
+  color: #777;
+  padding: 50px 20px;
+}
+
+/* ── Mobile ── */
+@media (max-width: 480px) {
+  .co-header  { padding: 8px 12px 4px; gap: 6px; }
+  .co-meta    { padding: 0 12px 4px; gap: 8px; }
+  .co-info-banner { margin: 0 12px 4px; }
+  .co-items   { margin: 0 12px 4px; }
+  .co-footer  { padding: 5px 12px 8px; }
+  .co-number  { font-size: 0.83rem; }
+  .co-total   { font-size: 0.9rem; }
+  .co-item-row { font-size: 0.74rem; }
+}

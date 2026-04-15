@@ -1,0 +1,43 @@
+.cp-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.cp-section-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #FFD166;
+  margin: 0 0 20px;
+}
+
+.cp-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cp-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.cp-email-row { opacity: 0.7; }
+
+.cp-email-note {
+  font-size: 0.75rem;
+  color: #888;
+}
+
+@media (max-width: 780px) {
+  .cp-layout { grid-template-columns: 1fr; }
+  .cp-row { grid-template-columns: 1fr; }
+}

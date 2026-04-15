@@ -442,6 +442,23 @@
   color: #185FA5;
 }
 
+.eod-pay-col {
+  background: #FFF3E0;
+  color: #E65100;
+}
+
+/* Source badges */
+.eod-src-badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.eod-src-online  { background: #EDE7F6; color: #512DA8; }
+.eod-src-counter { background: #E8F5E9; color: #2E7D32; }
+
 /* ── Pagination ── */
 .eod-pagination {
   display: flex;

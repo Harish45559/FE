@@ -77,6 +77,21 @@
   box-shadow: 0 0 0 2px #dd3a00;
 }
 
+.po-filter-select {
+  padding: 9px 12px;
+  border-radius: 12px;
+  border: 1.5px solid #e0e0e0;
+  background: #fff;
+  font-size: 13px;
+  color: #444;
+  cursor: pointer;
+  font-weight: 500;
+  outline: none;
+  transition: border-color .15s;
+}
+
+.po-filter-select:focus { border-color: #dd3a00; }
+
 .po-clear {
   padding: 9px 16px;
   border-radius: 12px;
@@ -90,6 +105,18 @@
   transition: all .15s;
   white-space: nowrap;
 }
+
+/* Source badges in table */
+.po-src-badge {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.po-src-online  { background: #EDE7F6; color: #512DA8; }
+.po-src-counter { background: #E8F5E9; color: #2E7D32; }
 
 .po-clear:hover {
   background: #fff1ee;
@@ -330,58 +357,53 @@
   background: #fff;
   padding: 18px;
   border-radius: 16px;
-  width: min(480px, 92vw);
+  width: min(420px, 92vw);
   max-height: 90vh;
   overflow: auto;
   box-shadow: 0 20px 50px rgba(0, 0, 0, .2);
   font-family: 'Courier New', Courier, monospace;
   color: #000;
+  font-size: 13px;
 }
 
+/* Receipt header */
 .receipt-header h2 {
   text-align: center;
-  margin: 0 0 6px;
-  font-size: 20px;
+  margin: 0 0 4px;
+  font-size: 18px;
   font-weight: 900;
   color: #000;
 }
 
 .receipt-header p {
-  font-size: 14px;
+  font-size: 12px;
   text-align: center;
-  margin: 2px 0;
+  margin: 1px 0;
   color: #000;
 }
 
-.receipt-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 12px 0;
-  font-size: 14px;
-}
+/* Typography helpers */
+.rcp-light { font-weight: 400; font-size: 12px; color: #555; margin: 2px 0; }
+.rcp-bold  { font-weight: 800; font-size: 13px; color: #000; margin: 3px 0; }
+.rcp-bold-lg { font-weight: 900; font-size: 15px; color: #000; margin: 4px 0; letter-spacing: 0.5px; }
+.rcp-divider { border: 0; border-top: 1px dashed #bbb; margin: 6px 0; }
 
-.receipt-table th,
-.receipt-table td {
-  padding: 6px 4px;
-  border-bottom: 1px dashed #ccc;
-  font-weight: 600;
-  color: #000;
-  text-align: left;
-}
+/* Items */
+.rcp-items-label { font-size: 10px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: .8px; margin: 4px 0 4px; }
+.rcp-items-table { display: flex; flex-direction: column; gap: 3px; margin-bottom: 4px; }
+.rcp-item-row    { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; }
+.rcp-item-name   { font-weight: 800; font-size: 13px; color: #000; flex: 1; }
+.rcp-item-price  { font-weight: 800; font-size: 13px; color: #000; white-space: nowrap; }
 
-.receipt-summary p {
-  margin: 6px 0;
-  font-size: 14px;
-  font-weight: 600;
-  color: #000;
-}
+/* Summary */
+.rcp-summary { margin-top: 4px; }
+.rcp-summary-row { display: flex; justify-content: space-between; margin: 2px 0; }
+.rcp-grand { font-size: 15px; font-weight: 900; color: #000; border-top: 2px solid #000; padding-top: 4px; margin-top: 4px; }
 
-.grand-total {
-  font-size: 16px;
-  font-weight: 800;
-  margin-top: 10px;
-}
+/* Thank-you line */
+.rcp-thankyou { text-align: center; font-size: 11px; color: #888; margin-top: 10px; }
 
+/* Buttons */
 .print-btn,
 .close-preview-btn {
   padding: 8px 16px;
@@ -411,9 +433,7 @@
 
 /* ===== PRINT ===== */
 @media print {
-  body>*:not(.receipt-modal) {
-    display: none !important;
-  }
+  body > *:not(.receipt-modal) { display: none !important; }
 
   .receipt-modal {
     display: block !important;
@@ -430,7 +450,7 @@
     width: 72mm !important;
     max-width: 72mm !important;
     margin: 0 auto !important;
-    padding: 10px !important;
+    padding: 8px !important;
     background: #fff !important;
     color: #000 !important;
     box-shadow: none !important;
@@ -438,30 +458,11 @@
     overflow: visible !important;
   }
 
-  .receipt-table th,
-  .receipt-table td {
-    padding: 2px 4px !important;
-    line-height: 1.1 !important;
-    border-bottom: 1px dashed #000 !important;
-  }
+  .print-btn, .close-preview-btn { display: none !important; }
 
-  .receipt-summary p {
-    margin: 2px 0 !important;
-    font-size: 13px !important;
-  }
+  @page { size: 72mm auto; margin: 0; }
 
-  .print-btn,
-  .close-preview-btn {
-    display: none !important;
-  }
-
-  @page {
-    size: 72mm auto;
-    margin: 0;
-  }
-
-  html,
-  body {
+  html, body {
     margin: 0 !important;
     padding: 0 !important;
     width: 72mm !important;
@@ -470,4 +471,5 @@
     background: #fff !important;
   }
 }
+
 @keyframes pagerPulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.75); } }
