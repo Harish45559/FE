@@ -51,12 +51,25 @@ function sendDlNewOrderNotif(count) {
   }
 }
 
+function speakDlNewOrder() {
+  if (!("speechSynthesis" in window)) return;
+  try {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(
+      "New online order received. Please check online orders."
+    );
+    u.volume = 1; u.rate = 0.9; u.pitch = 1.0;
+    window.speechSynthesis.speak(u);
+  } catch {}
+}
+
 const DashboardLayout = ({ children }) => {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [pendingOnlineCount, setPendingOnlineCount] = useState(0);
   const prevPendingRef = useRef(null);
   const soundLoopRef = useRef(null);
+  const speechLoopRef = useRef(null);
 
   const [user, setUser] = useState(() =>
     JSON.parse(localStorage.getItem("user")),
@@ -70,13 +83,20 @@ const DashboardLayout = ({ children }) => {
     return () => clearInterval(interval);
   }, []);
 
-  // Unlock AudioContext + request notification permission on first click anywhere
+  // Unlock AudioContext + speech synthesis + notifications on first click anywhere
   useEffect(() => {
     const unlock = () => {
       try {
         const ctx = getDlAudioCtx();
         if (ctx.state === "suspended") ctx.resume().catch(() => {});
       } catch {}
+      if ("speechSynthesis" in window) {
+        try {
+          const s = new SpeechSynthesisUtterance("");
+          s.volume = 0;
+          window.speechSynthesis.speak(s);
+        } catch {}
+      }
       if ("Notification" in window && Notification.permission === "default") {
         Notification.requestPermission();
       }
@@ -98,14 +118,30 @@ const DashboardLayout = ({ children }) => {
       if (prevPendingRef.current !== null && count > prevPendingRef.current) {
         const newCount = count - prevPendingRef.current;
         sendDlNewOrderNotif(newCount);
-        playDlNewOrderSound();
+      }
+
+      if (count > 0) {
+        // Start sound loop if not already running
         if (!soundLoopRef.current) {
+          playDlNewOrderSound();
           soundLoopRef.current = setInterval(playDlNewOrderSound, 4500);
         }
-      }
-      if (count === 0 && soundLoopRef.current) {
-        clearInterval(soundLoopRef.current);
-        soundLoopRef.current = null;
+        // Start speech loop if not already running — repeats every 12s until accepted
+        if (!speechLoopRef.current) {
+          speakDlNewOrder();
+          speechLoopRef.current = setInterval(speakDlNewOrder, 12000);
+        }
+      } else {
+        // No pending orders — stop both loops
+        if (soundLoopRef.current) {
+          clearInterval(soundLoopRef.current);
+          soundLoopRef.current = null;
+        }
+        if (speechLoopRef.current) {
+          clearInterval(speechLoopRef.current);
+          speechLoopRef.current = null;
+          try { window.speechSynthesis?.cancel(); } catch {}
+        }
       }
       prevPendingRef.current = count;
     } catch {}
@@ -117,6 +153,7 @@ const DashboardLayout = ({ children }) => {
     return () => {
       clearInterval(interval);
       if (soundLoopRef.current) clearInterval(soundLoopRef.current);
+      if (speechLoopRef.current) clearInterval(speechLoopRef.current);
     };
   }, [fetchPendingOnline]);
 

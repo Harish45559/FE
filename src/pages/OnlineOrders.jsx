@@ -40,32 +40,6 @@ function requestNotifPermission() {
   }
 }
 
-// ── Announce order ready via speech + browser notification ───────────────────
-function announceOrderReady(orderNumber) {
-  if ("Notification" in window && Notification.permission === "granted") {
-    try {
-      new Notification("🔔 Order Ready for Collection!", {
-        body: `Order ${orderNumber} is ready. Please inform the customer.`,
-        icon: "/logo2.png",
-        requireInteraction: true,
-      });
-    } catch {}
-  }
-
-  if ("speechSynthesis" in window) {
-    try {
-      window.speechSynthesis.cancel();
-      const msg = new SpeechSynthesisUtterance(
-        `Order ${orderNumber} is ready for collection. Please collect your order. Order ${orderNumber} is ready.`,
-      );
-      msg.rate = 0.88;
-      msg.pitch = 1.05;
-      msg.volume = 1;
-      window.speechSynthesis.speak(msg);
-    } catch {}
-  }
-}
-
 // ── Uber Eats-style ascending ding (uses shared unlocked AudioContext) ────────
 function playNewOrderSound() {
   try {
@@ -400,7 +374,8 @@ const OnlineOrders = () => {
     }
   };
 
-  // ── Staff taps "Order Ready" → updates DB status to "ready" + fires speech/notification ──
+  // ── Staff taps "Order Ready" → updates DB status to "ready" ─────────────────
+  // Speech + notification fires on the CUSTOMER'S screen via CustomerLayout polling
   const handleNotifyReady = async (order) => {
     try {
       await api.patch(`/orders/online/${order.id}/ready`);
@@ -408,8 +383,6 @@ const OnlineOrders = () => {
         prev.map((o) => (o.id === order.id ? { ...o, order_status: "ready" } : o)),
       );
     } catch {}
-    // Fire speech + browser notification regardless of API success
-    announceOrderReady(order.order_number);
     setReadyAnnounced((prev) => ({ ...prev, [order.id]: true }));
   };
 
