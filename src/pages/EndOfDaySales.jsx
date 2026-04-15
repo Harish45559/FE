@@ -53,6 +53,7 @@ const EndOfDaySales = () => {
   const [paymentFilter, setPaymentFilter] = useState("all");
   const [chartType, setChartType] = useState("bar");
 
+  const [sourceFilter, setSourceFilter] = useState("all");
   const [ordersPage, setOrdersPage] = useState(1);
   const [ordersPageSize, setOrdersPageSize] = useState(PAGE_SIZE);
 
@@ -105,7 +106,7 @@ const EndOfDaySales = () => {
 
   useEffect(() => {
     setOrdersPage(1);
-  }, [paymentFilter, activeRange, ordersPageSize]);
+  }, [paymentFilter, sourceFilter, activeRange, ordersPageSize]);
 
   const headerDateLabel = useMemo(() => {
     const { from, to } = activeRange;
@@ -126,9 +127,15 @@ const EndOfDaySales = () => {
   const topItem = topItems[0] || null;
 
   const filteredOrders = useMemo(() => {
-    if (paymentFilter === "all") return orders;
-    return orders.filter((o) => o.payment_method === paymentFilter);
-  }, [orders, paymentFilter]);
+    return orders.filter((o) => {
+      const payOk = paymentFilter === "all" || o.payment_method === paymentFilter;
+      const srcOk =
+        sourceFilter === "all" ||
+        (sourceFilter === "online" && o.source === "online") ||
+        (sourceFilter === "counter" && (o.source === "pos" || !o.source));
+      return payOk && srcOk;
+    });
+  }, [orders, paymentFilter, sourceFilter]);
 
   const ordersPageCount = Math.max(
     1,
@@ -167,6 +174,7 @@ const EndOfDaySales = () => {
     setFromDate("");
     setToDate("");
     setPaymentFilter("all");
+    setSourceFilter("all");
     setFilterMode("today");
     setTab("summary");
     setOrdersPage(1);
@@ -476,6 +484,15 @@ const EndOfDaySales = () => {
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                 <select
                   className="eod-date-inp"
+                  value={sourceFilter}
+                  onChange={(e) => { setSourceFilter(e.target.value); setOrdersPage(1); }}
+                >
+                  <option value="all">All sources</option>
+                  <option value="online">🌐 Online orders</option>
+                  <option value="counter">🖥️ Billing counter</option>
+                </select>
+                <select
+                  className="eod-date-inp"
                   value={paymentFilter}
                   onChange={(e) => {
                     setPaymentFilter(e.target.value);
@@ -483,8 +500,9 @@ const EndOfDaySales = () => {
                   }}
                 >
                   <option value="all">All payments</option>
-                  <option value="Cash">Cash only</option>
-                  <option value="Card">Card only</option>
+                  <option value="Cash">Cash</option>
+                  <option value="Card">Card</option>
+                  <option value="Pay at Collection">Pay at Collection</option>
                 </select>
                 <select
                   className="eod-date-inp"
@@ -508,6 +526,7 @@ const EndOfDaySales = () => {
                 <thead>
                   <tr>
                     <th>Order #</th>
+                    <th>Source</th>
                     <th>Date / time</th>
                     <th>Customer</th>
                     <th>Total</th>
@@ -517,25 +536,24 @@ const EndOfDaySales = () => {
                 <tbody>
                   {ordersPageRows.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="eod-empty">
+                      <td colSpan={6} className="eod-empty">
                         No orders for this range
                       </td>
                     </tr>
                   ) : (
                     ordersPageRows.map((o) => (
                       <tr key={o.id}>
-                        <td className="eod-order-num">
-                          #{o.order_number || o.id}
+                        <td className="eod-order-num">#{o.order_number || o.id}</td>
+                        <td>
+                          <span className={`eod-src-badge ${o.source === "online" ? "eod-src-online" : "eod-src-counter"}`}>
+                            {o.source === "online" ? "🌐 Online" : "🖥️ Counter"}
+                          </span>
                         </td>
                         <td className="eod-muted">{fmtDate(o.created_at)}</td>
                         <td>{o.customer_name || "—"}</td>
-                        <td className="eod-order-total">
-                          {fmt(o.final_amount ?? o.total_amount ?? 0)}
-                        </td>
+                        <td className="eod-order-total">{fmt(o.final_amount ?? o.total_amount ?? 0)}</td>
                         <td>
-                          <span
-                            className={`eod-pay-badge ${o.payment_method === "Cash" ? "eod-pay-cash" : "eod-pay-card"}`}
-                          >
+                          <span className={`eod-pay-badge ${o.payment_method === "Cash" ? "eod-pay-cash" : o.payment_method === "Card" ? "eod-pay-card" : "eod-pay-col"}`}>
                             {o.payment_method}
                           </span>
                         </td>

@@ -96,6 +96,24 @@ const DashboardLayout = ({ children }) => {
                 <span className="dl-item-label">Dashboard</span>
               </NavLink>
 
+              <div className="dl-section">Online Ordering</div>
+              <NavLink
+                to="/online-orders"
+                className={({ isActive }) => `dl-item${isActive ? " active" : ""}`}
+                onClick={() => setMenuOpen(false)}
+              >
+                <span className="dl-item-icon">🌐</span>
+                <span className="dl-item-label">Online Orders</span>
+              </NavLink>
+              <NavLink
+                to="/customers"
+                className={({ isActive }) => `dl-item${isActive ? " active" : ""}`}
+                onClick={() => setMenuOpen(false)}
+              >
+                <span className="dl-item-icon">👤</span>
+                <span className="dl-item-label">Customers</span>
+              </NavLink>
+
               <div className="dl-section">Management</div>
               <NavLink
                 to="/employees"

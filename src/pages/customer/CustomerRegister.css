@@ -1,0 +1,60 @@
+.reg-card { max-width: 560px !important; }
+.reg-form  { gap: 10px !important; }
+.reg-subtitle { font-size: 0.82rem; color: #888; margin: -8px 0 4px; text-align: center; }
+
+.reg-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* Field wrapper — holds input + error message */
+.reg-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+/* Input error state */
+.input-err {
+  border-color: #e53e3e !important;
+  box-shadow: 0 0 0 2px rgba(229,62,62,0.18) !important;
+}
+
+.field-err {
+  font-size: 0.72rem;
+  color: #fc8181;
+  padding-left: 2px;
+}
+
+/* Password strength bar */
+.pw-strength {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.pw-bar {
+  display: flex;
+  gap: 3px;
+  flex: 1;
+}
+
+.pw-seg {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  transition: background 0.25s;
+}
+
+.pw-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  min-width: 42px;
+  text-align: right;
+}
+
+@media (max-width: 420px) {
+  .reg-row { grid-template-columns: 1fr; }
+}

@@ -179,6 +179,19 @@
   opacity: .9;
 }
 
+.customer-portal-link{
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,106,0,0.2);
+}
+.customer-portal-link a{
+  color: #ffa048;
+  font-size: .88rem;
+  text-decoration: none;
+  font-weight: 600;
+}
+.customer-portal-link a:hover{ text-decoration: underline; }
+
 .alert{
   margin: 6px 0 2px;
   padding: 10px 12px;

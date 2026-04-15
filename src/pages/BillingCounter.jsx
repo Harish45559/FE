@@ -230,26 +230,15 @@ const BillingCounter = () => {
   };
 
   const renderReceiptHTML = (data) => {
-    const { orderNumber: onum, orderType: otype, customerName: cname, paymentMethod: pay, orderDate: odate, items, totals, staffName, pagerQR } = data;
+    const { orderNumber: onum, orderType: otype, customerName: cname, customerPhone: cphone, paymentMethod: pay, orderDate: odate, items, totals, staffName, pagerQR } = data;
 
-    // Item rows for customer copy — qty X name, price, total (bold + highlighted)
+    // Items rows: "2x Punugulu  £5.00" — name left, price right
     const itemRows = items.map((it) => {
-      const qty = it.qty ?? it.quantity ?? 0;
-      const price = Number(it.price).toFixed(2);
-      const total = Number(it.total).toFixed(2);
-      return `<tr>
-        <td style="font-weight:800;font-size:12px;padding:2mm 0">${qty} x ${it.name}</td>
-        <td style="text-align:right;font-weight:700;font-size:12px">£${price}</td>
-        <td style="text-align:right;font-weight:800;font-size:12px">£${total}</td>
-      </tr>`;
+      const qty   = it.qty ?? it.quantity ?? 0;
+      const price = Number(it.price ?? 0);
+      const total = Number(it.total ?? price * qty);
+      return `<div class="item-row"><span class="item-name">${qty}x ${it.name}</span><span class="item-price">£${total.toFixed(2)}</span></div>`;
     }).join("");
-
-    const qrSection = pagerQR
-      ? `<div style="text-align:center;margin-top:4mm;padding-top:3mm;border-top:1px dashed #bbb">
-           <p style="font-size:10px;margin-bottom:2mm;font-weight:700">📱 Scan to track your order</p>
-           <img src="${pagerQR}" style="width:120px;height:120px;" />
-           <p style="font-size:9px;margin-top:2mm;color:#555">We'll speak &amp; notify you when it's ready!</p>
-         </div>` : "";
 
     // ── CUSTOMER COPY ──────────────────────────────────────────────
     const customerCopy = `
@@ -263,31 +252,29 @@ const BillingCounter = () => {
         <hr/>
         <p class="highlight-row">ORDER #${onum ?? "—"}</p>
         <p class="highlight-row">${cname || "N/A"}</p>
-        <p class="light" style="margin:1mm 0">Type: <strong>${otype}</strong></p>
-        <p class="highlight-pay">Paid: ${pay}</p>
-        <p class="light">Date: ${odate || "—"}</p>
+        ${cphone ? `<p class="highlight-row">📞 ${cphone}</p>` : ""}
+        <p class="light">Type: ${otype}</p>
+        <p class="highlight-row" style="font-size:11px">Date: ${odate || "—"}</p>
         <hr/>
-        <table class="receipt-table">
-          <thead>
-            <tr>
-              <th>Item</th>
-              <th style="text-align:right">Price</th>
-              <th style="text-align:right">Total</th>
-            </tr>
-          </thead>
-          <tbody>${itemRows}</tbody>
-        </table>
+        <p class="items-label">Items</p>
+        <div class="items-block">${itemRows}</div>
         <hr/>
         <div class="receipt-summary">
-          <p class="light">Sub Total: £${totals.subtotal.toFixed(2)}</p>
-          ${totals.discount > 0 ? `<p class="light">Discount (${totals.discountPct}%): -£${totals.discount.toFixed(2)}</p>` : ""}
-          <p class="light">VAT (20%): £${totals.vat.toFixed(2)}</p>
-          <p class="light">Service (8%): £${totals.service.toFixed(2)}</p>
-          <p class="grand-total">TOTAL: £${totals.grand.toFixed(2)}</p>
-          <p class="light">Staff: ${staffName || "—"}</p>
+          <div class="summary-row light"><span>Sub Total</span><span>£${totals.subtotal.toFixed(2)}</span></div>
+          ${totals.discount > 0 ? `<div class="summary-row light"><span>Discount (${totals.discountPct}%)</span><span>-£${totals.discount.toFixed(2)}</span></div>` : ""}
+          <div class="summary-row light"><span>VAT (20%)</span><span>£${totals.vat.toFixed(2)}</span></div>
+          <div class="summary-row light"><span>Service (8%)</span><span>£${totals.service.toFixed(2)}</span></div>
+          <div class="summary-row grand-total"><span>TOTAL</span><span>£${totals.grand.toFixed(2)}</span></div>
+          <div class="summary-row highlight-pay"><span>Payment</span><span>${pay}</span></div>
+          <div class="summary-row light"><span>Staff</span><span>${staffName || "—"}</span></div>
         </div>
-        ${qrSection}
-        <p style="text-align:center;margin-top:3mm;font-size:9px;color:#888">Thank you for visiting Mirchi Mafia!</p>
+        ${pagerQR ? `
+        <div style="text-align:center;margin-top:4mm;padding-top:3mm;border-top:1px dashed #bbb">
+          <p style="font-size:10px;margin-bottom:2mm;font-weight:700">📱 Scan to track your order</p>
+          <img src="${pagerQR}" style="width:120px;height:120px;" />
+          <p style="font-size:9px;margin-top:2mm;color:#555">We'll notify you when it's ready!</p>
+        </div>` : ""}
+        <p style="text-align:center;margin-top:3mm;font-size:9px;color:#888">Thank you for visiting Mirchi Mafiya!</p>
       </div>`;
 
     // ── KITCHEN COPY ───────────────────────────────────────────────
@@ -322,18 +309,20 @@ const BillingCounter = () => {
       @page { size: 80mm auto; margin: 0; }
       html, body { margin: 0; padding: 0; }
       body { font-family: 'Courier New', monospace; background: #fff; color: #000; }
-      .bill-section { width: 72mm; max-width: 72mm; padding: 5mm 4mm; margin: 0 auto; font-size: 11px; line-height: 1.3; }
+      .bill-section { width: 72mm; max-width: 72mm; padding: 5mm 4mm; margin: 0 auto; font-size: 11px; line-height: 1.4; }
       .receipt-header { text-align: center; margin-bottom: 2mm; }
       .receipt-header h2 { font-size: 15px; margin: 0 0 1mm; font-weight: 900; letter-spacing: 1px; }
-      .light { font-weight: 400; font-size: 10px; color: #555; margin: 0.8mm 0; }
-      .highlight-row { font-size: 14px; font-weight: 900; margin: 1.5mm 0; letter-spacing: 0.5px; }
-      .highlight-pay { font-size: 12px; font-weight: 800; margin: 1mm 0; }
-      .receipt-table { width: 100%; border-collapse: collapse; margin: 1mm 0; }
-      .receipt-table th { font-size: 10px; font-weight: 600; color: #555; text-align: left; padding: 1mm 0; border-bottom: 1px solid #000; }
-      .receipt-table td { vertical-align: top; }
+      .light { font-weight: 400; font-size: 10px; color: #555; margin: 0.5mm 0; }
+      .highlight-row { font-size: 13px; font-weight: 900; margin: 1mm 0; letter-spacing: 0.3px; }
+      .items-label { font-size: 9px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: .8px; margin: 1.5mm 0 1mm; }
+      .items-block { display: flex; flex-direction: column; gap: 1mm; margin-bottom: 1mm; }
+      .item-row { display: flex; justify-content: space-between; align-items: baseline; gap: 4px; }
+      .item-name { font-size: 12px; font-weight: 900; flex: 1; }
+      .item-price { font-size: 12px; font-weight: 900; white-space: nowrap; }
       .receipt-summary { margin-top: 1mm; }
-      .receipt-summary .light { margin: 0.8mm 0; }
-      .grand-total { font-size: 14px; font-weight: 900; margin: 2mm 0 1mm; border-top: 2px solid #000; padding-top: 1mm; }
+      .summary-row { display: flex; justify-content: space-between; margin: 0.6mm 0; }
+      .grand-total { font-size: 13px; font-weight: 900; border-top: 2px solid #000; padding-top: 1mm; margin-top: 1mm; }
+      .highlight-pay { font-size: 12px; font-weight: 900; }
       .kitchen { border-top: 3px dashed #000; }
       hr { border: 0; border-top: 1px dashed #888; margin: 2mm 0; }
       .page-break { page-break-after: always; }
@@ -386,7 +375,7 @@ const BillingCounter = () => {
       const res = await api.post("/orders", payload);
       const placed = res?.data?.order || {};
 
-      // Auto-generate pager QR so it can be printed on the receipt
+      // Auto-generate pager QR so it prints on the receipt
       let autoPager = null;
       if (placed.id) {
         try {
@@ -417,6 +406,7 @@ const BillingCounter = () => {
           orderNumber: placed.order_number ?? nextTempOrderNumber,
           orderType: placed.order_type || orderType,
           customerName,
+          customerPhone: null,
           paymentMethod,
           orderDate: placed.date ?? getDateTime(),
           items: selectedItems,
@@ -434,8 +424,6 @@ const BillingCounter = () => {
         }
         setResumedHeldOrderId(null);
       }
-      // Do NOT call startNewOrder() here — staff must choose to generate a pager QR
-      // or click "New Order" before clearing the counter.
     } catch (err) {
       toast.error(err?.response?.data?.error || "Failed to place order");
     } finally {

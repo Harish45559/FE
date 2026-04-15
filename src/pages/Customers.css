@@ -1,0 +1,380 @@
+/* Customers.css — light admin theme */
+
+/* ── Header ── */
+.cx-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.cx-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #111;
+  margin: 0 0 2px;
+}
+
+.cx-subtitle {
+  font-size: 13px;
+  color: #888;
+  margin: 0;
+}
+
+.cx-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* View toggle */
+.cx-view-toggle {
+  display: flex;
+  gap: 2px;
+  background: #f0f0f0;
+  border-radius: 10px;
+  padding: 3px;
+}
+
+.cx-vbtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  cursor: pointer;
+  color: #888;
+  transition: all .15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cx-vbtn.active {
+  background: #fff;
+  color: #dd3a00;
+  box-shadow: 0 1px 4px rgba(0,0,0,.1);
+}
+
+/* ── Stats strip ── */
+.cx-stats {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.06);
+  padding: 16px 24px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.cx-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 24px;
+}
+
+.cx-stat-divider {
+  width: 1px;
+  height: 36px;
+  background: #f0f0f0;
+}
+
+.cx-stat-val {
+  font-size: 26px;
+  font-weight: 700;
+  color: #111;
+  line-height: 1.1;
+}
+
+.cx-stat-val.cx-stat-green {
+  color: #16a34a;
+}
+
+.cx-stat-lbl {
+  font-size: 11px;
+  color: #aaa;
+  margin-top: 3px;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  font-weight: 600;
+}
+
+/* ── Controls ── */
+.cx-controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.cx-search-wrap {
+  flex: 1;
+  min-width: 240px;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.cx-search-icon {
+  position: absolute;
+  left: 12px;
+  font-size: 14px;
+  pointer-events: none;
+}
+
+.cx-search {
+  width: 100%;
+  padding: 9px 36px 9px 36px;
+  border-radius: 12px;
+  border: none;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,.08);
+  font-size: 13px;
+  color: #111;
+  outline: none;
+  transition: box-shadow .15s;
+  box-sizing: border-box;
+}
+
+.cx-search:focus {
+  box-shadow: 0 0 0 2px #dd3a00;
+}
+
+.cx-search::placeholder { color: #bbb; }
+
+.cx-search-clear {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  color: #bbb;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 2px;
+  line-height: 1;
+}
+
+.cx-search-clear:hover { color: #dd3a00; }
+
+.cx-sort {
+  padding: 9px 12px;
+  border-radius: 12px;
+  border: 1.5px solid #e0e0e0;
+  background: #fff;
+  font-size: 13px;
+  color: #444;
+  cursor: pointer;
+  font-weight: 500;
+  outline: none;
+  transition: border-color .15s;
+}
+
+.cx-sort:focus { border-color: #dd3a00; }
+
+/* ── Grid ── */
+.cx-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.cx-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.06);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform .15s, box-shadow .15s;
+}
+
+.cx-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,.1);
+}
+
+.cx-avatar {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 800;
+  flex-shrink: 0;
+  margin: 20px auto 0;
+}
+
+.cx-avatar-sm {
+  width: 36px;
+  height: 36px;
+  font-size: 13px;
+  margin: 0;
+}
+
+.cx-card-body {
+  padding: 12px 16px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cx-card-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111;
+  text-align: center;
+  margin-bottom: 2px;
+}
+
+.cx-card-email {
+  font-size: 12px;
+  color: #888;
+  text-align: center;
+  margin-bottom: 8px;
+  word-break: break-all;
+}
+
+.cx-card-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 12px;
+  color: #555;
+}
+
+.cx-card-icon {
+  font-size: 13px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.cx-card-addr {
+  color: #888;
+}
+
+.cx-card-footer {
+  padding: 10px 16px;
+  border-top: 1px solid #f5f5f5;
+  background: #fafafa;
+}
+
+.cx-joined {
+  font-size: 11px;
+  color: #bbb;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+}
+
+/* ── Table view ── */
+.cx-table-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 14px rgba(0,0,0,.07);
+  overflow: hidden;
+}
+
+.cx-table-wrap {
+  overflow-x: auto;
+}
+
+.cx-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.cx-table thead th {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  background: #fafafa;
+  border-bottom: 1px solid #f0f0f0;
+  white-space: nowrap;
+}
+
+.cx-table tbody tr {
+  border-bottom: 1px solid #f5f5f5;
+  transition: background .1s;
+}
+
+.cx-table tbody tr:hover {
+  background: #fff8f6;
+}
+
+.cx-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.cx-table td {
+  padding: 11px 16px;
+  color: #333;
+  vertical-align: middle;
+}
+
+.cx-td-num {
+  color: #ccc;
+  font-size: 12px;
+  width: 36px;
+}
+
+.cx-td-cust {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cx-td-name {
+  font-weight: 600;
+  color: #111;
+  font-size: 13px;
+}
+
+.cx-td-email {
+  font-size: 11px;
+  color: #aaa;
+  margin-top: 1px;
+}
+
+.cx-td-date {
+  color: #bbb;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* ── Empty / loading ── */
+.cx-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: #bbb;
+  font-size: 14px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .cx-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .cx-stat {
+    padding: 0 14px;
+  }
+}
+
+@media (max-width: 400px) {
+  .cx-grid {
+    grid-template-columns: 1fr;
+  }
+}
