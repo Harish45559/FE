@@ -27,6 +27,7 @@
 .oc-value { color: #f3f3f3; font-weight: 600; }
 .oc-highlight { color: #FFD166; }
 .oc-pending { color: #ffa048; }
+.oc-paid    { color: #6effc2; }
 
 .oc-divider {
   height: 1px;

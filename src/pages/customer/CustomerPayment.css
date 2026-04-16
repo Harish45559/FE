@@ -1,0 +1,124 @@
+.cp-wrapper {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 0 16px 40px;
+}
+
+.cp-card {
+  padding: 28px;
+}
+
+.cp-order-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.cp-order-num {
+  font-weight: 700;
+  font-size: 1rem;
+  color: #e8e8e8;
+}
+
+.cp-pickup {
+  font-size: 0.85rem;
+  color: #aaa;
+}
+
+.cp-items {
+  border-top: 1px solid #2a2a2a;
+  border-bottom: 1px solid #2a2a2a;
+  padding: 12px 0;
+  margin-bottom: 20px;
+}
+
+.cp-item-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.88rem;
+  color: #ccc;
+  padding: 4px 0;
+}
+
+.cp-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.cp-amount {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.95rem;
+  color: #ccc;
+}
+
+.cp-price {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #6effc2;
+}
+
+.cp-label {
+  display: block;
+  font-size: 0.82rem;
+  color: #aaa;
+  margin-bottom: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.cp-card-element {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+
+.cp-error {
+  background: rgba(255, 107, 107, 0.12);
+  border: 1px solid rgba(255, 107, 107, 0.3);
+  color: #ff6b6b;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.88rem;
+}
+
+.cp-pay-btn {
+  width: 100%;
+  padding: 14px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.cp-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #555;
+  font-size: 0.8rem;
+}
+
+.cp-divider::before,
+.cp-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #2a2a2a;
+}
+
+.cp-secure {
+  text-align: center;
+  font-size: 0.78rem;
+  color: #666;
+  margin: 0;
+}
+
+.cp-loading {
+  text-align: center;
+  color: #aaa;
+  font-size: 0.9rem;
+  padding: 20px 0;
+}

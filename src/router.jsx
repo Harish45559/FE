@@ -27,6 +27,7 @@ import CustomerCart from "./pages/customer/CustomerCart";
 import OrderConfirmation from "./pages/customer/OrderConfirmation";
 import CustomerOrders from "./pages/customer/CustomerOrders";
 import CustomerProfile from "./pages/customer/CustomerProfile";
+import CustomerPayment from "./pages/customer/CustomerPayment";
 import CustomerProtectedRoute from "./components/CustomerProtectedRoute";
 
 const AppRouter = () => {
@@ -159,6 +160,14 @@ const AppRouter = () => {
       element: (
         <CustomerProtectedRoute>
           <OrderConfirmation />
+        </CustomerProtectedRoute>
+      ),
+    },
+    {
+      path: "/customer/payment",
+      element: (
+        <CustomerProtectedRoute>
+          <CustomerPayment />
         </CustomerProtectedRoute>
       ),
     },
