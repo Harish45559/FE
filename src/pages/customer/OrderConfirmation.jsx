@@ -66,8 +66,8 @@ const OrderConfirmation = () => {
           </div>
           <div className="oc-row">
             <span>Status</span>
-            <span className="oc-value oc-pending">
-              {order.payment_status === "paid" ? "Paid" : "Pay on Collection"}
+            <span className={`oc-value ${order.payment_status === "paid" ? "oc-paid" : "oc-pending"}`}>
+              {order.payment_status === "paid" ? "✅ Paid" : "Pay on Collection"}
             </span>
           </div>
 

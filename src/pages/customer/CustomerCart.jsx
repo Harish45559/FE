@@ -55,7 +55,12 @@ const CustomerCart = () => {
       const res = await customerApi.post("/customer/orders", payload);
       const order = res.data.order;
       clearCart();
-      navigate("/customer/order-confirmation", { state: { order } });
+
+      if (paymentMethod === "Card") {
+        navigate("/customer/payment", { state: { order } });
+      } else {
+        navigate("/customer/order-confirmation", { state: { order } });
+      }
     } catch (err) {
       setError(err?.response?.data?.message || "Failed to place order");
     } finally {
@@ -189,16 +194,25 @@ const CustomerCart = () => {
           <div className="c-card">
             <h3 className="cc-section-title">Payment</h3>
             <div className="cc-type-btns">
-              {["Pay at Collection", "Cash"].map((method) => (
+              {[
+                { value: "Card", label: "💳 Pay Online (Card)" },
+                { value: "Pay at Collection", label: "🏪 Pay at Collection" },
+                { value: "Cash", label: "💵 Cash" },
+              ].map(({ value, label }) => (
                 <button
-                  key={method}
-                  className={`cc-type-btn ${paymentMethod === method ? "active" : ""}`}
-                  onClick={() => setPaymentMethod(method)}
+                  key={value}
+                  className={`cc-type-btn ${paymentMethod === value ? "active" : ""}`}
+                  onClick={() => setPaymentMethod(value)}
                 >
-                  {method === "Cash" ? "💵 Cash" : "💳 Pay at Collection(card)"}
+                  {label}
                 </button>
               ))}
             </div>
+            {paymentMethod === "Card" && (
+              <p style={{ fontSize: "0.8rem", color: "#aaa", marginTop: "10px", marginBottom: 0 }}>
+                You'll enter your card details on the next screen.
+              </p>
+            )}
           </div>
 
           {/* Summary + Place Order */}
