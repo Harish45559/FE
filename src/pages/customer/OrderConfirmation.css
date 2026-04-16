@@ -1,5 +1,5 @@
 .oc-wrapper {
-  max-width: 520px;
+  max-width: 500px;
   margin: 0 auto;
   text-align: center;
   display: flex;
@@ -8,9 +8,9 @@
   gap: 20px;
 }
 
-.oc-icon { font-size: 3.5rem; }
-.oc-title { font-size: 2rem; font-weight: 800; color: #FFD166; margin: 0; }
-.oc-sub { color: #aaa; margin: 0; }
+.oc-icon  { font-size: 3.5rem; }
+.oc-title { font-size: 1.8rem; font-weight: 800; color: #1a1a1a; margin: 0; letter-spacing: -0.02em; }
+.oc-sub   { color: #6b7280; margin: 0; font-size: 0.9rem; line-height: 1.6; }
 
 .oc-card { width: 100%; text-align: left; }
 
@@ -18,21 +18,21 @@
   display: flex;
   justify-content: space-between;
   padding: 10px 0;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-  font-size: 0.92rem;
-  color: #aaa;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 0.88rem;
+  color: #6b7280;
 }
-
 .oc-row:last-of-type { border-bottom: none; }
-.oc-value { color: #f3f3f3; font-weight: 600; }
-.oc-highlight { color: #FFD166; }
-.oc-pending { color: #ffa048; }
-.oc-paid    { color: #6effc2; }
+
+.oc-value     { color: #1a1a1a; font-weight: 600; }
+.oc-highlight { color: #FF6A00; }
+.oc-pending   { color: #f59e0b; }
+.oc-paid      { color: #16a34a; }
 
 .oc-divider {
   height: 1px;
-  background: rgba(255,106,0,0.2);
-  margin: 12px 0;
+  background: #f3f4f6;
+  margin: 8px 0;
 }
 
 .oc-items { display: flex; flex-direction: column; gap: 6px; }
@@ -40,24 +40,25 @@
 .oc-item {
   display: flex;
   justify-content: space-between;
-  font-size: 0.88rem;
-  color: #ccc;
+  font-size: 0.85rem;
+  color: #374151;
+  padding: 2px 0;
 }
 
 .oc-total-row {
   display: flex;
   justify-content: space-between;
-  margin-top: 14px;
+  margin-top: 12px;
   padding-top: 12px;
-  border-top: 1.5px solid rgba(255,106,0,0.3);
+  border-top: 2px solid #f3f4f6;
   font-weight: 800;
   font-size: 1rem;
-  color: #FFD166;
+  color: #1a1a1a;
 }
 
 .oc-actions {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
   justify-content: center;
 }
@@ -65,5 +66,5 @@
 .oc-error {
   text-align: center;
   padding: 60px 20px;
-  color: #888;
+  color: #9ca3af;
 }

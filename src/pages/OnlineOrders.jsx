@@ -402,11 +402,18 @@ const OnlineOrders = () => {
     }
   };
 
-  const pendingCount = orders.filter((o) => o.order_status === "pending").length;
+  // Card orders that haven't been paid yet are awaiting payment — exclude from pending tab
+  const isAwaitingPayment = (o) => o.payment_method === "Card" && o.payment_status !== "paid";
+
+  const pendingCount = orders.filter(
+    (o) => o.order_status === "pending" && !isAwaitingPayment(o)
+  ).length;
+
   // "accepted" tab shows both accepted and ready orders
   const filtered = orders.filter((o) => {
     if (filter === "all") return true;
     if (filter === "accepted") return o.order_status === "accepted" || o.order_status === "ready";
+    if (filter === "pending") return o.order_status === "pending" && !isAwaitingPayment(o);
     return o.order_status === filter;
   });
 
@@ -448,7 +455,15 @@ const OnlineOrders = () => {
                 <td className="oo-td-amount">
                   £{parseFloat(order.final_amount).toFixed(2)}
                 </td>
-                <td className="oo-td-muted">{order.payment_method}</td>
+                <td className="oo-td-muted">
+                  {order.payment_method}
+                  {" "}
+                  {order.payment_status === "paid"
+                    ? "✅"
+                    : order.payment_method === "Card"
+                    ? "⏳"
+                    : ""}
+                </td>
                 <td>
                   <span
                     className="oo-status-chip"
@@ -550,7 +565,11 @@ const OnlineOrders = () => {
                 <span>
                   {order.payment_status === "paid"
                     ? "✅ Paid"
-                    : "⏳ Pay on Collection"}
+                    : order.payment_method === "Card"
+                    ? "⏳ Awaiting Payment"
+                    : order.payment_method === "Cash"
+                    ? "💵 Cash on Collection"
+                    : "🏪 Pay at Collection"}
                 </span>
               </div>
 

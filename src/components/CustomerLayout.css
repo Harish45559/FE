@@ -1,19 +1,27 @@
 :root {
-  --mm-orange: #FF6A00;
-  --mm-red: #DD3A00;
-  --mm-gold: #FFD166;
-  --mm-bg: #0e0e0e;
-  --mm-card: rgba(255,255,255,0.04);
-  --mm-border: rgba(255,106,0,0.35);
-  --mm-text: #f3f3f3;
-  --mm-muted: #aaa;
+  --mm-orange:  #FF6A00;
+  --mm-red:     #e85d00;
+  --mm-gold:    #FF6A00;
+  --mm-bg:      #f5f1ec;
+  --mm-surface: #ffffff;
+  --mm-card:    #ffffff;
+  --mm-border:  rgba(0,0,0,0.09);
+  --mm-text:    #1a1a1a;
+  --mm-muted:   #6b7280;
+  --mm-sub:     #9ca3af;
+  --shadow-sm:  0 1px 4px rgba(0,0,0,0.08);
+  --shadow-md:  0 4px 16px rgba(0,0,0,0.10);
+  --shadow-lg:  0 8px 32px rgba(0,0,0,0.12);
+  --radius:     14px;
 }
+
+* { box-sizing: border-box; }
 
 .cl-wrapper {
   min-height: 100vh;
   background: var(--mm-bg);
   color: var(--mm-text);
-  font-family: system-ui, sans-serif;
+  font-family: system-ui, -apple-system, sans-serif;
 }
 
 /* ── Nav ── */
@@ -23,218 +31,206 @@
   z-index: 100;
   display: flex;
   align-items: center;
-  gap: 24px;
-  padding: 0 28px;
-  height: 62px;
-  background: rgba(14,14,14,0.92);
-  border-bottom: 1.5px solid var(--mm-border);
-  backdrop-filter: blur(10px);
+  gap: 20px;
+  padding: 0 24px;
+  height: 60px;
+  background: #ffffff;
+  border-bottom: 1px solid var(--mm-border);
+  box-shadow: var(--shadow-sm);
 }
 
 .cl-brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 9px;
   text-decoration: none;
-  color: var(--mm-gold);
+  color: var(--mm-orange);
   font-weight: 800;
-  font-size: 1.05rem;
+  font-size: 1rem;
   flex-shrink: 0;
+  letter-spacing: -0.02em;
 }
 
 .cl-logo {
-  height: 36px;
+  height: 34px;
   width: auto;
-  filter: drop-shadow(0 2px 8px rgba(255,106,0,0.4));
 }
 
 .cl-links {
   display: flex;
-  gap: 6px;
+  gap: 4px;
   flex: 1;
 }
 
 .cl-link {
-  padding: 7px 16px;
-  border-radius: 8px;
+  padding: 7px 14px;
+  border-radius: 10px;
   text-decoration: none;
   color: var(--mm-muted);
-  font-size: 0.93rem;
-  font-weight: 500;
-  transition: color 0.2s, background 0.2s;
+  font-size: 0.88rem;
+  font-weight: 600;
+  transition: color 0.15s, background 0.15s;
 }
 
-.cl-link:hover, .cl-link.active {
-  color: var(--mm-gold);
-  background: rgba(255,106,0,0.1);
-}
+.cl-link:hover  { color: var(--mm-orange); background: rgba(255,106,0,0.06); }
+.cl-link.active { color: var(--mm-orange); background: rgba(255,106,0,0.08); }
 
 .cl-right {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   margin-left: auto;
 }
 
 .cl-cart-btn {
   position: relative;
-  font-size: 1.3rem;
+  font-size: 1.25rem;
   text-decoration: none;
   line-height: 1;
 }
 
 .cl-cart-badge {
   position: absolute;
-  top: -6px;
-  right: -8px;
-  background: var(--mm-red);
+  top: -6px; right: -8px;
+  background: var(--mm-orange);
   color: #fff;
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   font-weight: 800;
-  min-width: 18px;
-  height: 18px;
+  min-width: 17px; height: 17px;
   border-radius: 9px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 4px;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 3px;
 }
 
 .cl-username {
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   color: var(--mm-muted);
+  font-weight: 500;
 }
 
 .cl-logout {
-  padding: 6px 14px;
-  border-radius: 8px;
-  border: 1.5px solid rgba(255,106,0,0.5);
+  padding: 7px 14px;
+  border-radius: 10px;
+  border: 1.5px solid rgba(255,106,0,0.4);
   background: transparent;
   color: var(--mm-orange);
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: 0.83rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  transition: background 0.15s, color 0.15s;
 }
+.cl-logout:hover { background: var(--mm-orange); color: #fff; }
 
-.cl-logout:hover {
-  background: var(--mm-orange);
-  color: #fff;
-}
-
-/* ── Main ── */
+/* ── Main content ── */
 .cl-main {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 32px 20px;
+  padding: 28px 20px;
 }
 
-/* ── Shared card style ── */
+/* ── Shared card ── */
 .c-card {
-  background: var(--mm-card);
-  border: 1.5px solid var(--mm-border);
-  border-radius: 14px;
-  padding: 24px;
+  background: var(--mm-surface);
+  border: 1px solid var(--mm-border);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
 }
 
 .c-page-title {
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   font-weight: 800;
-  color: var(--mm-gold);
-  margin: 0 0 24px;
+  color: var(--mm-text);
+  margin: 0 0 20px;
+  letter-spacing: -0.02em;
 }
 
+/* ── Buttons ── */
 .c-btn {
-  padding: 12px 24px;
+  padding: 11px 22px;
   border-radius: 10px;
   border: none;
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   cursor: pointer;
-  transition: filter 0.2s, transform 0.1s;
+  transition: filter 0.15s, transform 0.1s;
 }
-
 .c-btn:active { transform: translateY(1px); }
 
 .c-btn-primary {
-  background: linear-gradient(180deg, var(--mm-orange), var(--mm-red));
+  background: linear-gradient(135deg, #FF6A00, #e85d00);
   color: #fff;
-  box-shadow: 0 8px 24px rgba(255,106,0,0.3);
+  box-shadow: 0 4px 14px rgba(255,106,0,0.3);
 }
-
-.c-btn-primary:hover { filter: brightness(1.1); }
+.c-btn-primary:hover { filter: brightness(1.06); }
 
 .c-btn-secondary {
-  background: rgba(255,106,0,0.1);
-  color: var(--mm-orange);
-  border: 1.5px solid rgba(255,106,0,0.4);
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #e5e7eb;
 }
+.c-btn-secondary:hover { background: #e9eaec; }
 
-.c-btn-secondary:hover { background: rgba(255,106,0,0.18); }
-
+/* ── Inputs ── */
 .c-input {
   width: 100%;
-  padding: 12px 14px;
+  padding: 11px 14px;
   border-radius: 10px;
-  border: 1.5px solid rgba(255,106,0,0.5);
-  background: rgba(0,0,0,0.4);
+  border: 1.5px solid #e5e7eb;
+  background: #fafafa;
   color: var(--mm-text);
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   outline: none;
   box-sizing: border-box;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
-
 .c-input:focus {
-  border-color: var(--mm-gold);
-  box-shadow: 0 0 0 2px rgba(255,209,102,0.15);
+  border-color: var(--mm-orange);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(255,106,0,0.1);
 }
-
-.c-input::placeholder { color: var(--mm-muted); }
+.c-input::placeholder { color: #9ca3af; }
 
 .c-label {
   display: block;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   color: var(--mm-muted);
-  margin-bottom: 6px;
+  margin-bottom: 5px;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.02em;
 }
 
+/* ── Alerts ── */
 .c-error {
-  background: rgba(221,58,0,0.12);
-  border: 1px solid #B92F00;
-  color: #ffb4a1;
+  background: #fff5f5;
+  border: 1px solid #fecaca;
+  color: #dc2626;
   padding: 10px 14px;
-  border-radius: 8px;
-  font-size: 0.88rem;
-  margin-bottom: 14px;
+  border-radius: 9px;
+  font-size: 0.85rem;
+  margin-bottom: 12px;
 }
 
 .c-success {
-  background: rgba(0,200,100,0.1);
-  border: 1px solid rgba(0,200,100,0.4);
-  color: #6effc2;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #16a34a;
   padding: 10px 14px;
-  border-radius: 8px;
-  font-size: 0.88rem;
-  margin-bottom: 14px;
+  border-radius: 9px;
+  font-size: 0.85rem;
+  margin-bottom: 12px;
 }
 
-/* ── Bottom tab bar (mobile only) ── */
+/* ── Bottom tab bar (mobile) ── */
 .cl-bottom-nav {
-  display: none; /* shown only on mobile via media query */
+  display: none;
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  bottom: 0; left: 0; right: 0;
   z-index: 200;
-  background: rgba(14,14,14,0.96);
-  border-top: 1.5px solid var(--mm-border);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  height: 62px;
+  background: #ffffff;
+  border-top: 1px solid var(--mm-border);
+  box-shadow: 0 -2px 12px rgba(0,0,0,0.08);
+  height: 60px;
   padding: 0 4px;
   justify-content: space-around;
   align-items: center;
@@ -248,66 +244,48 @@
   gap: 3px;
   flex: 1;
   text-decoration: none;
-  color: #666;
-  font-size: 0.62rem;
+  color: #9ca3af;
+  font-size: 0.6rem;
   font-weight: 600;
   padding: 6px 4px;
   border-radius: 10px;
-  transition: color 0.15s, background 0.15s;
+  transition: color 0.15s;
   min-width: 0;
 }
 
-.cl-tab:hover { color: var(--mm-gold); }
+.cl-tab:hover        { color: var(--mm-orange); }
+.cl-tab-active       { color: var(--mm-orange); }
 
-.cl-tab-active {
-  color: var(--mm-gold);
-  background: rgba(255,106,0,0.1);
-}
+.cl-tab-icon         { font-size: 1.25rem; line-height: 1; }
 
-.cl-tab-icon {
-  font-size: 1.35rem;
-  line-height: 1;
-}
-
-.cl-tab-cart-wrap {
-  position: relative;
-  display: inline-block;
-}
+.cl-tab-cart-wrap    { position: relative; display: inline-block; }
 
 .cl-tab-badge {
   position: absolute;
-  top: -5px;
-  right: -8px;
-  background: var(--mm-red);
+  top: -5px; right: -8px;
+  background: var(--mm-orange);
   color: #fff;
-  font-size: 0.58rem;
+  font-size: 0.56rem;
   font-weight: 800;
-  min-width: 16px;
-  height: 16px;
+  min-width: 15px; height: 15px;
   border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: flex; align-items: center; justify-content: center;
   padding: 0 3px;
 }
 
-/* Order status update dot — desktop nav + mobile tab */
 .cl-order-dot {
   display: inline-block;
-  width: 8px;
-  height: 8px;
+  width: 7px; height: 7px;
   background: #ef4444;
   border-radius: 50%;
-  margin-left: 5px;
+  margin-left: 4px;
   vertical-align: middle;
 }
 
 .cl-order-alert-dot {
   position: absolute;
-  top: -4px;
-  right: -6px;
-  width: 9px;
-  height: 9px;
+  top: -4px; right: -6px;
+  width: 8px; height: 8px;
   background: #ef4444;
   border-radius: 50%;
   min-width: unset;
@@ -315,9 +293,8 @@
 }
 
 .cl-tab-label {
-  font-size: 0.6rem;
+  font-size: 0.58rem;
   font-weight: 700;
-  letter-spacing: 0.2px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -325,9 +302,9 @@
 }
 
 @media (max-width: 640px) {
-  .cl-nav { padding: 0 14px; gap: 12px; }
-  .cl-links { display: none; }
-  .cl-username { display: none; }
-  .cl-main { padding: 20px 12px 80px; } /* extra bottom padding for tab bar */
+  .cl-nav        { padding: 0 14px; gap: 10px; }
+  .cl-links      { display: none; }
+  .cl-username   { display: none; }
+  .cl-main       { padding: 16px 12px 80px; }
   .cl-bottom-nav { display: flex; }
 }
