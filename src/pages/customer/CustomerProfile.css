@@ -1,15 +1,17 @@
 .cp-layout {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 24px;
+  gap: 20px;
   align-items: start;
 }
 
 .cp-section-title {
-  font-size: 1rem;
+  font-size: 0.78rem;
   font-weight: 700;
-  color: #FFD166;
-  margin: 0 0 20px;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin: 0 0 18px;
 }
 
 .cp-form {
@@ -30,14 +32,10 @@
   gap: 12px;
 }
 
-.cp-email-row { opacity: 0.7; }
-
-.cp-email-note {
-  font-size: 0.75rem;
-  color: #888;
-}
+.cp-email-row  { opacity: 0.65; }
+.cp-email-note { font-size: 0.72rem; color: #9ca3af; }
 
 @media (max-width: 780px) {
   .cp-layout { grid-template-columns: 1fr; }
-  .cp-row { grid-template-columns: 1fr; }
+  .cp-row    { grid-template-columns: 1fr; }
 }

@@ -12,9 +12,10 @@ import customerApi from "../../services/customerApi";
 import CustomerLayout from "../../components/CustomerLayout";
 import "./CustomerPayment.css";
 
+// NOTE: do NOT pass clientSecret to Elements — that breaks CardElement input
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
-// ── Inner form (must be inside <Elements>) ──────────────────────────────────
+// ── Inner form ───────────────────────────────────────────────────────────────
 const PaymentForm = ({ order, clientSecret }) => {
   const stripe = useStripe();
   const elements = useElements();
@@ -23,179 +24,129 @@ const PaymentForm = ({ order, clientSecret }) => {
   const [error, setError] = useState("");
   const [paymentRequest, setPaymentRequest] = useState(null);
 
-  // Set up Apple Pay / Google Pay payment request
+  const amount = parseFloat(order.final_amount);
+
+  const onSuccess = () =>
+    navigate("/customer/order-confirmation", {
+      state: { order: { ...order, payment_status: "paid" } },
+    });
+
+  // Apple Pay / Google Pay
   useEffect(() => {
     if (!stripe) return;
-
     const pr = stripe.paymentRequest({
       country: "GB",
       currency: "gbp",
-      total: {
-        label: `Order #${order.order_number}`,
-        amount: Math.round(parseFloat(order.final_amount) * 100),
-      },
+      total: { label: `Order #${order.order_number}`, amount: Math.round(amount * 100) },
       requestPayerName: true,
-      requestPayerEmail: false,
     });
-
-    // Check if Apple Pay / Google Pay is available on this device/browser
-    pr.canMakePayment().then((result) => {
-      if (result) setPaymentRequest(pr);
-    });
-
-    // Handle payment via Apple Pay / Google Pay
+    pr.canMakePayment().then((r) => { if (r) setPaymentRequest(pr); });
     pr.on("paymentmethod", async (ev) => {
-      const { error: confirmError, paymentIntent } =
-        await stripe.confirmCardPayment(
-          clientSecret,
-          { payment_method: ev.paymentMethod.id },
-          { handleActions: false }
-        );
-
-      if (confirmError) {
-        ev.complete("fail");
-        setError(confirmError.message);
-        return;
-      }
-
+      const { error: err, paymentIntent } = await stripe.confirmCardPayment(
+        clientSecret, { payment_method: ev.paymentMethod.id }, { handleActions: false }
+      );
+      if (err) { ev.complete("fail"); setError(err.message); return; }
       ev.complete("success");
-
       if (paymentIntent.status === "requires_action") {
-        const { error: actionError } = await stripe.confirmCardPayment(clientSecret);
-        if (actionError) {
-          setError(actionError.message);
-          return;
-        }
+        const { error: e2 } = await stripe.confirmCardPayment(clientSecret);
+        if (e2) { setError(e2.message); return; }
       }
-
-      navigate("/customer/order-confirmation", {
-        state: { order: { ...order, payment_status: "paid" } },
-      });
+      await customerApi.patch(`/customer/orders/${order.id}/confirm-payment`, {
+        paymentIntentId: paymentIntent.id,
+      }).catch(() => {});
+      onSuccess();
     });
-  }, [stripe, clientSecret, order, navigate]);
+  }, [stripe, clientSecret]);
 
-  // Handle card form submission
   const handlePay = async (e) => {
     e.preventDefault();
     if (!stripe || !elements) return;
-
     setError("");
     setLoading(true);
-
-    const { error: stripeError, paymentIntent } =
-      await stripe.confirmCardPayment(clientSecret, {
-        payment_method: { card: elements.getElement(CardElement) },
-      });
-
-    if (stripeError) {
-      setError(stripeError.message);
-      setLoading(false);
-      return;
-    }
-
+    const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+      payment_method: { card: elements.getElement(CardElement) },
+    });
+    if (stripeError) { setError(stripeError.message); setLoading(false); return; }
     if (paymentIntent.status === "succeeded") {
-      navigate("/customer/order-confirmation", {
-        state: { order: { ...order, payment_status: "paid" } },
-      });
+      // Confirm payment in our DB directly (don't rely solely on webhook)
+      await customerApi.patch(`/customer/orders/${order.id}/confirm-payment`, {
+        paymentIntentId: paymentIntent.id,
+      }).catch(() => {}); // webhook is fallback if this fails
+      onSuccess();
     }
   };
 
   return (
-    <div className="cp-form">
-      <div className="cp-amount">
-        <span>Amount to pay</span>
-        <span className="cp-price">£{parseFloat(order.final_amount).toFixed(2)}</span>
-      </div>
-
-      {/* Apple Pay / Google Pay button — only shown if device supports it */}
+    <form onSubmit={handlePay} className="cpf-form">
+      {/* Apple Pay / Google Pay */}
       {paymentRequest && (
         <>
           <PaymentRequestButtonElement
             options={{
               paymentRequest,
-              style: {
-                paymentRequestButton: {
-                  type: "buy",
-                  theme: "dark",
-                  height: "52px",
-                },
-              },
+              style: { paymentRequestButton: { type: "buy", theme: "dark", height: "48px" } },
             }}
           />
-          <div className="cp-divider">
-            <span>or pay by card</span>
-          </div>
+          <div className="cpf-divider"><span>or pay by card</span></div>
         </>
       )}
 
-      {/* Card form */}
-      <form onSubmit={handlePay}>
-        <div className="cp-card-wrapper">
-          <label className="cp-label">Card Details</label>
-          <div className="cp-card-element">
-            <CardElement
-              options={{
-                style: {
-                  base: {
-                    color: "#e8e8e8",
-                    fontFamily: "inherit",
-                    fontSize: "16px",
-                    "::placeholder": { color: "#888" },
-                  },
-                  invalid: { color: "#ff6b6b" },
+      {/* Card input */}
+      <div className="cpf-field">
+        <label className="cpf-label">Card details</label>
+        <div className="cpf-stripe-box">
+          <CardElement
+            options={{
+              hidePostalCode: true,
+              style: {
+                base: {
+                  color: "#1a1a1a",
+                  fontSize: "15px",
+                  fontFamily: "system-ui, sans-serif",
+                  lineHeight: "24px",
+                  "::placeholder": { color: "#9ca3af" },
+                  iconColor: "#FF6A00",
                 },
-              }}
-            />
-          </div>
+                invalid: { color: "#dc2626", iconColor: "#dc2626" },
+              },
+            }}
+          />
         </div>
+      </div>
 
-        {error && <div className="cp-error">{error}</div>}
+      {error && <div className="cpf-error">{error}</div>}
 
-        <button
-          type="submit"
-          className="c-btn c-btn-primary cp-pay-btn"
-          disabled={!stripe || loading}
-        >
-          {loading ? "Processing…" : `Pay £${parseFloat(order.final_amount).toFixed(2)}`}
-        </button>
-      </form>
+      <button type="submit" className="cpf-pay-btn" disabled={!stripe || loading}>
+        {loading ? "Processing…" : `Pay £${amount.toFixed(2)}`}
+      </button>
 
-      <p className="cp-secure">🔒 Secured by Stripe</p>
-    </div>
+      <p className="cpf-secure">🔒 Payments secured by Stripe</p>
+    </form>
   );
 };
 
-// ── Outer page — fetches clientSecret, then renders form ────────────────────
+// ── Page ─────────────────────────────────────────────────────────────────────
 const CustomerPayment = () => {
   const { state } = useLocation();
   const navigate = useNavigate();
   const order = state?.order;
-
   const [clientSecret, setClientSecret] = useState("");
   const [fetchError, setFetchError] = useState("");
 
   useEffect(() => {
     if (!order?.id) return;
-
     customerApi
       .post(`/customer/orders/${order.id}/pay`)
       .then((res) => setClientSecret(res.data.clientSecret))
-      .catch((err) =>
-        setFetchError(
-          err?.response?.data?.message || "Failed to initialise payment"
-        )
-      );
+      .catch((err) => setFetchError(err?.response?.data?.message || "Failed to initialise payment"));
   }, [order?.id]);
 
   if (!order) {
     return (
       <CustomerLayout>
-        <div style={{ padding: "40px", textAlign: "center" }}>
+        <div style={{ textAlign: "center", padding: "60px 0" }}>
           <p style={{ color: "#aaa" }}>No order found.</p>
-          <button
-            className="c-btn c-btn-primary"
-            onClick={() => navigate("/customer/menu")}
-          >
+          <button className="c-btn c-btn-primary" onClick={() => navigate("/customer/menu")}>
             Back to Menu
           </button>
         </div>
@@ -203,38 +154,68 @@ const CustomerPayment = () => {
     );
   }
 
+  const amount = parseFloat(order.final_amount);
+
   return (
     <CustomerLayout>
-      <div className="cp-wrapper">
-        <h1 className="c-page-title">Pay for Order</h1>
+      <div className="cp-grid">
 
-        <div className="c-card cp-card">
-          <div className="cp-order-info">
-            <span className="cp-order-num">Order #{order.order_number}</span>
-            {order.pickup_time && (
-              <span className="cp-pickup">Pickup: {order.pickup_time}</span>
-            )}
-          </div>
-
-          <div className="cp-items">
-            {(order.items || []).map((item, i) => (
-              <div key={i} className="cp-item-row">
-                <span>{item.name} × {item.qty}</span>
-                <span>£{(item.price * item.qty).toFixed(2)}</span>
+        {/* ── Left: Payment form ── */}
+        <div>
+          <div className="cp-panel">
+            <h3 className="cp-panel-title">Payment details</h3>
+            {fetchError && <div className="cpf-error">{fetchError}</div>}
+            {clientSecret ? (
+              // Pass ONLY stripePromise to Elements — do NOT pass clientSecret here
+              <Elements stripe={stripePromise}>
+                <PaymentForm order={order} clientSecret={clientSecret} />
+              </Elements>
+            ) : !fetchError ? (
+              <div className="cp-loading">
+                <div className="cp-spinner" />
+                <p>Loading payment…</p>
               </div>
-            ))}
+            ) : null}
           </div>
-
-          {fetchError && <div className="cp-error">{fetchError}</div>}
-
-          {clientSecret ? (
-            <Elements stripe={stripePromise} options={{ clientSecret }}>
-              <PaymentForm order={order} clientSecret={clientSecret} />
-            </Elements>
-          ) : !fetchError ? (
-            <p className="cp-loading">Loading payment form…</p>
-          ) : null}
         </div>
+
+        {/* ── Right: Order summary ── */}
+        <aside>
+          <div className="cp-panel">
+            <h3 className="cp-panel-title">Order summary</h3>
+
+            <div className="cp-summary-items">
+              {(order.items || []).map((item, i) => (
+                <div key={i} className="cp-summary-row">
+                  <span className="cp-item-name">
+                    {item.name}
+                    <span className="cp-item-qty"> ×{item.qty}</span>
+                  </span>
+                  <span className="cp-item-price">
+                    £{(item.price * item.qty).toFixed(2)}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {order.pickup_time && (
+              <div className="cp-pickup">
+                <span>⏱ Pickup time</span>
+                <span>{order.pickup_time}</span>
+              </div>
+            )}
+
+            <div className="cp-total">
+              <span>Total</span>
+              <span className="cp-total-amount">£{amount.toFixed(2)}</span>
+            </div>
+
+            <div className="cp-order-ref">
+              Order #{order.order_number}
+            </div>
+          </div>
+        </aside>
+
       </div>
     </CustomerLayout>
   );
