@@ -56,8 +56,8 @@
   letter-spacing: 0.08em;
 }
 
-/* Stripe card box */
-.cpf-stripe-box {
+/* Stripe card box — commented out, replaced by SumUp */
+/* .cpf-stripe-box {
   background: #fafafa;
   border: 1.5px solid #e5e7eb;
   border-radius: 11px;
@@ -69,6 +69,12 @@
   border-color: #FF6A00;
   background: #fff;
   box-shadow: 0 0 0 3px rgba(255,106,0,0.1);
+} */
+
+/* SumUp card widget container — SumUp renders its own iframe inside */
+.cpf-sumup-widget {
+  min-height: 200px;
+  width: 100%;
 }
 
 /* Error */
