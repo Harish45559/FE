@@ -142,9 +142,14 @@ const CustomerPayment = () => {
                     setFetchError("Payment could not be verified. Please try again or contact us.");
                   }
                 })
-                .catch(() => {
-                  // Network error — navigate anyway, webhook will update DB
-                  onSuccess();
+                .catch((err) => {
+                  if (err?.response?.data?.success === false) {
+                    // Backend confirmed payment failed — show error, don't navigate
+                    setFetchError("Payment failed. Please check your card and try again.");
+                  } else {
+                    // Network error only — navigate anyway, webhook will update DB
+                    onSuccess();
+                  }
                 });
             } else if (type === "error") {
               setFetchError("Payment failed. Please check your card details and try again.");
