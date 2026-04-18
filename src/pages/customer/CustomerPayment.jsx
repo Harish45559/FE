@@ -132,7 +132,20 @@ const CustomerPayment = () => {
           checkoutId,
           onResponse(type) {
             if (type === "success") {
-              onSuccess();
+              // Verify with backend — only navigate if SumUp confirms PAID
+              customerApi
+                .post(`/customer/orders/${order.id}/verify-payment`, { checkoutId })
+                .then((res) => {
+                  if (res.data.success) {
+                    onSuccess();
+                  } else {
+                    setFetchError("Payment could not be verified. Please try again or contact us.");
+                  }
+                })
+                .catch(() => {
+                  // Network error — navigate anyway, webhook will update DB
+                  onSuccess();
+                });
             } else if (type === "error") {
               setFetchError("Payment failed. Please check your card details and try again.");
             }
