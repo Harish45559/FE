@@ -309,11 +309,23 @@ const OnlineOrders = () => {
     return () => clearInterval(interval);
   }, [fetchOrders]);
 
-  // ── In-app alert banner when new pending orders arrive ──────────────────────
+  // ── In-app alert + browser notification when new pending orders arrive ────────
   useEffect(() => {
     const pendingCount = orders.filter((o) => o.order_status === "pending").length;
     if (prevPendingCountRef.current !== null && pendingCount > prevPendingCountRef.current) {
       setInAppAlert(true);
+      playNewOrderSound();
+      // Fire browser notification — works even when tab is in background
+      if ("Notification" in window && Notification.permission === "granted") {
+        try {
+          new Notification("🔔 New Order!", {
+            body: `${pendingCount} pending order${pendingCount > 1 ? "s" : ""} waiting`,
+            icon: "/favicon.ico",
+            tag: "new-order",   // replaces previous notification instead of stacking
+            renotify: true,
+          });
+        } catch {}
+      }
     }
     if (pendingCount === 0) setInAppAlert(false);
     prevPendingCountRef.current = pendingCount;
@@ -658,15 +670,6 @@ const OnlineOrders = () => {
                       🕐 Ready at <strong>{order.estimated_ready}</strong>
                     </div>
                   )}
-                  {order.payment_method === "Pay on Collection" && order.payment_status !== "paid" && (
-                    <button
-                      className="oo-mark-paid-btn"
-                      onClick={() => setMarkPaidModal(order.id)}
-                      disabled={isLoading}
-                    >
-                      💰 Mark as Paid
-                    </button>
-                  )}
                   <button
                     className="oo-notify-ready-btn"
                     onClick={() => handleNotifyReady(order)}
@@ -677,7 +680,7 @@ const OnlineOrders = () => {
                 </div>
               )}
 
-              {/* Ready footer — step 2: customer notified, now mark as delivered */}
+              {/* Ready footer — step 2: mark paid (if Pay on Collection) then mark delivered */}
               {order.order_status === "ready" && (
                 <div className="oo-accepted-footer">
                   {order.estimated_ready && (
@@ -688,6 +691,15 @@ const OnlineOrders = () => {
                   <div className="oo-announced-badge">
                     🔔 Customer notified — waiting to collect
                   </div>
+                  {order.payment_method === "Pay on Collection" && order.payment_status !== "paid" && (
+                    <button
+                      className="oo-mark-paid-btn"
+                      onClick={() => setMarkPaidModal(order.id)}
+                      disabled={isLoading}
+                    >
+                      💰 Mark as Paid
+                    </button>
+                  )}
                   <button
                     className="oo-delivered-btn"
                     onClick={() => handleMarkDelivered(order.id)}
