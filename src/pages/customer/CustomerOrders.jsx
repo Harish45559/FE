@@ -19,12 +19,7 @@ const CustomerOrders = () => {
   const fetchOrders = useCallback(async () => {
     try {
       const res = await customerApi.get("/customer/orders");
-      const allOrders = res.data.orders || [];
-      // Hide Card orders where payment hasn't completed — ghost orders from abandoned/failed checkouts
-      const visibleOrders = allOrders.filter(
-        (o) => !(o.payment_method === "Card" && o.payment_status !== "paid")
-      );
-      setOrders(visibleOrders);
+      setOrders(res.data.orders || []);
     } catch {}
     finally {
       setLoading(false);
@@ -65,11 +60,12 @@ const CustomerOrders = () => {
         <div className="co-list">
           {orders.map((order) => {
             const cfg = ORDER_STATUS[order.order_status] || ORDER_STATUS.pending;
-            const isAccepted  = order.order_status === "accepted";
-            const isPending   = order.order_status === "pending";
-            const isReady     = order.order_status === "ready";
-            const isCompleted = order.order_status === "completed";
-            const isRejected  = order.order_status === "rejected";
+            const isAccepted      = order.order_status === "accepted";
+            const isPending       = order.order_status === "pending";
+            const isReady         = order.order_status === "ready";
+            const isCompleted     = order.order_status === "completed";
+            const isRejected      = order.order_status === "rejected";
+            const isPaymentFailed = order.payment_method === "Card" && order.payment_status !== "paid";
 
             return (
               <div
@@ -97,7 +93,13 @@ const CustomerOrders = () => {
                 </div>
 
                 {/* Status-specific banners */}
-                {isPending && (
+                {isPaymentFailed && (
+                  <div className="co-info-banner co-banner-rejected">
+                    ❌ Payment failed. Your order has not been confirmed. Please try ordering again.
+                  </div>
+                )}
+
+                {isPending && !isPaymentFailed && (
                   <div className="co-info-banner co-banner-pending">
                     ⏳ Waiting for restaurant to confirm your order…
                   </div>
