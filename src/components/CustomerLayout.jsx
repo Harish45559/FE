@@ -88,28 +88,6 @@ const CustomerLayout = ({ children }) => {
     return () => document.removeEventListener("click", unlock, true);
   }, []);
 
-  // When customer returns to the tab — re-unlock audio, fire held speech, and re-poll immediately
-  useEffect(() => {
-    const onVisible = () => {
-      if (document.hidden) return;
-      try {
-        const ctx = getCustAudioCtx();
-        if (ctx.state === "suspended") ctx.resume().catch(() => {});
-      } catch {}
-      // Re-poll immediately so status is fresh as soon as customer opens the app
-      pollOrders();
-      if (pendingAlertRef.current) {
-        const { soundType, msg, repeat } = pendingAlertRef.current;
-        pendingAlertRef.current = null;
-        playCustSound(soundType);
-        speakCust(msg);
-        if (repeat) setTimeout(() => speakCust(msg), 2800);
-      }
-    };
-    document.addEventListener("visibilitychange", onVisible);
-    return () => document.removeEventListener("visibilitychange", onVisible);
-  }, [pollOrders]);
-
   // Clear the alert badge when customer opens My Orders
   useEffect(() => {
     if (location.pathname === "/customer/orders") setOrderAlert(false);
@@ -161,6 +139,27 @@ const CustomerLayout = ({ children }) => {
     pollOrders();
     const interval = setInterval(pollOrders, 12000);
     return () => clearInterval(interval);
+  }, [pollOrders]);
+
+  // When customer returns to the tab — re-unlock audio, fire held speech, and re-poll immediately
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.hidden) return;
+      try {
+        const ctx = getCustAudioCtx();
+        if (ctx.state === "suspended") ctx.resume().catch(() => {});
+      } catch {}
+      pollOrders();
+      if (pendingAlertRef.current) {
+        const { soundType, msg, repeat } = pendingAlertRef.current;
+        pendingAlertRef.current = null;
+        playCustSound(soundType);
+        speakCust(msg);
+        if (repeat) setTimeout(() => speakCust(msg), 2800);
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
   }, [pollOrders]);
 
   const handleLogout = () => {
