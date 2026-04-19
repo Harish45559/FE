@@ -304,7 +304,8 @@
 .cm-mobile-cart-bar {
   display: none;
   position: fixed;
-  bottom: 60px; left: 0; right: 0;
+  bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+  left: 0; right: 0;
   background: #FF6A00;
   padding: 12px 16px;
   z-index: 150;

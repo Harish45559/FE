@@ -135,6 +135,7 @@
   border: 1.6px solid rgba(255,106,0,.95);
   background: rgba(0,0,0,.55);
   color: var(--mm-text);
+  -webkit-text-fill-color: var(--mm-text);
   font-size: 1rem;
   outline: none;
   transition: border-color .2s, box-shadow .2s, background-color .2s;
@@ -145,6 +146,14 @@
   border-color: var(--mm-glow);
   background: rgba(0,0,0,.65);
   box-shadow: 0 0 0 2px rgba(255,209,102,.22), 0 12px 24px rgba(0,0,0,.35);
+}
+/* Fix browser autofill overriding text/background color on mobile */
+.login-form input:-webkit-autofill,
+.login-form input:-webkit-autofill:hover,
+.login-form input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--mm-text);
+  -webkit-box-shadow: 0 0 0px 1000px rgba(0,0,0,0.65) inset;
+  transition: background-color 5000s ease-in-out 0s;
 }
 
 /* CTA */
