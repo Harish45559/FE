@@ -57,6 +57,7 @@ const PreviousOrders = () => {
           date:             o.date ?? o.created_at ?? o.createdAt ?? "",
           order_type:       o.order_type ?? o.orderType ?? o.type ?? "",
           source:           o.source ?? "pos",
+          payment_status:   o.payment_status ?? null,
           pager_token:      o.pager_token ?? null,
           pager_status:     o.pager_status ?? null,
           ring_count:       o.ring_count ?? 0,
@@ -276,6 +277,7 @@ const PreviousOrders = () => {
                   <th>Customer</th>
                   <th>Items</th>
                   <th>Payment</th>
+                  <th>Pay Status</th>
                   <th>Total</th>
                   <th>Pager</th>
                   <th>Print</th>
@@ -283,9 +285,9 @@ const PreviousOrders = () => {
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan={8} className="po-empty">Loading orders…</td></tr>
+                  <tr><td colSpan={9} className="po-empty">Loading orders…</td></tr>
                 ) : pageData.length === 0 ? (
-                  <tr><td colSpan={8} className="po-empty">No orders found.</td></tr>
+                  <tr><td colSpan={9} className="po-empty">No orders found.</td></tr>
                 ) : (
                   pageData.map((o) => (
                     <tr key={o.id}>
@@ -310,6 +312,12 @@ const PreviousOrders = () => {
                           {o.payment_method?.toLowerCase() === "card" ? "💳" : "💵"}{" "}
                           {o.payment_method}
                         </span>
+                      </td>
+                      <td>
+                        {o.payment_status === "paid"    && <span style={{ color: "#16a34a", fontWeight: 700, fontSize: "0.78rem" }}>✅ Paid</span>}
+                        {o.payment_status === "failed"  && <span style={{ color: "#dc2626", fontWeight: 700, fontSize: "0.78rem" }}>❌ Failed</span>}
+                        {o.payment_status === "pending" && <span style={{ color: "#f59e0b", fontWeight: 700, fontSize: "0.78rem" }}>⏳ Pending</span>}
+                        {!o.payment_status              && <span style={{ color: "#ccc", fontSize: "0.78rem" }}>—</span>}
                       </td>
                       <td>
                         <span className="po-amount">
