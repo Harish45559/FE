@@ -19,7 +19,12 @@ const CustomerOrders = () => {
   const fetchOrders = useCallback(async () => {
     try {
       const res = await customerApi.get("/customer/orders");
-      setOrders(res.data.orders || []);
+      const allOrders = res.data.orders || [];
+      // Hide Card orders where payment hasn't completed — ghost orders from abandoned/failed checkouts
+      const visibleOrders = allOrders.filter(
+        (o) => !(o.payment_method === "Card" && o.payment_status !== "paid")
+      );
+      setOrders(visibleOrders);
     } catch {}
     finally {
       setLoading(false);
