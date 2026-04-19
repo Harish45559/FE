@@ -134,16 +134,16 @@
   border-radius: 12px;
   border: 1.6px solid rgba(255,106,0,.95);
   background: rgba(0,0,0,.55);
-  color: var(--mm-text);
-  -webkit-text-fill-color: var(--mm-text);
+  color: #F3F3F3 !important;
+  -webkit-text-fill-color: #F3F3F3 !important;
   font-size: 1rem;
   outline: none;
   transition: border-color .2s, box-shadow .2s, background-color .2s;
 }
-.login-form input::placeholder{ color: var(--mm-muted); }
+.login-form input::placeholder{ color: #B7B7B7; opacity: 1; }
 .login-form input:hover{ border-color: #ff7a1d; }
 .login-form input:focus{
-  border-color: var(--mm-glow);
+  border-color: #FFD166;
   background: rgba(0,0,0,.65);
   box-shadow: 0 0 0 2px rgba(255,209,102,.22), 0 12px 24px rgba(0,0,0,.35);
 }
@@ -151,8 +151,8 @@
 .login-form input:-webkit-autofill,
 .login-form input:-webkit-autofill:hover,
 .login-form input:-webkit-autofill:focus {
-  -webkit-text-fill-color: var(--mm-text);
-  -webkit-box-shadow: 0 0 0px 1000px rgba(0,0,0,0.65) inset;
+  -webkit-text-fill-color: #F3F3F3 !important;
+  -webkit-box-shadow: 0 0 0px 1000px rgba(0,0,0,0.65) inset !important;
   transition: background-color 5000s ease-in-out 0s;
 }
 
