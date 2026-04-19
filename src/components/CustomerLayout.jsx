@@ -63,6 +63,11 @@ const CustomerLayout = ({ children }) => {
   const prevStatusRef = useRef({}); // { [orderId]: order_status }
   const pendingAlertRef = useRef(null); // holds alert data when tab is backgrounded
   const [orderAlert, setOrderAlert] = useState(false); // badge on My Orders tab
+  const [notifDismissed, setNotifDismissed] = useState(
+    () => localStorage.getItem("notif_dismissed") === "1"
+  );
+  const notifPermission = "Notification" in window ? Notification.permission : "denied";
+  const showNotifBanner = !notifDismissed && notifPermission !== "granted" && notifPermission !== "denied";
 
   // Unlock AudioContext + speech + notifications on first tap
   useEffect(() => {
@@ -83,15 +88,16 @@ const CustomerLayout = ({ children }) => {
     return () => document.removeEventListener("click", unlock, true);
   }, []);
 
-  // When customer returns to the tab, fire any speech that was held back
+  // When customer returns to the tab — re-unlock audio, fire held speech, and re-poll immediately
   useEffect(() => {
     const onVisible = () => {
       if (document.hidden) return;
-      // Re-unlock AudioContext (released when tab went to background)
       try {
         const ctx = getCustAudioCtx();
         if (ctx.state === "suspended") ctx.resume().catch(() => {});
       } catch {}
+      // Re-poll immediately so status is fresh as soon as customer opens the app
+      pollOrders();
       if (pendingAlertRef.current) {
         const { soundType, msg, repeat } = pendingAlertRef.current;
         pendingAlertRef.current = null;
@@ -102,7 +108,7 @@ const CustomerLayout = ({ children }) => {
     };
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
-  }, []);
+  }, [pollOrders]);
 
   // Clear the alert badge when customer opens My Orders
   useEffect(() => {
@@ -166,8 +172,30 @@ const CustomerLayout = ({ children }) => {
 
   const isActive = (path) => location.pathname === path;
 
+  const handleEnableNotifs = async () => {
+    const result = await Notification.requestPermission();
+    if (result === "denied") {
+      localStorage.setItem("notif_dismissed", "1");
+      setNotifDismissed(true);
+    }
+  };
+
   return (
     <div className="cl-wrapper">
+      {/* ── Notification permission banner ── */}
+      {showNotifBanner && (
+        <div style={{ background: "#ff6a00", color: "#fff", padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "0.85rem", gap: 8 }}>
+          <span>🔔 Enable notifications to get alerted when your order is ready</span>
+          <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+            <button onClick={handleEnableNotifs} style={{ background: "#fff", color: "#ff6a00", border: "none", borderRadius: 6, padding: "5px 12px", fontWeight: 700, cursor: "pointer" }}>
+              Enable
+            </button>
+            <button onClick={() => { setNotifDismissed(true); localStorage.setItem("notif_dismissed", "1"); }} style={{ background: "transparent", color: "#fff", border: "1px solid rgba(255,255,255,0.5)", borderRadius: 6, padding: "5px 10px", cursor: "pointer" }}>
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
       {/* ── Top nav bar ── */}
       <nav className="cl-nav">
         <Link to="/customer/menu" className="cl-brand">
