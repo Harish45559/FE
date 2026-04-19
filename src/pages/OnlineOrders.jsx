@@ -261,6 +261,7 @@ const OnlineOrders = () => {
   const [selectedMinutes, setSelectedMinutes] = useState({});
   const [actionLoading, setActionLoading] = useState({});
   const [receiptOrder, setReceiptOrder] = useState(null);
+  const [markPaidModal, setMarkPaidModal] = useState(null); // order id awaiting pay method selection
   const [audioReady, setAudioReady] = useState(false);
   const [readyAnnounced, setReadyAnnounced] = useState({}); // tracks which orders had "ready" announced
   const [inAppAlert, setInAppAlert] = useState(false);
@@ -396,6 +397,22 @@ const OnlineOrders = () => {
         ),
       );
       setReadyAnnounced((prev) => { const n = { ...prev }; delete n[id]; return n; });
+    } catch {
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [id]: false }));
+    }
+  };
+
+  const handleMarkPaid = async (id, method) => {
+    setMarkPaidModal(null);
+    setActionLoading((prev) => ({ ...prev, [id]: true }));
+    try {
+      await api.patch(`/orders/online/${id}/mark-paid`, { payment_method: method });
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === id ? { ...o, payment_status: "paid", payment_method: method } : o,
+        ),
+      );
     } catch {
     } finally {
       setActionLoading((prev) => ({ ...prev, [id]: false }));
@@ -564,12 +581,10 @@ const OnlineOrders = () => {
                 <span>{order.payment_method}</span>
                 <span>
                   {order.payment_status === "paid"
-                    ? "✅ Paid"
+                    ? `✅ Paid (${order.payment_method})`
                     : order.payment_method === "Card"
-                    ? "⏳ Awaiting Payment"
-                    : order.payment_method === "Cash"
-                    ? "💵 Cash on Collection"
-                    : "🏪 Pay at Collection"}
+                    ? "⏳ Awaiting Online Payment"
+                    : "🏪 Collect payment on arrival"}
                 </span>
               </div>
 
@@ -642,6 +657,15 @@ const OnlineOrders = () => {
                     <div className="oo-ready-badge">
                       🕐 Ready at <strong>{order.estimated_ready}</strong>
                     </div>
+                  )}
+                  {order.payment_method === "Pay on Collection" && order.payment_status !== "paid" && (
+                    <button
+                      className="oo-mark-paid-btn"
+                      onClick={() => setMarkPaidModal(order.id)}
+                      disabled={isLoading}
+                    >
+                      💰 Mark as Paid
+                    </button>
                   )}
                   <button
                     className="oo-notify-ready-btn"
@@ -753,6 +777,43 @@ const OnlineOrders = () => {
             order={receiptOrder}
             onClose={() => setReceiptOrder(null)}
           />
+        )}
+
+        {/* ── Mark as Paid modal ── */}
+        {markPaidModal && (
+          <div
+            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999 }}
+            onClick={() => setMarkPaidModal(null)}
+          >
+            <div
+              style={{ background: "#fff", borderRadius: 16, padding: "28px 24px", width: 300, textAlign: "center", boxShadow: "0 8px 32px rgba(0,0,0,0.18)" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div style={{ fontSize: "1.8rem", marginBottom: 8 }}>💰</div>
+              <h3 style={{ margin: "0 0 6px", fontSize: "1.05rem" }}>How did the customer pay?</h3>
+              <p style={{ color: "#9ca3af", fontSize: "0.82rem", marginBottom: 20 }}>Select the payment method used at collection</p>
+              <div style={{ display: "flex", gap: 10 }}>
+                <button
+                  onClick={() => handleMarkPaid(markPaidModal, "Cash")}
+                  style={{ flex: 1, padding: "12px 0", background: "#f0fdf4", color: "#16a34a", border: "1.5px solid #bbf7d0", borderRadius: 10, fontWeight: 700, fontSize: "0.95rem", cursor: "pointer" }}
+                >
+                  💵 Cash
+                </button>
+                <button
+                  onClick={() => handleMarkPaid(markPaidModal, "Card on Collection")}
+                  style={{ flex: 1, padding: "12px 0", background: "#eff6ff", color: "#2563eb", border: "1.5px solid #bfdbfe", borderRadius: 10, fontWeight: 700, fontSize: "0.95rem", cursor: "pointer" }}
+                >
+                  💳 Card
+                </button>
+              </div>
+              <button
+                onClick={() => setMarkPaidModal(null)}
+                style={{ marginTop: 14, width: "100%", padding: "10px 0", background: "#f3f4f6", border: "none", borderRadius: 10, color: "#6b7280", fontWeight: 600, cursor: "pointer" }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         )}
       </div>
     </DashboardLayout>

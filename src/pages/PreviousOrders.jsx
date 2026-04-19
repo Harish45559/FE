@@ -35,6 +35,7 @@ const PreviousOrders = () => {
   const [qrModal, setQrModal]             = useState(null);
   const [qrLoading, setQrLoading]         = useState(null);
   const [receiptQR, setReceiptQR]         = useState(null);
+  const [markPaidModal, setMarkPaidModal] = useState(null);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -148,6 +149,20 @@ const PreviousOrders = () => {
       console.error("Failed to complete order", err);
     } finally {
       setCompleting(null);
+    }
+  };
+
+  const handleMarkPaid = async (id, method) => {
+    setMarkPaidModal(null);
+    try {
+      await api.patch(`/orders/online/${id}/mark-paid`, { payment_method: method });
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === id ? { ...o, payment_status: "paid", payment_method: method } : o,
+        ),
+      );
+    } catch (err) {
+      console.error("Failed to mark as paid", err);
     }
   };
 
@@ -316,7 +331,15 @@ const PreviousOrders = () => {
                       <td>
                         {o.payment_status === "paid"    && <span style={{ color: "#16a34a", fontWeight: 700, fontSize: "0.78rem" }}>✅ Paid</span>}
                         {o.payment_status === "failed"  && <span style={{ color: "#dc2626", fontWeight: 700, fontSize: "0.78rem" }}>❌ Failed</span>}
-                        {o.payment_status === "pending" && <span style={{ color: "#f59e0b", fontWeight: 700, fontSize: "0.78rem" }}>⏳ Pending</span>}
+                        {o.payment_status === "pending" && o.payment_method === "Pay on Collection" && (
+                          <button
+                            onClick={() => setMarkPaidModal(o.id)}
+                            style={{ background: "#fff7ed", color: "#ea580c", border: "1px solid #fed7aa", borderRadius: 7, padding: "4px 10px", fontWeight: 700, fontSize: "0.75rem", cursor: "pointer" }}
+                          >
+                            💰 Mark Paid
+                          </button>
+                        )}
+                        {o.payment_status === "pending" && o.payment_method !== "Pay on Collection" && <span style={{ color: "#f59e0b", fontWeight: 700, fontSize: "0.78rem" }}>⏳ Pending</span>}
                         {!o.payment_status              && <span style={{ color: "#ccc", fontSize: "0.78rem" }}>—</span>}
                       </td>
                       <td>
@@ -610,6 +633,43 @@ const PreviousOrders = () => {
             <p className="rcp-thankyou">Thank you for visiting Mirchi Mafiya!</p>
           </div>
         </ReceiptPortal>
+      )}
+
+      {/* ── Mark as Paid modal ── */}
+      {markPaidModal && (
+        <div
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999 }}
+          onClick={() => setMarkPaidModal(null)}
+        >
+          <div
+            style={{ background: "#fff", borderRadius: 16, padding: "28px 24px", width: 300, textAlign: "center", boxShadow: "0 8px 32px rgba(0,0,0,0.18)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ fontSize: "1.8rem", marginBottom: 8 }}>💰</div>
+            <h3 style={{ margin: "0 0 6px", fontSize: "1.05rem" }}>How did the customer pay?</h3>
+            <p style={{ color: "#9ca3af", fontSize: "0.82rem", marginBottom: 20 }}>Select the payment method used at collection</p>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button
+                onClick={() => handleMarkPaid(markPaidModal, "Cash")}
+                style={{ flex: 1, padding: "12px 0", background: "#f0fdf4", color: "#16a34a", border: "1.5px solid #bbf7d0", borderRadius: 10, fontWeight: 700, fontSize: "0.95rem", cursor: "pointer" }}
+              >
+                💵 Cash
+              </button>
+              <button
+                onClick={() => handleMarkPaid(markPaidModal, "Card on Collection")}
+                style={{ flex: 1, padding: "12px 0", background: "#eff6ff", color: "#2563eb", border: "1.5px solid #bfdbfe", borderRadius: 10, fontWeight: 700, fontSize: "0.95rem", cursor: "pointer" }}
+              >
+                💳 Card
+              </button>
+            </div>
+            <button
+              onClick={() => setMarkPaidModal(null)}
+              style={{ marginTop: 14, width: "100%", padding: "10px 0", background: "#f3f4f6", border: "none", borderRadius: 10, color: "#6b7280", fontWeight: 600, cursor: "pointer" }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
       )}
     </DashboardLayout>
   );
