@@ -1,0 +1,6 @@
+reports/report.html
+reports/*.html
+reports/screenshots/*.png
+__pycache__/
+*.pyc
+.env

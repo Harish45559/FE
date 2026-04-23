@@ -1,0 +1,27 @@
+{
+  "valid_clock_in": [
+    {"employee_id": 1, "pin": "1234", "expected": "success"},
+    {"employee_id": 2, "pin": "5678", "expected": "success"}
+  ],
+  "invalid_clock_in": [
+    {"employee_id": 99, "pin": "0000", "expected": "error", "reason": "employee not found"},
+    {"employee_id": 1, "pin": "9999", "expected": "error", "reason": "wrong pin"}
+  ],
+  "timezone_scenarios": [
+    {"utc_offset": 0, "expected_bst": "+01:00", "description": "Winter UTC"},
+    {"utc_offset": 1, "expected_bst": "+01:00", "description": "Summer BST"}
+  ],
+  "manual_entry_valid": [
+    {
+      "employee_id": 1,
+      "clock_in": "2025-04-23T09:00:00",
+      "clock_out": "2025-04-23T17:00:00",
+      "expected_work_hours": "07:30",
+      "expected_break_minutes": 30
+    }
+  ],
+  "manual_entry_invalid": [
+    {"employee_id": null, "clock_in": "2025-04-23T09:00:00", "reason": "missing employee_id"},
+    {"employee_id": 1, "clock_in": null, "reason": "missing clock_in"}
+  ]
+}
