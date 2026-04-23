@@ -1,0 +1,12 @@
+{
+  "include": ["."],
+  "extraPaths": [
+    ".",
+    "C:\\Users\\haris\\AppData\\Roaming\\Python\\Python313\\site-packages"
+  ],
+  "pythonVersion": "3.13",
+  "pythonPlatform": "Windows",
+  "typeCheckingMode": "basic",
+  "reportMissingImports": false,
+  "reportMissingModuleSource": false
+}

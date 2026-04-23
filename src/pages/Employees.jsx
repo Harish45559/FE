@@ -116,7 +116,7 @@ const Employees = () => {
   const validateForm = () => {
     const errs = {};
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const phoneRegex = /^[6-9]\d{9}$/;
+    const phoneRegex = /^0\d{9,10}$/;
     const pinRegex = /^\d{4}$/;
 
     if (!form.first_name.trim()) errs.first_name = "Required";
@@ -126,7 +126,7 @@ const Employees = () => {
     else if (!emailRegex.test(form.email)) errs.email = "Invalid email format";
     if (!form.phone.trim()) errs.phone = "Required";
     else if (!phoneRegex.test(form.phone))
-      errs.phone = "Must be 10 digits starting with 6-9";
+      errs.phone = "Must be a UK number starting with 0 (e.g. 07700900123)";
     if (!form.address.trim()) errs.address = "Required";
     if (!form.gender) errs.gender = "Required";
     if (!form.dob) errs.dob = "Required";
@@ -342,7 +342,7 @@ const Employees = () => {
                   name="phone"
                   label="Phone"
                   required
-                  placeholder="9876543210"
+                  placeholder="07700900123"
                   form={form}
                   errors={errors}
                   editingId={editingId}

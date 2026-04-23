@@ -1,0 +1,130 @@
+pipeline {
+    agent any
+
+    environment {
+        // Inject secrets from Jenkins Credentials store
+        ADMIN_DEFAULT_PASSWORD = credentials('ADMIN_DEFAULT_PASSWORD')
+        DATABASE_URL           = credentials('DATABASE_URL')
+        BASE_URL               = 'https://fe-2n6s.onrender.com'
+        API_URL                = 'https://attendance-be-production.onrender.com/api'
+        HEADLESS               = 'true'
+    }
+
+    options {
+        timestamps()
+        timeout(time: 30, unit: 'MINUTES')
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    stages {
+
+        stage('Install Dependencies') {
+            steps {
+                bat 'pip install -r automation_framework/requirements.txt'
+            }
+        }
+
+        stage('API Tests') {
+            steps {
+                dir('automation_framework') {
+                    bat 'pytest tests/api/ -m api --html=reports/api_report.html --self-contained-html -v'
+                }
+            }
+            post {
+                always {
+                    publishHTML(target: [
+                        allowMissing:         false,
+                        alwaysLinkToLastBuild: true,
+                        keepAll:              true,
+                        reportDir:            'automation_framework/reports',
+                        reportFiles:          'api_report.html',
+                        reportName:           'API Test Report'
+                    ])
+                }
+            }
+        }
+
+        stage('DB Tests') {
+            steps {
+                dir('automation_framework') {
+                    bat 'pytest tests/db/ -m db --html=reports/db_report.html --self-contained-html -v'
+                }
+            }
+            post {
+                always {
+                    publishHTML(target: [
+                        allowMissing:         true,
+                        alwaysLinkToLastBuild: true,
+                        keepAll:              true,
+                        reportDir:            'automation_framework/reports',
+                        reportFiles:          'db_report.html',
+                        reportName:           'DB Test Report'
+                    ])
+                }
+            }
+        }
+
+        stage('UI Smoke Tests') {
+            steps {
+                dir('automation_framework') {
+                    bat 'pytest tests/ui/ -m smoke --html=reports/smoke_report.html --self-contained-html -v'
+                }
+            }
+            post {
+                always {
+                    publishHTML(target: [
+                        allowMissing:         true,
+                        alwaysLinkToLastBuild: true,
+                        keepAll:              true,
+                        reportDir:            'automation_framework/reports',
+                        reportFiles:          'smoke_report.html',
+                        reportName:           'UI Smoke Report'
+                    ])
+                    archiveArtifacts artifacts: 'automation_framework/reports/screenshots/*.png',
+                                     allowEmptyArchive: true
+                }
+            }
+        }
+
+        stage('UI Regression Tests') {
+            when {
+                anyOf {
+                    branch 'main'
+                    triggeredBy 'TimerTrigger'
+                }
+            }
+            steps {
+                dir('automation_framework') {
+                    bat 'pytest tests/ui/ -m regression --html=reports/regression_report.html --self-contained-html -v'
+                }
+            }
+            post {
+                always {
+                    publishHTML(target: [
+                        allowMissing:         true,
+                        alwaysLinkToLastBuild: true,
+                        keepAll:              true,
+                        reportDir:            'automation_framework/reports',
+                        reportFiles:          'regression_report.html',
+                        reportName:           'UI Regression Report'
+                    ])
+                    archiveArtifacts artifacts: 'automation_framework/reports/screenshots/*.png',
+                                     allowEmptyArchive: true
+                }
+            }
+        }
+
+    }
+
+    post {
+        always {
+            echo 'Test pipeline complete. Check the HTML reports above.'
+        }
+        failure {
+            echo 'One or more test stages failed. Review the reports and screenshots.'
+        }
+        success {
+            echo 'All test stages passed successfully.'
+        }
+    }
+}

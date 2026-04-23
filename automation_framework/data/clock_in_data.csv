@@ -1,0 +1,5 @@
+employee_id,pin,expected_result,test_case
+1,1234,success,valid_employee
+2,9999,success,valid_employee_2
+99,0000,error,invalid_employee
+1,9999,error,wrong_pin

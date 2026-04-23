@@ -1,0 +1,4 @@
+name,email,role,pin,expected_status
+John Test,john.test@example.com,staff,1111,active
+Jane Test,jane.test@example.com,admin,2222,active
+Invalid User,,staff,,error

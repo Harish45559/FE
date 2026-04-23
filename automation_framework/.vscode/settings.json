@@ -1,0 +1,7 @@
+{
+  "python.defaultInterpreterPath": "C:\\Program Files\\Python313\\python.exe",
+  "python.analysis.extraPaths": [
+    "C:\\Users\\haris\\AppData\\Roaming\\Python\\Python313\\site-packages",
+    "${workspaceFolder}"
+  ]
+}
