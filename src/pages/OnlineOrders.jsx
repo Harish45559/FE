@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import DashboardLayout from "../components/DashboardLayout";
 import api from "../services/api";
+import socket from "../services/appSocket";
 import "./OnlineOrders.css";
 
 const TIME_PRESETS = [0, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60];
-const POLL_INTERVAL = 8000; // 8 seconds
 
 // ── Shared AudioContext — one instance, resumed on user gesture ───────────────
 // Mobile browsers suspend AudioContext until a user interaction occurs.
@@ -302,11 +302,15 @@ const OnlineOrders = () => {
     }
   }, []);
 
-  // ── Poll every 8 seconds ────────────────────────────────────────────────────
   useEffect(() => {
     fetchOrders();
-    const interval = setInterval(() => fetchOrders(true), POLL_INTERVAL);
-    return () => clearInterval(interval);
+    const refresh = () => fetchOrders(true);
+    socket.on("order:new", refresh);
+    socket.on("order:status-changed", refresh);
+    return () => {
+      socket.off("order:new", refresh);
+      socket.off("order:status-changed", refresh);
+    };
   }, [fetchOrders]);
 
   // ── In-app alert + browser notification when new pending orders arrive ────────

@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import socket from "../../services/appSocket";
 import customerApi from "../../services/customerApi";
 import CustomerLayout from "../../components/CustomerLayout";
 import { useCart } from "../../hooks/useCart";
@@ -23,6 +24,7 @@ const CustomerMenu = () => {
   const [search, setSearch]           = useState("");
   const [loading, setLoading]         = useState(true);
   const [imgErrors, setImgErrors]     = useState({});
+  const [favourites, setFavourites]   = useState([]);
   const { cart, addItem, updateQty, removeItem, total, itemCount } = useCart();
   const navigate = useNavigate();
 
@@ -42,10 +44,35 @@ const CustomerMenu = () => {
       }
     };
     fetchMenu();
+    customerApi.get("/customer/profile/favourites")
+      .then((r) => setFavourites(r.data.favourites || []))
+      .catch(() => {});
+
+    const handler = ({ id, available }) => {
+      setItems((prev) =>
+        prev.map((item) => (item.id === id ? { ...item, available } : item)),
+      );
+    };
+    socket.on("menu:availability-changed", handler);
+    return () => socket.off("menu:availability-changed", handler);
   }, []);
 
   const handleImgError = (id) =>
     setImgErrors((prev) => ({ ...prev, [id]: true }));
+
+  const handleToggleFavourite = async (e, itemId) => {
+    e.stopPropagation();
+    const optimistic = favourites.includes(itemId)
+      ? favourites.filter((id) => id !== itemId)
+      : [...favourites, itemId];
+    setFavourites(optimistic);
+    try {
+      const res = await customerApi.post(`/customer/profile/favourites/toggle/${itemId}`);
+      setFavourites(res.data.favourites || []);
+    } catch {
+      setFavourites(favourites); // revert on error
+    }
+  };
 
   // Get qty of item in cart
   const getCartQty = (id) => {
@@ -55,12 +82,16 @@ const CustomerMenu = () => {
 
   const filtered = useMemo(() => {
     return items.filter((i) => {
-      const catMatch    = activeCategory === "all" || i.categoryId === activeCategory;
+      const catMatch    = activeCategory === "all"
+        ? true
+        : activeCategory === "favourites"
+          ? favourites.includes(i.id)
+          : i.categoryId === activeCategory;
       const vegMatch    = vegFilter === "all" || (vegFilter === "veg" && i.is_veg) || (vegFilter === "nonveg" && !i.is_veg);
       const searchMatch = !search.trim() || i.name.toLowerCase().includes(search.toLowerCase()) || (i.category?.name || "").toLowerCase().includes(search.toLowerCase());
       return catMatch && vegMatch && searchMatch;
     });
-  }, [items, activeCategory, vegFilter, search]);
+  }, [items, activeCategory, vegFilter, search, favourites]);
 
   const hasCart = itemCount > 0;
 
@@ -95,6 +126,12 @@ const CustomerMenu = () => {
                 onClick={() => setActiveCategory("all")}
               >
                 All
+              </button>
+              <button
+                className={`cm-tab cm-tab-fav ${activeCategory === "favourites" ? "active" : ""}`}
+                onClick={() => setActiveCategory("favourites")}
+              >
+                ♥ Favourites {favourites.length > 0 && <span className="cm-fav-count">{favourites.length}</span>}
               </button>
               {categories.map((cat) => (
                 <button
@@ -147,14 +184,22 @@ const CustomerMenu = () => {
               {filtered.map((item) => {
                 const qty = getCartQty(item.id);
                 const inCart = qty > 0;
+                const soldOut = !item.available;
                 return (
                   <div
                     key={item.id}
                     data-testid={`menu-item-${item.id}`}
-                    className={`cm-card ${item.is_veg ? "cm-card-veg" : "cm-card-nonveg"} ${inCart ? "cm-card-incart" : ""}`}
+                    className={`cm-card ${item.is_veg ? "cm-card-veg" : "cm-card-nonveg"} ${inCart ? "cm-card-incart" : ""} ${soldOut ? "cm-card-soldout" : ""}`}
                   >
                     {/* Image */}
                     <div className="cm-img-wrap">
+                      <button
+                        className={`cm-fav-btn ${favourites.includes(item.id) ? "cm-fav-btn--on" : ""}`}
+                        onClick={(e) => handleToggleFavourite(e, item.id)}
+                        title={favourites.includes(item.id) ? "Remove from favourites" : "Add to favourites"}
+                      >
+                        {favourites.includes(item.id) ? "♥" : "♡"}
+                      </button>
                       {!imgErrors[item.id] ? (
                         <img
                           src={getItemImage(item)}
@@ -169,7 +214,10 @@ const CustomerMenu = () => {
                       <span className={`cm-veg-dot ${item.is_veg ? "veg" : "nonveg"}`}>
                         {item.is_veg ? "🟢" : "🔴"}
                       </span>
-                      {inCart && (
+                      {soldOut && (
+                        <span className="cm-soldout-badge">Sold Out</span>
+                      )}
+                      {!soldOut && inCart && (
                         <span className="cm-cart-badge">{qty}</span>
                       )}
                     </div>
@@ -183,8 +231,9 @@ const CustomerMenu = () => {
                       <div className="cm-bottom">
                         <span className="cm-price">£{parseFloat(item.price).toFixed(2)}</span>
 
-                        {/* Before adding: single Add button */}
-                        {!inCart ? (
+                        {soldOut ? (
+                          <span className="cm-soldout-label">Unavailable</span>
+                        ) : !inCart ? (
                           <button
                             data-testid={`add-btn-${item.id}`}
                             className="cm-add-btn"
@@ -193,7 +242,6 @@ const CustomerMenu = () => {
                             + Add
                           </button>
                         ) : (
-                          /* After adding: inline qty controls */
                           <div className="cm-qty-ctrl">
                             <button
                               className="cm-qty-btn cm-qty-minus"

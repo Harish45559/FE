@@ -181,7 +181,7 @@ const EndOfDaySales = () => {
   };
 
   const pieData = {
-    labels: ["Cash", "Card"],
+    labels: ["Cash", "Card / Collection"],
     datasets: [
       {
         data: [summary.cashSales || 0, summary.cardSales || 0],
@@ -502,7 +502,7 @@ const EndOfDaySales = () => {
                   <option value="all">All payments</option>
                   <option value="Cash">Cash</option>
                   <option value="Card">Card</option>
-                  <option value="Pay at Collection">Pay at Collection</option>
+                  <option value="Card on Collection">Card on Collection</option>
                 </select>
                 <select
                   className="eod-date-inp"

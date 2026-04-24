@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useCart } from "../hooks/useCart";
 import customerApi from "../services/customerApi";
+import socket from "../services/appSocket";
 import "./CustomerLayout.css";
 
 // ── Module-level AudioContext — shared, unlocked on first tap ─────────────────
@@ -137,8 +138,12 @@ const CustomerLayout = ({ children }) => {
 
   useEffect(() => {
     pollOrders();
-    const interval = setInterval(pollOrders, 12000);
-    return () => clearInterval(interval);
+    const customer = JSON.parse(localStorage.getItem("customer_user") || "{}");
+    const handler = ({ customer_id }) => {
+      if (!customer_id || customer_id === customer.id) pollOrders();
+    };
+    socket.on("order:status-changed", handler);
+    return () => socket.off("order:status-changed", handler);
   }, [pollOrders]);
 
   // When customer returns to the tab — re-unlock audio, fire held speech, and re-poll immediately

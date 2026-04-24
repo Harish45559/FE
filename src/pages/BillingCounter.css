@@ -222,10 +222,30 @@
   align-self: start;
 }
 
-.bc-card:hover {
+.bc-card:hover:not(.bc-card--soldout) {
   border-color: var(--pos-purple);
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(108, 99, 255, .15);
+}
+
+.bc-card--soldout {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.bc-soldout-overlay {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgba(0, 0, 0, 0.72);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 99px;
+  letter-spacing: 0.5px;
+  z-index: 2;
+  text-transform: uppercase;
 }
 
 .bc-card:active {
