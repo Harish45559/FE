@@ -46,8 +46,12 @@ const CustomerOrders = () => {
     const handler = ({ customer_id }) => {
       if (!customer_id || customer_id === customer.id) fetchOrders();
     };
+    socket.on("connect", fetchOrders);
     socket.on("order:status-changed", handler);
-    return () => socket.off("order:status-changed", handler);
+    return () => {
+      socket.off("connect", fetchOrders);
+      socket.off("order:status-changed", handler);
+    };
   }, [fetchOrders]);
 
   const filtered = useMemo(() => {

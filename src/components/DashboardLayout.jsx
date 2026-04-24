@@ -150,9 +150,11 @@ const DashboardLayout = ({ children }) => {
 
   useEffect(() => {
     fetchPendingOnline();
+    socket.on("connect", fetchPendingOnline);
     socket.on("order:new", fetchPendingOnline);
     socket.on("order:status-changed", fetchPendingOnline);
     return () => {
+      socket.off("connect", fetchPendingOnline);
       socket.off("order:new", fetchPendingOnline);
       socket.off("order:status-changed", fetchPendingOnline);
       if (soundLoopRef.current) clearInterval(soundLoopRef.current);

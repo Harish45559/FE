@@ -305,9 +305,11 @@ const OnlineOrders = () => {
   useEffect(() => {
     fetchOrders();
     const refresh = () => fetchOrders(true);
+    socket.on("connect", refresh);
     socket.on("order:new", refresh);
     socket.on("order:status-changed", refresh);
     return () => {
+      socket.off("connect", refresh);
       socket.off("order:new", refresh);
       socket.off("order:status-changed", refresh);
     };

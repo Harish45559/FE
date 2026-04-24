@@ -142,8 +142,12 @@ const CustomerLayout = ({ children }) => {
     const handler = ({ customer_id }) => {
       if (!customer_id || customer_id === customer.id) pollOrders();
     };
+    socket.on("connect", pollOrders);
     socket.on("order:status-changed", handler);
-    return () => socket.off("order:status-changed", handler);
+    return () => {
+      socket.off("connect", pollOrders);
+      socket.off("order:status-changed", handler);
+    };
   }, [pollOrders]);
 
   // When customer returns to the tab — re-unlock audio, fire held speech, and re-poll immediately
