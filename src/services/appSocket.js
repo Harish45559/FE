@@ -1,6 +1,7 @@
 import { io } from "socket.io-client";
 
-const url = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/api$/, "");
+const rawUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const url = new URL(rawUrl).origin;
 
 console.log("[socket] connecting to:", url);
 
