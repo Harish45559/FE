@@ -122,6 +122,19 @@ const MasterData = () => {
     setEditingItem({ ...item, veg: item.is_veg });
   };
 
+  const handleToggleAvailability = async (id) => {
+    try {
+      const res = await api.patch(`/menu/${id}/toggle-availability`);
+      setMenuItems((prev) =>
+        prev.map((item) =>
+          item.id === id ? { ...item, available: res.data.available } : item,
+        ),
+      );
+    } catch (err) {
+      alert("Failed to update availability");
+    }
+  };
+
   const handleSaveItem = async (id) => {
     const { name, price, categoryId, veg } = editingItem;
     if (!name.trim() || !price || !categoryId)
@@ -428,19 +441,24 @@ const MasterData = () => {
                     <th>Name</th>
                     <th>Price</th>
                     <th>Category</th>
+                    <th style={{ textAlign: "center", width: 90 }}>Available</th>
                     <th style={{ textAlign: "center", width: 110 }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {pagedMenuItems.length === 0 ? (
                     <tr>
-                      <td colSpan="4" className="md-empty">
+                      <td colSpan="5" className="md-empty">
                         No items match your filters
                       </td>
                     </tr>
                   ) : (
                     pagedMenuItems.map((item) => (
-                      <tr key={item.id} id={`md-item-row-${item.id}`}>
+                      <tr
+                        key={item.id}
+                        id={`md-item-row-${item.id}`}
+                        className={item.available === false ? "md-row--unavailable" : ""}
+                      >
                         {editingItemId === item.id ? (
                           <>
                             <td>
@@ -486,6 +504,7 @@ const MasterData = () => {
                                 ))}
                               </select>
                             </td>
+                            <td style={{ textAlign: "center" }}>—</td>
                             <td>
                               <div className="md-row-actions md-row-actions--center">
                                 <button
@@ -528,6 +547,17 @@ const MasterData = () => {
                                     String(c.id) === String(item.categoryId),
                                 )?.name ||
                                 "—"}
+                            </td>
+                            <td style={{ textAlign: "center" }}>
+                              <button
+                                id={`md-item-toggle-${item.id}`}
+                                className={`md-toggle-btn ${item.available !== false ? "md-toggle-btn--on" : "md-toggle-btn--off"}`}
+                                type="button"
+                                onClick={() => handleToggleAvailability(item.id)}
+                                title={item.available !== false ? "Mark unavailable" : "Mark available"}
+                              >
+                                {item.available !== false ? "On" : "Off"}
+                              </button>
                             </td>
                             <td>
                               <div className="md-row-actions md-row-actions--center">

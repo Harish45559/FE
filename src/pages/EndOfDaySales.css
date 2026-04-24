@@ -112,7 +112,7 @@
 }
 
 .eod-metric-card {
-  background: var(--color-background-secondary, #f5f5f5);
+  background: var(--color-background-secondary, #e0bc0846);
   border-radius: 8px;
   padding: 1rem;
   position: relative;

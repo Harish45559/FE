@@ -4,6 +4,7 @@ import { useNavigate, NavLink } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import api from "../services/api";
+import socket from "../services/appSocket";
 import "./DashboardLayout.css";
 
 // ── Module-level AudioContext (persists across re-renders) ────────────────────
@@ -149,9 +150,11 @@ const DashboardLayout = ({ children }) => {
 
   useEffect(() => {
     fetchPendingOnline();
-    const interval = setInterval(fetchPendingOnline, 10000);
+    socket.on("order:new", fetchPendingOnline);
+    socket.on("order:status-changed", fetchPendingOnline);
     return () => {
-      clearInterval(interval);
+      socket.off("order:new", fetchPendingOnline);
+      socket.off("order:status-changed", fetchPendingOnline);
       if (soundLoopRef.current) clearInterval(soundLoopRef.current);
       if (speechLoopRef.current) clearInterval(speechLoopRef.current);
     };

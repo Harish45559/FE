@@ -127,6 +127,7 @@ const BillingCounter = () => {
             price: priceNum,
             veg: toVegBool(rawVeg),
             category: categoryName,
+            available: !!item.available,
           };
         },
       );
@@ -655,13 +656,17 @@ const BillingCounter = () => {
             ) : (
               filteredMenu.map((item) => {
                 const inCart = selectedItems.find((s) => s.id === item.id);
+                const isUnavailable = !item.available;
                 return (
                   <div
                     key={item.id}
-                    className="bc-card"
-                    onClick={() => handleAddItem(item)}
+                    className={`bc-card${isUnavailable ? " bc-card--soldout" : ""}`}
+                    onClick={() => !isUnavailable && handleAddItem(item)}
                   >
-                    {inCart && (
+                    {isUnavailable && (
+                      <div className="bc-soldout-overlay">Sold Out</div>
+                    )}
+                    {!isUnavailable && inCart && (
                       <div className="bc-card-badge">{inCart.qty}</div>
                     )}
                     <button

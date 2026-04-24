@@ -363,6 +363,43 @@
   font-size: 14px;
 }
 
+/* ── Availability toggle ── */
+.md-toggle-btn {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 99px;
+  border: none;
+  cursor: pointer;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  transition: opacity 0.15s ease;
+}
+
+.md-toggle-btn:hover {
+  opacity: 0.8;
+}
+
+.md-toggle-btn--on {
+  background: #D1F2E5;
+  color: #085041;
+}
+
+.md-toggle-btn--off {
+  background: #F0F0F0;
+  color: #888;
+}
+
+/* ── Unavailable row dim ── */
+.md-row--unavailable td {
+  opacity: 0.5;
+}
+
+.md-row--unavailable:hover td {
+  opacity: 0.65;
+}
+
 /* ── Responsive ── */
 @media (max-width: 960px) {
   .md-layout {
