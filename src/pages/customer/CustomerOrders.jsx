@@ -197,21 +197,21 @@ const CustomerOrders = () => {
                   return (
                     <tr key={order.id} className={isReady ? "co-row-ready" : ""}>
 
-                      <td>
+                      <td data-label="Order">
                         <div className="co-order-num">#{order.order_number}</div>
                         <div className="co-order-type">
                           {order.order_type === "Takeaway" ? "🥡 Takeaway" : "🍽️ Eat In"}
                         </div>
                       </td>
 
-                      <td>
+                      <td data-label="Date">
                         <div className="co-date">{order.date}</div>
                         {order.pickup_time && (
                           <div className="co-pickup">🕐 {order.pickup_time}</div>
                         )}
                       </td>
 
-                      <td>
+                      <td data-label="Items">
                         <ul className="co-items-list">
                           {(order.items || []).map((item, i) => (
                             <li key={i} className="co-item">
@@ -223,14 +223,17 @@ const CustomerOrders = () => {
                             </li>
                           ))}
                         </ul>
+                        {order.customer_notes && (
+                          <div className="co-notes">📝 {order.customer_notes}</div>
+                        )}
                       </td>
 
-                      <td>
+                      <td data-label="Total">
                         <div className="co-total">£{parseFloat(order.final_amount).toFixed(2)}</div>
                         <div className="co-payment">{order.payment_method}</div>
                       </td>
 
-                      <td>
+                      <td data-label="Status">
                         <span
                           className="co-status-badge"
                           style={{ color: cfg.color, background: cfg.bg, borderColor: cfg.border }}
@@ -242,7 +245,7 @@ const CustomerOrders = () => {
                         )}
                       </td>
 
-                      <td>
+                      <td data-label="Actions">
                         <div className="co-actions">
                           <button className="co-btn co-btn-dark" onClick={() => handleOrderAgain(order)}>
                             🔁 Again

@@ -133,6 +133,24 @@
 .cc-empty-icon { font-size: 3.5rem; }
 .cc-empty p { color: #9ca3af; }
 
+/* ── Notes ── */
+.cc-notes {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 0.85rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  resize: vertical;
+  font-family: inherit;
+  color: #111;
+  background: #fafafa;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+}
+.cc-notes:focus { border-color: #9ca3af; background: #fff; }
+.cc-notes-count { font-size: 11px; color: #9ca3af; text-align: right; margin-top: 4px; }
+
 @media (max-width: 780px) {
   .cc-layout { grid-template-columns: 1fr; }
 }
