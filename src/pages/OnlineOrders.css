@@ -844,3 +844,28 @@
     padding: 9px;
   }
 }
+
+/* ── Customer notes box (order card) ── */
+.oo-notes-box {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  padding: 7px 10px;
+  margin: 8px 0 4px;
+  font-size: 12px;
+}
+.oo-notes-label { font-weight: 700; color: #92400e; white-space: nowrap; }
+.oo-notes-text  { color: #78350f; font-style: italic; line-height: 1.4; }
+
+/* ── Notes in receipt modal ── */
+.oo-receipt-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 6px 0;
+}
+.oo-receipt-notes-label { font-size: 10px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.4px; }
+.oo-receipt-notes-text  { font-size: 12px; color: #111; font-style: italic; }

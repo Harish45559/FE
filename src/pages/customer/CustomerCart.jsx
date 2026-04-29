@@ -16,6 +16,7 @@ const CustomerCart = () => {
   const [selectedDate, setSelectedDate] = useState(
     () => new Date().toISOString().split("T")[0],
   );
+  const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -51,6 +52,7 @@ const CustomerCart = () => {
         items: cart,
         payment_method: paymentMethod,
         pickup_time: needsSlot ? `${pickupTime} ${formatDate(selectedDate)}` : null,
+        customer_notes: notes.trim() || null,
       };
       const res = await customerApi.post("/customer/orders", payload);
       const order = res.data.order;
@@ -212,6 +214,20 @@ const CustomerCart = () => {
                 You'll enter your card details on the next screen.
               </p>
             )}
+          </div>
+
+          {/* Special requests / notes */}
+          <div className="c-card">
+            <h3 className="cc-section-title">Special Requests</h3>
+            <textarea
+              className="cc-notes"
+              placeholder="e.g. No onions, less spicy, extra sauce…"
+              maxLength={500}
+              rows={3}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+            />
+            <div className="cc-notes-count">{notes.length}/500</div>
           </div>
 
           {/* Summary + Place Order */}

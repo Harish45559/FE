@@ -85,6 +85,7 @@ function printOnlineReceipt(order) {
   const total = parseFloat(order.final_amount).toFixed(2);
   const pickup = order.pickup_time || "";
   const ready = order.estimated_ready || "";
+  const notes = order.customer_notes || "";
 
   const itemRows = items.map((it) => {
     const qty = it.qty || 1;
@@ -118,6 +119,7 @@ function printOnlineReceipt(order) {
         <div class="summary-row grand-total"><span>TOTAL</span><span>£${total}</span></div>
         <div class="summary-row highlight-pay"><span>Payment</span><span>${pay}</span></div>
       </div>
+      ${notes ? `<hr/><p style="font-size:10px;font-weight:700;margin:1mm 0 0.5mm">Special Requests:</p><p style="font-size:10px;font-style:italic;margin:0">${notes}</p>` : ""}
       <p style="text-align:center;margin-top:3mm;font-size:9px;color:#111">Thank you for your order!</p>
     </div>`;
 
@@ -134,6 +136,7 @@ function printOnlineReceipt(order) {
       <hr/>
       <table style="width:100%"><tbody>${kitchenRows}</tbody></table>
       <hr/>
+      ${notes ? `<p style="font-size:12px;font-weight:900;margin:1mm 0 0.5mm">⚠ NOTES: ${notes}</p><hr/>` : ""}
       <p style="text-align:center;font-size:10px;color:#111">${odate}</p>
     </div>`;
 
@@ -236,6 +239,15 @@ const ReceiptModal = ({ order, onClose }) => {
               <span style={{ color: st.color }}>{st.label}</span>
             </div>
           </div>
+          {order.customer_notes && (
+            <>
+              <div className="oo-receipt-divider" />
+              <div className="oo-receipt-notes">
+                <span className="oo-receipt-notes-label">📝 Notes</span>
+                <span className="oo-receipt-notes-text">{order.customer_notes}</span>
+              </div>
+            </>
+          )}
           <div className="oo-receipt-divider" />
           <div className="oo-receipt-thanks">Thank you!</div>
         </div>
@@ -585,6 +597,14 @@ const OnlineOrders = () => {
                   </div>
                 ))}
               </div>
+
+              {/* Customer notes */}
+              {order.customer_notes && (
+                <div className="oo-notes-box">
+                  <span className="oo-notes-label">📝 Notes:</span>
+                  <span className="oo-notes-text">{order.customer_notes}</span>
+                </div>
+              )}
 
               {/* Total row */}
               <div className="oo-total-bar">
