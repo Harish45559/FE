@@ -3,6 +3,7 @@ import DashboardLayout from "../components/DashboardLayout";
 import api from "../services/api";
 import socket from "../services/appSocket";
 import "./OnlineOrders.css";
+import { btConnected, btPrintOnlineOrder } from "../services/bluetoothPrinter";
 
 const TIME_PRESETS = [0, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60];
 
@@ -75,7 +76,16 @@ function playNewOrderSound() {
 }
 
 // ── Auto-print receipt on Accept (customer copy + kitchen copy) ───────────────
-function printOnlineReceipt(order) {
+async function printOnlineReceipt(order) {
+  // If Bluetooth printer is connected, use it — silent, no dialog, real auto-cut
+  if (btConnected()) {
+    try {
+      await btPrintOnlineOrder(order);
+      return;
+    } catch (_) {
+      // Fall through to iframe print if BT fails
+    }
+  }
   const items = order.items || [];
   const onum = order.order_number;
   const cname = order.customer_name;

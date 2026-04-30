@@ -7,6 +7,10 @@ import "./BillingCounter.css";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import imageMapping from "./imageMapping";
+import {
+  btSupported, btConnected, btDeviceName,
+  btConnect, btDisconnect, btPrintBoth,
+} from "../services/bluetoothPrinter";
 
 const toVegBool = (raw) => {
   if (raw === true) return true;
@@ -55,6 +59,10 @@ const BillingCounter = () => {
   });
 
   const [customerNotes, setCustomerNotes] = useState("");
+
+  // ── Bluetooth printer ──
+  const [btPrinter, setBtPrinter]     = useState(null);   // device name when connected
+  const [btConnecting, setBtConnecting] = useState(false);
 
   // ── Pager QR ──
   const [lastPlacedOrder, setLastPlacedOrder] = useState(null);
@@ -216,6 +224,25 @@ const BillingCounter = () => {
     setPagerData(null);
     setPagerModal(false);
     fetchLastOrderNumber();
+  };
+
+  const handleBtConnect = async () => {
+    if (btConnected()) {
+      btDisconnect();
+      setBtPrinter(null);
+      toast.info("Printer disconnected");
+      return;
+    }
+    setBtConnecting(true);
+    try {
+      const name = await btConnect();
+      setBtPrinter(name);
+      toast.success(`🖨️ Connected to ${name}`);
+    } catch (err) {
+      toast.error(err.message || "Could not connect to printer");
+    } finally {
+      setBtConnecting(false);
+    }
   };
 
   const generatePagerQR = async () => {
@@ -416,21 +443,31 @@ const BillingCounter = () => {
         discountPct: discountPercent,
         grand: getGrandTotal(),
       };
-      printViaIframe(
-        renderReceiptHTML({
-          orderNumber: placed.order_number ?? nextTempOrderNumber,
-          orderType: placed.order_type || orderType,
-          customerName,
-          customerPhone: null,
-          paymentMethod,
-          customerNotes: customerNotes.trim() || null,
-          orderDate: placed.date ?? getDateTime(),
-          items: selectedItems,
-          totals,
-          staffName: tillOpenedBy,
-          pagerQR: autoPager?.qrCode ?? null,
-        })
-      );
+      const receiptData = {
+        orderNumber:   placed.order_number ?? nextTempOrderNumber,
+        orderType:     placed.order_type || orderType,
+        customerName,
+        paymentMethod,
+        customerNotes: customerNotes.trim() || null,
+        orderDate:     placed.date ?? getDateTime(),
+        items:         selectedItems,
+        totals,
+        staffName:     tillOpenedBy,
+        pagerQR:       autoPager?.qrCode ?? null,
+      };
+
+      if (btConnected()) {
+        // Bluetooth: silent, no dialog, real auto-cut
+        try {
+          await btPrintBoth(receiptData);
+        } catch (btErr) {
+          toast.warning("Bluetooth print failed, falling back to browser print");
+          printViaIframe(renderReceiptHTML({ ...receiptData, customerPhone: null }));
+        }
+      } else {
+        // Fallback: iframe print (shows OS dialog)
+        printViaIframe(renderReceiptHTML({ ...receiptData, customerPhone: null }));
+      }
       if (resumedHeldOrderId) {
         try {
           await api.delete(`/orders/held/${resumedHeldOrderId}`);
@@ -762,6 +799,21 @@ const BillingCounter = () => {
               </button>
             </div>
           </div>
+
+          {/* Bluetooth printer */}
+          {btSupported() && (
+            <button
+              className={`bc-bt-btn${btPrinter ? " connected" : ""}`}
+              onClick={handleBtConnect}
+              disabled={btConnecting}
+            >
+              {btConnecting
+                ? "🔵 Connecting…"
+                : btPrinter
+                ? `🖨️ ${btPrinter} ✓`
+                : "🔵 Connect Printer"}
+            </button>
+          )}
 
           {/* Order type toggle */}
           <div className="bc-pay-row" style={{ marginBottom: 8 }}>
