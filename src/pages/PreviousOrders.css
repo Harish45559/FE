@@ -358,8 +358,9 @@
   padding: 12px 14px;
   border-radius: 16px;
   width: min(380px, 92vw);
-  max-height: 85vh;
-  overflow: auto;
+  max-height: 92vh;
+  overflow-y: auto;
+  overflow-x: hidden;
   box-shadow: 0 20px 50px rgba(0, 0, 0, .2);
   font-family: 'Courier New', Courier, monospace;
   color: #000;
@@ -454,6 +455,7 @@
   .bill-section {
     width: 72mm !important;
     max-width: 72mm !important;
+    max-height: none !important;
     margin: 0 auto !important;
     padding: 8px !important;
     background: #fff !important;
@@ -472,7 +474,7 @@
     padding: 0 !important;
     width: 72mm !important;
     height: auto !important;
-    overflow: hidden !important;
+    overflow: visible !important;
     background: #fff !important;
   }
 }
