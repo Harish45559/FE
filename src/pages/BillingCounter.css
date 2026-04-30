@@ -467,6 +467,29 @@
   border-bottom-color: #dd3a00;
 }
 
+/* Bluetooth connect button */
+.bc-bt-btn {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1.5px solid #d1d5db;
+  border-radius: 0;
+  background: #f9fafb;
+  color: #374151;
+  cursor: pointer;
+  text-align: left;
+  flex-shrink: 0;
+  transition: background .15s, border-color .15s;
+}
+.bc-bt-btn:hover:not(:disabled) { background: #f3f4f6; }
+.bc-bt-btn.connected {
+  background: #f0fdf4;
+  border-color: #86efac;
+  color: #15803d;
+}
+.bc-bt-btn:disabled { opacity: .6; cursor: not-allowed; }
+
 /* Notes */
 .bc-notes-wrap {
   position: relative;
