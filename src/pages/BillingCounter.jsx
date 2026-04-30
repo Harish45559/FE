@@ -429,8 +429,7 @@ const BillingCounter = () => {
           totals,
           staffName: tillOpenedBy,
           pagerQR: autoPager?.qrCode ?? null,
-        }),
-        )
+        })
       );
       if (resumedHeldOrderId) {
         try {
