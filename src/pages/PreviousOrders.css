@@ -355,38 +355,38 @@
 
 .bill-section {
   background: #fff;
-  padding: 18px;
+  padding: 12px 14px;
   border-radius: 16px;
-  width: min(420px, 92vw);
-  max-height: 90vh;
+  width: min(380px, 92vw);
+  max-height: 85vh;
   overflow: auto;
   box-shadow: 0 20px 50px rgba(0, 0, 0, .2);
   font-family: 'Courier New', Courier, monospace;
   color: #000;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 /* Receipt header */
 .receipt-header h2 {
   text-align: center;
-  margin: 0 0 4px;
-  font-size: 18px;
+  margin: 0 0 2px;
+  font-size: 16px;
   font-weight: 900;
   color: #000;
 }
 
 .receipt-header p {
-  font-size: 12px;
+  font-size: 11px;
   text-align: center;
-  margin: 1px 0;
+  margin: 0;
   color: #000;
 }
 
 /* Typography helpers */
-.rcp-light { font-weight: 400; font-size: 12px; color: #555; margin: 2px 0; }
+.rcp-light { font-weight: 400; font-size: 12px; color: #222; margin: 2px 0; }
 .rcp-bold  { font-weight: 800; font-size: 13px; color: #000; margin: 3px 0; }
 .rcp-bold-lg { font-weight: 900; font-size: 15px; color: #000; margin: 4px 0; letter-spacing: 0.5px; }
-.rcp-divider { border: 0; border-top: 1px dashed #bbb; margin: 6px 0; }
+.rcp-divider { border: 0; border-top: 1px dashed #bbb; margin: 4px 0; }
 
 /* Items */
 .rcp-items-label { font-size: 10px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: .8px; margin: 4px 0 4px; }
@@ -400,8 +400,13 @@
 .rcp-summary-row { display: flex; justify-content: space-between; margin: 2px 0; }
 .rcp-grand { font-size: 15px; font-weight: 900; color: #000; border-top: 2px solid #000; padding-top: 4px; margin-top: 4px; }
 
+/* Customer notes in receipt */
+.rcp-notes { margin: 4px 0; padding: 4px 6px; background: #fffbeb; border: 1px dashed #f59e0b; border-radius: 3px; }
+.rcp-notes-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #92400e; margin: 0 0 2px; }
+.rcp-notes-text { font-size: 11px; font-style: italic; color: #111; margin: 0; }
+
 /* Thank-you line */
-.rcp-thankyou { text-align: center; font-size: 11px; color: #888; margin-top: 10px; }
+.rcp-thankyou { text-align: center; font-size: 11px; color: #555; margin-top: 6px; }
 
 /* Buttons */
 .print-btn,

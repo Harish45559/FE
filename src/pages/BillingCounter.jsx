@@ -54,6 +54,8 @@ const BillingCounter = () => {
     }
   });
 
+  const [customerNotes, setCustomerNotes] = useState("");
+
   // ── Pager QR ──
   const [lastPlacedOrder, setLastPlacedOrder] = useState(null);
   const [pagerModal, setPagerModal] = useState(false);
@@ -162,6 +164,7 @@ const BillingCounter = () => {
   const clearCurrentOrder = () => {
     setSelectedItems([]);
     setCustomerName("");
+    setCustomerNotes("");
     setDiscountPercent(0);
   };
 
@@ -205,6 +208,7 @@ const BillingCounter = () => {
   const startNewOrder = () => {
     setSelectedItems([]);
     setCustomerName("");
+    setCustomerNotes("");
     setOrderNumber(null);
     setShowReceipt(false);
     setOrderDate(null);
@@ -231,7 +235,7 @@ const BillingCounter = () => {
   };
 
   const renderReceiptHTML = (data) => {
-    const { orderNumber: onum, orderType: otype, customerName: cname, customerPhone: cphone, paymentMethod: pay, orderDate: odate, items, totals, staffName, pagerQR } = data;
+    const { orderNumber: onum, orderType: otype, customerName: cname, customerPhone: cphone, paymentMethod: pay, customerNotes: cnotes, orderDate: odate, items, totals, staffName, pagerQR } = data;
 
     // Items rows: "2x Punugulu  £5.00" — name left, price right
     const itemRows = items.map((it) => {
@@ -269,6 +273,7 @@ const BillingCounter = () => {
           <div class="summary-row highlight-pay"><span>Payment</span><span>${pay}</span></div>
           <div class="summary-row light"><span>Staff</span><span>${staffName || "—"}</span></div>
         </div>
+        ${cnotes ? `<hr/><p style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin:0 0 1mm">Special Requests:</p><p style="font-size:10px;font-style:italic;margin:0 0 2mm">${cnotes}</p>` : ""}
         ${pagerQR ? `
         <div style="text-align:center;margin-top:4mm;padding-top:3mm;border-top:1px dashed #bbb">
           <p style="font-size:10px;margin-bottom:2mm;font-weight:700">📱 Scan to track your order</p>
@@ -297,6 +302,7 @@ const BillingCounter = () => {
           <tbody>${kitchenRows}</tbody>
         </table>
         <hr/>
+        ${cnotes ? `<p style="font-size:12px;font-weight:900;margin:1mm 0">⚠ NOTES: ${cnotes}</p><hr/>` : ""}
         <p style="text-align:center;font-size:10px;color:#111">${odate || ""}</p>
       </div>`;
 
@@ -369,6 +375,7 @@ const BillingCounter = () => {
       discount_amount: getDiscountAmount(),
       final_amount: getGrandTotal(),
       payment_method: paymentMethod,
+      customer_notes: customerNotes.trim() || null,
       created_at: DateTime.now().toUTC().toISO(),
       date: getDateTime(),
     };
@@ -409,6 +416,7 @@ const BillingCounter = () => {
           customerName,
           customerPhone: null,
           paymentMethod,
+          customerNotes: customerNotes.trim() || null,
           orderDate: placed.date ?? getDateTime(),
           items: selectedItems,
           totals,
@@ -773,6 +781,20 @@ const BillingCounter = () => {
             value={customerName}
             onChange={(e) => setCustomerName(e.target.value)}
           />
+
+          {/* Special Requests */}
+          <div className="bc-notes-wrap">
+            <textarea
+              className="bc-notes-inp"
+              placeholder="Special requests (e.g. no onions, less spicy…)"
+              maxLength={500}
+              value={customerNotes}
+              onChange={(e) => setCustomerNotes(e.target.value)}
+            />
+            {customerNotes.length > 0 && (
+              <span className="bc-notes-count">{customerNotes.length}/500</span>
+            )}
+          </div>
 
           {/* Cart */}
           <div className="bc-cart">

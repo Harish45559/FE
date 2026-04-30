@@ -62,6 +62,7 @@ const PreviousOrders = () => {
           pager_token:      o.pager_token ?? null,
           pager_status:     o.pager_status ?? null,
           ring_count:       o.ring_count ?? 0,
+          customer_notes:   o.customer_notes ?? null,
         }));
         norm.sort((a, b) => {
           const ta = a.date ? new Date(a.date).getTime() : 0;
@@ -619,9 +620,9 @@ const PreviousOrders = () => {
             })()}
 
             {activeOrder.customer_notes && (
-              <div style={{ margin: "8px 0", padding: "6px 8px", background: "#fffbeb", border: "1px dashed #f59e0b", borderRadius: 4 }}>
-                <p style={{ fontSize: 9, fontFamily: "Courier New, monospace", fontWeight: 700, margin: "0 0 2px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Special Requests:</p>
-                <p style={{ fontSize: 10, fontFamily: "Courier New, monospace", fontStyle: "italic", margin: 0 }}>{activeOrder.customer_notes}</p>
+              <div className="rcp-notes">
+                <p className="rcp-notes-label">Special Requests:</p>
+                <p className="rcp-notes-text">{activeOrder.customer_notes}</p>
               </div>
             )}
 
