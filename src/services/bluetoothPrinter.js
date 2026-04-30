@@ -6,6 +6,7 @@ const GS  = 0x1D;
 
 const CMD = {
   INIT:         [ESC, 0x40],
+  CODE_PAGE:    [ESC, 0x74, 0x13],  // ESC t 19 = Windows-1252 — fixes £ showing as "Tú"
   ALIGN_LEFT:   [ESC, 0x61, 0x00],
   ALIGN_CENTER: [ESC, 0x61, 0x01],
   BOLD_ON:      [ESC, 0x45, 0x01],
@@ -39,6 +40,33 @@ let _char   = null;
 export const btSupported  = () => 'bluetooth' in navigator;
 export const btConnected  = () => !!(_device?.gatt?.connected && _char);
 export const btDeviceName = () => _device?.name || null;
+
+// Try to silently reconnect to any previously-paired printer (Chrome 85+)
+export const btAutoConnect = async (onConnect) => {
+  if (!btSupported() || !navigator.bluetooth.getDevices) return;
+  try {
+    const devices = await navigator.bluetooth.getDevices();
+    if (!devices.length) return;
+    const dev = devices[0];
+    dev.addEventListener('gattserverdisconnected', () => { _device = null; _char = null; });
+    const server = await dev.gatt.connect();
+    let service = null;
+    for (const uuid of BLE_SERVICES) {
+      try { service = await server.getPrimaryService(uuid); break; } catch (_) {}
+    }
+    if (!service) return;
+    let char = null;
+    for (const uuid of BLE_CHARS) {
+      try { char = await service.getCharacteristic(uuid); break; } catch (_) {}
+    }
+    if (!char) return;
+    _device = dev;
+    _char   = char;
+    if (onConnect) onConnect(dev.name || 'Bluetooth Printer');
+  } catch (_) {
+    // Silent — user hasn't paired yet or device is off
+  }
+};
 
 export const btConnect = async () => {
   if (!btSupported()) {
@@ -99,17 +127,42 @@ const send = async (bytes) => {
   }
 };
 
-const enc      = (text)            => Array.from(new TextEncoder().encode(text));
+// CP1252 encoder — £ (U+00A3) → 0xA3 single byte; avoids UTF-8 two-byte "Tú" artefact
+const enc = (text) => {
+  const bytes = [];
+  for (let i = 0; i < text.length; i++) {
+    const c = text.charCodeAt(i);
+    if (c < 128) bytes.push(c);
+    else if (c < 256) bytes.push(c); // Latin-1 / CP1252 passthrough (covers £ = 0xA3)
+    else bytes.push(0x3F);           // '?' fallback for chars outside CP1252
+  }
+  return bytes;
+};
 const divider  = (w = 32)          => '-'.repeat(w);
 const twoCol   = (l, r, w = 32)   => l + ' '.repeat(Math.max(1, w - l.length - r.length)) + r;
+
+// ESC/POS native QR code — prints without sending raster image bytes
+const buildQR = (url) => {
+  const data  = enc(url);
+  const len   = data.length + 3;
+  const pL    = len & 0xFF;
+  const pH    = (len >> 8) & 0xFF;
+  return [
+    0x1D, 0x28, 0x6B, 0x04, 0x00, 0x31, 0x41, 0x32, 0x00, // model 2
+    0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x43, 0x04,        // module size 4
+    0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x45, 0x31,        // error correction M
+    0x1D, 0x28, 0x6B, pL, pH, 0x31, 0x50, 0x30, ...data,   // store data
+    0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x51, 0x30,        // print
+  ];
+};
 
 // ── Customer receipt ──────────────────────────────────────────────────────────
 const buildCustomer = (data) => {
   const { orderNumber, orderType, customerName, paymentMethod, orderDate,
-          items, totals, staffName, customerNotes, isOnline = false } = data;
+          items, totals, staffName, customerNotes, pagerUrl, isOnline = false } = data;
   const b = [];
 
-  b.push(...CMD.INIT);
+  b.push(...CMD.INIT, ...CMD.CODE_PAGE);
   b.push(...CMD.ALIGN_CENTER, ...CMD.BOLD_ON, ...CMD.DOUBLE_SIZE);
   b.push(...enc('Mirchi Mafiya\n'));
   b.push(...CMD.NORMAL_SIZE, ...CMD.BOLD_OFF);
@@ -165,6 +218,11 @@ const buildCustomer = (data) => {
   }
 
   b.push(...CMD.ALIGN_CENTER);
+  if (pagerUrl) {
+    b.push(...enc('\nScan to track your order:\n'));
+    b.push(...buildQR(pagerUrl));
+    b.push(...enc('\n'));
+  }
   b.push(...enc('\nThank you for visiting\nMirchi Mafiya!\n'));
   b.push(...CMD.FEED);
   b.push(...CMD.CUT);   // ✂ physical cut after customer copy
@@ -178,7 +236,7 @@ const buildKitchen = (data) => {
           items, customerNotes, isOnline = false, pickupTime, estimatedReady } = data;
   const b = [];
 
-  b.push(...CMD.INIT);
+  b.push(...CMD.INIT, ...CMD.CODE_PAGE);
   b.push(...CMD.ALIGN_CENTER, ...CMD.BOLD_ON, ...CMD.DOUBLE_SIZE);
   b.push(...enc(`KITCHEN${isOnline ? ' - ONLINE' : ''}\n`));
   b.push(...enc(`#${orderNumber}\n`));

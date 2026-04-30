@@ -9,7 +9,7 @@ import "react-toastify/dist/ReactToastify.css";
 import imageMapping from "./imageMapping";
 import {
   btSupported, btConnected, btDeviceName,
-  btConnect, btDisconnect, btPrintBoth,
+  btConnect, btDisconnect, btPrintBoth, btAutoConnect,
 } from "../services/bluetoothPrinter";
 
 const toVegBool = (raw) => {
@@ -96,6 +96,12 @@ const BillingCounter = () => {
     fetchMenu();
     fetchCategories();
     fetchLastOrderNumber();
+
+    // Silently reconnect to previously-paired BT printer if available
+    btAutoConnect((name) => {
+      setBtPrinter(name);
+      toast.success(`Printer reconnected: ${name}`, { autoClose: 2000 });
+    });
     const resumed = localStorage.getItem("resumedOrder");
     if (resumed) {
       try {
@@ -454,6 +460,7 @@ const BillingCounter = () => {
         totals,
         staffName:     tillOpenedBy,
         pagerQR:       autoPager?.qrCode ?? null,
+        pagerUrl:      autoPager?.pagerUrl ?? null,
       };
 
       if (btConnected()) {
