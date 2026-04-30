@@ -1,25 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
-import ReactDOM from "react-dom";
 import DashboardLayout from "../components/DashboardLayout";
 import api from "../services/api";
 import "./PreviousOrders.css";
 import usePagination from "../hooks/usePagination";
-
-/* ── Receipt Portal ── */
-const ReceiptPortal = ({ children }) => {
-  const [el] = useState(() => {
-    const d = document.createElement("div");
-    d.className = "receipt-modal";
-    return d;
-  });
-  useEffect(() => {
-    document.body.appendChild(el);
-    return () => {
-      try { document.body.removeChild(el); } catch (e) { console.error(e); }
-    };
-  }, [el]);
-  return ReactDOM.createPortal(children, el);
-};
 
 const PreviousOrders = () => {
   const [orders, setOrders]               = useState([]);
@@ -28,13 +11,10 @@ const PreviousOrders = () => {
   const [date, setDate]                   = useState("");
   const [sourceFilter, setSourceFilter]   = useState("all");
   const [payFilter, setPayFilter]         = useState("all");
-  const [showReceipt, setShowReceipt]     = useState(false);
-  const [activeOrder, setActiveOrder]     = useState(null);
   const [markingReady, setMarkingReady]   = useState(null);
   const [completing, setCompleting]       = useState(null);
   const [qrModal, setQrModal]             = useState(null);
   const [qrLoading, setQrLoading]         = useState(null);
-  const [receiptQR, setReceiptQR]         = useState(null);
   const [markPaidModal, setMarkPaidModal] = useState(null);
 
   useEffect(() => {
@@ -62,6 +42,7 @@ const PreviousOrders = () => {
           pager_token:      o.pager_token ?? null,
           pager_status:     o.pager_status ?? null,
           ring_count:       o.ring_count ?? 0,
+          customer_notes:   o.customer_notes ?? null,
         }));
         norm.sort((a, b) => {
           const ta = a.date ? new Date(a.date).getTime() : 0;
@@ -185,8 +166,95 @@ const PreviousOrders = () => {
     }
   };
 
+  const buildReceiptHTML = (ord, qrCode) => {
+    const subtotal = ord.total_amount || calcSubtotal(ord);
+    const discPct  = Number(ord.discount_percent || 0);
+    const discAmt  = ord.discount_amount || (discPct > 0 ? (subtotal * discPct) / 100 : 0);
+    const grand    = ord.final_amount || Math.max(0, subtotal - discAmt);
+    const vatIncl  = calcIncluded(grand, 20);
+    const svcIncl  = calcIncluded(grand, 8);
+
+    const itemRows = (ord.items || []).map((it) => {
+      const qty   = Number(it.qty ?? it.quantity ?? 0);
+      const price = Number(it.price ?? 0);
+      const total = Number(it.total ?? price * qty);
+      return `<div class="item-row"><span class="item-name">${qty}x ${it.name}</span><span class="item-price">£${total.toFixed(2)}</span></div>`;
+    }).join("");
+
+    return `
+      <div class="bill-section">
+        <div class="receipt-header">
+          <h2>Mirchi Mafiya</h2>
+          <p class="light">Cumberland Street, LU1 3BW, Luton</p>
+          <p class="light">Phone: +447440086046</p>
+          <p class="light">dtsretaillimited@gmail.com</p>
+        </div>
+        <hr/>
+        <p class="bold-lg">ORDER #${ord.order_number}</p>
+        <p class="bold">${ord.customer_name || "N/A"}</p>
+        ${ord.customer_phone ? `<p class="bold">📞 ${ord.customer_phone}</p>` : ""}
+        <p class="light">Type: ${ord.order_type || "—"}</p>
+        <p class="bold" style="font-size:11px">Date: ${ord.date || "—"}</p>
+        <hr/>
+        <p class="items-label">Items</p>
+        <div class="items-block">${itemRows}</div>
+        <hr/>
+        <div class="summary">
+          <div class="sum-row light"><span>Sub Total</span><span>£${subtotal.toFixed(2)}</span></div>
+          ${discPct > 0 ? `<div class="sum-row light"><span>Discount (${discPct}%)</span><span>-£${discAmt.toFixed(2)}</span></div>` : ""}
+          <div class="sum-row light"><span>VAT (20%)</span><span>£${vatIncl.toFixed(2)}</span></div>
+          <div class="sum-row light"><span>Service (8%)</span><span>£${svcIncl.toFixed(2)}</span></div>
+          <hr/>
+          <div class="sum-row grand"><span>TOTAL</span><span>£${grand.toFixed(2)}</span></div>
+          <div class="sum-row bold" style="margin-top:3px"><span>Payment</span><span>${ord.payment_method}</span></div>
+          <div class="sum-row light" style="margin-top:2px"><span>Staff</span><span>${ord.server_name || "—"}</span></div>
+        </div>
+        ${ord.customer_notes ? `<hr/><p style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin:3px 0 1px">Special Requests:</p><p style="font-size:10px;font-style:italic;margin:0 0 3px">${ord.customer_notes}</p>` : ""}
+        ${qrCode ? `
+        <div style="text-align:center;margin-top:4mm;padding-top:3mm;border-top:1px dashed #bbb">
+          <p style="font-size:10px;margin-bottom:2mm;font-weight:700">📱 Scan to track your order</p>
+          <img src="${qrCode}" style="width:120px;height:120px;" />
+          <p style="font-size:9px;margin-top:2mm">We'll notify you when it's ready!</p>
+        </div>` : ""}
+        <p style="text-align:center;margin-top:4mm;font-size:9px">Thank you for visiting Mirchi Mafiya!</p>
+      </div>`;
+  };
+
+  const printReceiptWindow = (html) => {
+    const styles = `<style>
+      @page { size: 72mm auto; margin: 0; }
+      html, body { margin: 0; padding: 0; width: 72mm; height: auto; overflow: visible; background: #fff; }
+      body { font-family: 'Courier New', monospace; background: #fff; color: #000; }
+      .bill-section { width: 72mm; max-width: 72mm; padding: 5mm 4mm; margin: 0 auto; font-size: 11px; line-height: 1.4; }
+      .receipt-header { text-align: center; margin-bottom: 2mm; }
+      .receipt-header h2 { font-size: 15px; margin: 0 0 1mm; font-weight: 900; letter-spacing: 1px; }
+      .light { font-weight: 400; font-size: 10px; color: #222; margin: 0.5mm 0; }
+      .bold { font-weight: 800; font-size: 12px; margin: 1mm 0; }
+      .bold-lg { font-weight: 900; font-size: 14px; margin: 2mm 0 1mm; letter-spacing: .5px; }
+      .items-label { font-size: 9px; font-weight: 700; color: #333; text-transform: uppercase; letter-spacing: .8px; margin: 1.5mm 0 1mm; }
+      .items-block { display: flex; flex-direction: column; gap: 1mm; margin-bottom: 1mm; }
+      .item-row { display: flex; justify-content: space-between; align-items: baseline; gap: 4px; }
+      .item-name { font-size: 12px; font-weight: 900; flex: 1; }
+      .item-price { font-size: 12px; font-weight: 900; white-space: nowrap; }
+      .summary { margin-top: 1mm; }
+      .sum-row { display: flex; justify-content: space-between; margin: 0.6mm 0; font-size: 11px; }
+      .grand { font-size: 13px; font-weight: 900; padding-top: 1mm; margin-top: 1mm; }
+      hr { border: 0; border-top: 1px dashed #555; margin: 2mm 0; }
+    </style>`;
+    const w = window.open("", "_blank", "width=420,height=700");
+    if (!w) return;
+    w.document.open();
+    w.document.write(`<!doctype html><html><head><meta charset="utf-8"/><title>Receipt</title>${styles}</head><body>${html}</body></html>`);
+    w.document.close();
+    const imgs = w.document.getElementsByTagName("img");
+    const doPrint = () => { try { w.focus(); w.print(); } finally { setTimeout(() => w.close(), 500); } };
+    if (imgs.length === 0) { setTimeout(doPrint, 80); return; }
+    let loaded = 0;
+    const onLoad = () => { if (++loaded >= imgs.length) setTimeout(doPrint, 80); };
+    Array.from(imgs).forEach((img) => { if (img.complete) onLoad(); else { img.onload = onLoad; img.onerror = onLoad; } });
+  };
+
   const openReceipt = async (ord) => {
-    // Fetch pager QR for counter orders so it prints on the receipt
     let qr = null;
     if (ord.source !== "online") {
       try {
@@ -199,31 +267,11 @@ const PreviousOrders = () => {
               : o
           )
         );
-      } catch (_) {
-        // QR is optional — receipt still prints without it
-      }
+      } catch (_) {}
     }
-    setReceiptQR(qr);
-    setActiveOrder(ord);
-    setShowReceipt(true);
-    window.onafterprint = () => {
-      window.onafterprint = null;
-      setShowReceipt(false);
-      setActiveOrder(null);
-      setReceiptQR(null);
-    };
-    setTimeout(() => window.print(), 600);
+    printReceiptWindow(buildReceiptHTML(ord, qr));
   };
 
-  const handlePrint = () => {
-    window.onafterprint = () => {
-      window.onafterprint = null;
-      setShowReceipt(false);
-      setActiveOrder(null);
-      setReceiptQR(null);
-    };
-    window.print();
-  };
 
   /* Pagination pages */
   const pages = [];
@@ -551,95 +599,6 @@ const PreviousOrders = () => {
             </div>
           </div>
         </div>
-      )}
-
-      {/* ── Receipt Portal ── */}
-      {showReceipt && activeOrder && (
-        <ReceiptPortal>
-          <div className="bill-section">
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
-              <button className="print-btn" onClick={handlePrint}>🖨️ Print</button>
-              <button className="close-preview-btn" onClick={() => { setShowReceipt(false); setActiveOrder(null); }}>✕ Close</button>
-            </div>
-
-            <div className="receipt-header">
-              <h2>Mirchi Mafiya</h2>
-              <p className="rcp-light">Cumberland Street, LU1 3BW, Luton</p>
-              <p className="rcp-light">Phone: +447440086046</p>
-              <p className="rcp-light">dtsretaillimited@gmail.com</p>
-            </div>
-            <hr className="rcp-divider" />
-
-            <p className="rcp-bold-lg">ORDER #{activeOrder.order_number}</p>
-            <p className="rcp-bold">{activeOrder.customer_name || "N/A"}</p>
-            {activeOrder.customer_phone && (
-              <p className="rcp-bold">📞 {activeOrder.customer_phone}</p>
-            )}
-            <p className="rcp-light">Type: {activeOrder.order_type || "—"}</p>
-            <p className="rcp-bold">Date: {activeOrder.date || "—"}</p>
-            <hr className="rcp-divider" />
-
-            <p className="rcp-items-label">Items</p>
-            <div className="rcp-items-table">
-              {(activeOrder.items || []).map((it, idx) => {
-                const qty   = Number(it.qty ?? it.quantity ?? 0);
-                const price = Number(it.price ?? 0);
-                const total = Number(it.total ?? price * qty);
-                return (
-                  <div key={idx} className="rcp-item-row">
-                    <span className="rcp-item-name">{qty}x {it.name}</span>
-                    <span className="rcp-item-price">£{total.toFixed(2)}</span>
-                  </div>
-                );
-              })}
-            </div>
-            <hr className="rcp-divider" />
-
-            {(() => {
-              const subtotal = activeOrder.total_amount || calcSubtotal(activeOrder);
-              const discPct  = Number(activeOrder.discount_percent || 0);
-              const discAmt  = activeOrder.discount_amount || (discPct > 0 ? (subtotal * discPct) / 100 : 0);
-              const grand    = activeOrder.final_amount || Math.max(0, subtotal - discAmt);
-              const vatIncl  = calcIncluded(grand, 20);
-              const svcIncl  = calcIncluded(grand, 8);
-              return (
-                <div className="rcp-summary">
-                  <div className="rcp-summary-row rcp-light"><span>Sub Total</span><span>£{subtotal.toFixed(2)}</span></div>
-                  {discPct > 0 && (
-                    <div className="rcp-summary-row rcp-light"><span>Discount ({discPct}%)</span><span>-£{discAmt.toFixed(2)}</span></div>
-                  )}
-                  <div className="rcp-summary-row rcp-light"><span>VAT (20%)</span><span>£{vatIncl.toFixed(2)}</span></div>
-                  <div className="rcp-summary-row rcp-light"><span>Service (8%)</span><span>£{svcIncl.toFixed(2)}</span></div>
-                  <hr className="rcp-divider" />
-                  <div className="rcp-summary-row rcp-grand"><span>TOTAL</span><span>£{grand.toFixed(2)}</span></div>
-                  <div className="rcp-summary-row rcp-bold" style={{ marginTop: 6 }}><span>Payment</span><span>{activeOrder.payment_method}</span></div>
-                  <div className="rcp-summary-row rcp-light" style={{ marginTop: 4 }}><span>Staff</span><span>{activeOrder.server_name || "—"}</span></div>
-                </div>
-              );
-            })()}
-
-            {activeOrder.customer_notes && (
-              <div style={{ margin: "8px 0", padding: "6px 8px", background: "#fffbeb", border: "1px dashed #f59e0b", borderRadius: 4 }}>
-                <p style={{ fontSize: 9, fontFamily: "Courier New, monospace", fontWeight: 700, margin: "0 0 2px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Special Requests:</p>
-                <p style={{ fontSize: 10, fontFamily: "Courier New, monospace", fontStyle: "italic", margin: 0 }}>{activeOrder.customer_notes}</p>
-              </div>
-            )}
-
-            {receiptQR && (
-              <div style={{ textAlign: "center", marginTop: 8, paddingTop: 6, borderTop: "1px dashed #bbb" }}>
-                <p style={{ fontSize: 10, fontFamily: "Courier New, monospace", fontWeight: 700, marginBottom: 4 }}>
-                  📱 Scan to track your order
-                </p>
-                <img src={receiptQR} alt="Track order QR" style={{ width: 130, height: 130 }} />
-                <p style={{ fontSize: 9, fontFamily: "Courier New, monospace", marginTop: 4, color: "#555" }}>
-                  We'll notify you when it's ready!
-                </p>
-              </div>
-            )}
-
-            <p className="rcp-thankyou">Thank you for visiting Mirchi Mafiya!</p>
-          </div>
-        </ReceiptPortal>
       )}
 
       {/* ── Mark as Paid modal ── */}
