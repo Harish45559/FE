@@ -618,6 +618,13 @@ const PreviousOrders = () => {
               );
             })()}
 
+            {activeOrder.customer_notes && (
+              <div style={{ margin: "8px 0", padding: "6px 8px", background: "#fffbeb", border: "1px dashed #f59e0b", borderRadius: 4 }}>
+                <p style={{ fontSize: 9, fontFamily: "Courier New, monospace", fontWeight: 700, margin: "0 0 2px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Special Requests:</p>
+                <p style={{ fontSize: 10, fontFamily: "Courier New, monospace", fontStyle: "italic", margin: 0 }}>{activeOrder.customer_notes}</p>
+              </div>
+            )}
+
             {receiptQR && (
               <div style={{ textAlign: "center", marginTop: 8, paddingTop: 6, borderTop: "1px dashed #bbb" }}>
                 <p style={{ fontSize: 10, fontFamily: "Courier New, monospace", fontWeight: 700, marginBottom: 4 }}>
