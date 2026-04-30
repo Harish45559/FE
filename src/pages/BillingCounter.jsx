@@ -310,40 +310,44 @@ const BillingCounter = () => {
     return `${customerCopy}<div class="page-break"></div>${kitchenCopy}`;
   };
 
-  const printReceipt = (html, title = "Receipt") => {
-    const w = window.open("", "_blank", "width=420,height=640");
-    const styles = `<style>
-      @page { size: 80mm auto; margin: 0; }
-      html, body { margin: 0; padding: 0; }
-      body { font-family: 'Courier New', monospace; background: #fff; color: #000; }
-      .bill-section { width: 72mm; max-width: 72mm; padding: 5mm 4mm; margin: 0 auto; font-size: 11px; line-height: 1.4; }
-      .receipt-header { text-align: center; margin-bottom: 2mm; }
-      .receipt-header h2 { font-size: 15px; margin: 0 0 1mm; font-weight: 900; letter-spacing: 1px; }
-      .light { font-weight: 400; font-size: 10px; color: #111; margin: 0.5mm 0; }
-      .highlight-row { font-size: 13px; font-weight: 900; margin: 1mm 0; letter-spacing: 0.3px; }
-      .items-label { font-size: 9px; font-weight: 700; color: #333; text-transform: uppercase; letter-spacing: .8px; margin: 1.5mm 0 1mm; }
-      .items-block { display: flex; flex-direction: column; gap: 1mm; margin-bottom: 1mm; }
-      .item-row { display: flex; justify-content: space-between; align-items: baseline; gap: 4px; }
-      .item-name { font-size: 12px; font-weight: 900; flex: 1; }
-      .item-price { font-size: 12px; font-weight: 900; white-space: nowrap; }
-      .receipt-summary { margin-top: 1mm; }
-      .summary-row { display: flex; justify-content: space-between; margin: 0.6mm 0; }
-      .grand-total { font-size: 13px; font-weight: 900; border-top: 2px solid #000; padding-top: 1mm; margin-top: 1mm; }
-      .highlight-pay { font-size: 12px; font-weight: 900; }
-      .kitchen { border-top: 3px dashed #000; }
-      hr { border: 0; border-top: 1px dashed #333; margin: 2mm 0; }
-      .page-break { page-break-after: always; break-after: page; height: 0; display: block; }
-    </style>`;
-    if (!w) { window.print(); return; }
+  const receiptStyles = `<style>
+    @page { size: 80mm auto; margin: 0; }
+    html, body { margin: 0; padding: 0; width: 80mm; height: auto; overflow: visible; }
+    body { font-family: 'Courier New', monospace; background: #fff; color: #000; }
+    .bill-section { width: 72mm; max-width: 72mm; padding: 5mm 4mm; margin: 0 auto; font-size: 11px; line-height: 1.4; }
+    .receipt-header { text-align: center; margin-bottom: 2mm; }
+    .receipt-header h2 { font-size: 15px; margin: 0 0 1mm; font-weight: 900; letter-spacing: 1px; }
+    .light { font-weight: 400; font-size: 10px; color: #111; margin: 0.5mm 0; }
+    .highlight-row { font-size: 13px; font-weight: 900; margin: 1mm 0; letter-spacing: 0.3px; }
+    .items-label { font-size: 9px; font-weight: 700; color: #333; text-transform: uppercase; letter-spacing: .8px; margin: 1.5mm 0 1mm; }
+    .items-block { display: flex; flex-direction: column; gap: 1mm; margin-bottom: 1mm; }
+    .item-row { display: flex; justify-content: space-between; align-items: baseline; gap: 4px; }
+    .item-name { font-size: 12px; font-weight: 900; flex: 1; }
+    .item-price { font-size: 12px; font-weight: 900; white-space: nowrap; }
+    .receipt-summary { margin-top: 1mm; }
+    .summary-row { display: flex; justify-content: space-between; margin: 0.6mm 0; }
+    .grand-total { font-size: 13px; font-weight: 900; border-top: 2px solid #000; padding-top: 1mm; margin-top: 1mm; }
+    .highlight-pay { font-size: 12px; font-weight: 900; }
+    .kitchen { border-top: 3px dashed #000; }
+    hr { border: 0; border-top: 1px dashed #333; margin: 2mm 0; }
+    .page-break { page-break-after: always; break-after: page; height: 0; display: block; }
+  </style>`;
+
+  // Step 1 — open window synchronously (must be called in direct user-gesture context)
+  const openPrintWindow = () => window.open("", "_blank", "width=420,height=700");
+
+  // Step 2 — write HTML to an already-opened window and trigger print
+  const writeAndPrint = (w, html, title = "Receipt") => {
+    if (!w) return;
     w.document.open();
-    w.document.write(`<!doctype html><html><head><meta charset="utf-8"/><title>${title}</title>${styles}</head><body>${html}</body></html>`);
+    w.document.write(`<!doctype html><html><head><meta charset="utf-8"/><title>${title}</title>${receiptStyles}</head><body>${html}</body></html>`);
     w.document.close();
-    const doPrint = () => { try { w.focus(); w.print(); } finally { w.close(); } };
+    const doPrint = () => { try { w.focus(); w.print(); } finally { setTimeout(() => w.close(), 500); } };
     const triggerPrint = () => {
       const imgs = w.document.getElementsByTagName("img");
-      if (imgs.length === 0) { setTimeout(doPrint, 50); return; }
+      if (imgs.length === 0) { setTimeout(doPrint, 80); return; }
       let loaded = 0;
-      const onLoad = () => { if (++loaded >= imgs.length) setTimeout(doPrint, 50); };
+      const onLoad = () => { if (++loaded >= imgs.length) setTimeout(doPrint, 80); };
       Array.from(imgs).forEach((img) => {
         if (img.complete) onLoad();
         else { img.onload = onLoad; img.onerror = onLoad; }
@@ -353,12 +357,22 @@ const BillingCounter = () => {
     else w.onload = triggerPrint;
   };
 
+  // Legacy helper kept for any other callers
+  const printReceipt = (html, title = "Receipt") => {
+    writeAndPrint(openPrintWindow(), html, title);
+  };
+
   const handlePlaceOrder = async () => {
     if (isPlacing) return; // prevent double-submit
     if (!isTillOpen) return toast.error("Open the till first.");
     if (!selectedItems.length) return toast.error("Add items first.");
     if (!paymentMethod) return toast.error("Select a payment method.");
     if (!customerName.trim()) return toast.error("Customer name is required.");
+
+    // Open print window NOW — synchronously in the click handler so the browser
+    // doesn't block it as a popup (window.open after an await is always blocked).
+    const printWin = openPrintWindow();
+
     setIsPlacing(true);
     const payload = {
       customer_name: customerName,
@@ -409,7 +423,8 @@ const BillingCounter = () => {
         discountPct: discountPercent,
         grand: getGrandTotal(),
       };
-      printReceipt(
+      writeAndPrint(
+        printWin,
         renderReceiptHTML({
           orderNumber: placed.order_number ?? nextTempOrderNumber,
           orderType: placed.order_type || orderType,
@@ -434,6 +449,8 @@ const BillingCounter = () => {
         setResumedHeldOrderId(null);
       }
     } catch (err) {
+      // Close the pre-opened print window if the order failed
+      try { printWin?.close(); } catch (_) {}
       toast.error(err?.response?.data?.error || "Failed to place order");
     } finally {
       setIsPlacing(false);
