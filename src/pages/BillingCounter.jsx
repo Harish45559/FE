@@ -306,8 +306,7 @@ const BillingCounter = () => {
         <p style="text-align:center;font-size:10px;color:#111">${odate || ""}</p>
       </div>`;
 
-    // Both copies in one print job — page break between them
-    return `${customerCopy}<div class="page-break"></div>${kitchenCopy}`;
+    return `${customerCopy}${kitchenCopy}`;
   };
 
   const receiptStyles = `<style>
@@ -328,39 +327,37 @@ const BillingCounter = () => {
     .summary-row { display: flex; justify-content: space-between; margin: 0.6mm 0; }
     .grand-total { font-size: 13px; font-weight: 900; border-top: 2px solid #000; padding-top: 1mm; margin-top: 1mm; }
     .highlight-pay { font-size: 12px; font-weight: 900; }
-    .kitchen { border-top: 3px dashed #000; }
+    .kitchen { page-break-before: always; break-before: page; }
     hr { border: 0; border-top: 1px dashed #333; margin: 2mm 0; }
     .page-break { page-break-after: always; break-after: page; height: 0; display: block; }
   </style>`;
 
-  // Step 1 — open window synchronously (must be called in direct user-gesture context)
-  const openPrintWindow = () => window.open("", "_blank", "width=420,height=700");
-
-  // Step 2 — write HTML to an already-opened window and trigger print
-  const writeAndPrint = (w, html, title = "Receipt") => {
-    if (!w) return;
-    w.document.open();
-    w.document.write(`<!doctype html><html><head><meta charset="utf-8"/><title>${title}</title>${receiptStyles}</head><body>${html}</body></html>`);
-    w.document.close();
-    const doPrint = () => { try { w.focus(); w.print(); } finally { setTimeout(() => w.close(), 500); } };
-    const triggerPrint = () => {
-      const imgs = w.document.getElementsByTagName("img");
-      if (imgs.length === 0) { setTimeout(doPrint, 80); return; }
-      let loaded = 0;
-      const onLoad = () => { if (++loaded >= imgs.length) setTimeout(doPrint, 80); };
-      Array.from(imgs).forEach((img) => {
-        if (img.complete) onLoad();
-        else { img.onload = onLoad; img.onerror = onLoad; }
-      });
+  // Print via hidden iframe — no popup window, just the OS print dialog
+  const printViaIframe = (html) => {
+    const id = "bc-receipt-frame";
+    const old = document.getElementById(id);
+    if (old) old.remove();
+    const f = document.createElement("iframe");
+    f.id = id;
+    f.style.cssText = "position:fixed;bottom:0;right:0;width:0;height:0;border:0;visibility:hidden;";
+    document.body.appendChild(f);
+    const doc = f.contentDocument || f.contentWindow.document;
+    doc.open();
+    doc.write(`<!doctype html><html><head><meta charset="utf-8"/>${receiptStyles}</head><body>${html}</body></html>`);
+    doc.close();
+    const doPrint = () => {
+      try { f.contentWindow.focus(); f.contentWindow.print(); } catch (_) {}
+      setTimeout(() => { try { f.remove(); } catch (_) {} }, 2000);
     };
-    if (w.document.readyState === "complete") triggerPrint();
-    else w.onload = triggerPrint;
+    const imgs = doc.getElementsByTagName("img");
+    if (!imgs.length) { setTimeout(doPrint, 150); return; }
+    let loaded = 0;
+    const tick = () => { if (++loaded >= imgs.length) setTimeout(doPrint, 150); };
+    Array.from(imgs).forEach((img) => { if (img.complete) tick(); else { img.onload = tick; img.onerror = tick; } });
   };
 
-  // Legacy helper kept for any other callers
-  const printReceipt = (html, title = "Receipt") => {
-    writeAndPrint(openPrintWindow(), html, title);
-  };
+  // Legacy alias used by any remaining callers
+  const printReceipt = (html) => printViaIframe(html);
 
   const handlePlaceOrder = async () => {
     if (isPlacing) return; // prevent double-submit
@@ -368,10 +365,6 @@ const BillingCounter = () => {
     if (!selectedItems.length) return toast.error("Add items first.");
     if (!paymentMethod) return toast.error("Select a payment method.");
     if (!customerName.trim()) return toast.error("Customer name is required.");
-
-    // Open print window NOW — synchronously in the click handler so the browser
-    // doesn't block it as a popup (window.open after an await is always blocked).
-    const printWin = openPrintWindow();
 
     setIsPlacing(true);
     const payload = {
@@ -423,8 +416,7 @@ const BillingCounter = () => {
         discountPct: discountPercent,
         grand: getGrandTotal(),
       };
-      writeAndPrint(
-        printWin,
+      printViaIframe(
         renderReceiptHTML({
           orderNumber: placed.order_number ?? nextTempOrderNumber,
           orderType: placed.order_type || orderType,
@@ -438,7 +430,7 @@ const BillingCounter = () => {
           staffName: tillOpenedBy,
           pagerQR: autoPager?.qrCode ?? null,
         }),
-        `Receipt #${placed.order_number ?? nextTempOrderNumber}`,
+        )
       );
       if (resumedHeldOrderId) {
         try {
@@ -449,8 +441,6 @@ const BillingCounter = () => {
         setResumedHeldOrderId(null);
       }
     } catch (err) {
-      // Close the pre-opened print window if the order failed
-      try { printWin?.close(); } catch (_) {}
       toast.error(err?.response?.data?.error || "Failed to place order");
     } finally {
       setIsPlacing(false);

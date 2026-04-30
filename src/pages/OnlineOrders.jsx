@@ -142,7 +142,7 @@ function printOnlineReceipt(order) {
 
   const styles = `<style>
     @page { size: 80mm auto; margin: 0; }
-    html, body { margin: 0; padding: 0; }
+    html, body { margin: 0; padding: 0; width: 80mm; height: auto; overflow: visible; }
     body { font-family: 'Courier New', monospace; background: #fff; color: #000; }
     .bill-section { width: 72mm; max-width: 72mm; padding: 5mm 4mm; margin: 0 auto; font-size: 11px; line-height: 1.4; }
     .receipt-header { text-align: center; margin-bottom: 2mm; }
@@ -158,20 +158,27 @@ function printOnlineReceipt(order) {
     .summary-row { display: flex; justify-content: space-between; margin: 0.6mm 0; }
     .grand-total { font-size: 13px; font-weight: 900; border-top: 2px solid #000; padding-top: 1mm; margin-top: 1mm; }
     .highlight-pay { font-size: 12px; font-weight: 900; }
-    .kitchen { border-top: 3px dashed #000; }
+    .kitchen { page-break-before: always; break-before: page; }
     hr { border: 0; border-top: 1px dashed #333; margin: 2mm 0; }
-    .page-break { page-break-after: always; break-after: page; height: 0; display: block; }
   </style>`;
 
-  const html = `${customerCopy}<div class="page-break"></div>${kitchenCopy}`;
-  const w = window.open("", "_blank", "width=420,height=640");
-  if (!w) return;
-  w.document.open();
-  w.document.write(`<!doctype html><html><head><meta charset="utf-8"/><title>Receipt #${onum}</title>${styles}</head><body>${html}</body></html>`);
-  w.document.close();
-  const doPrint = () => { try { w.focus(); w.print(); } finally { w.close(); } };
-  if (w.document.readyState === "complete") setTimeout(doPrint, 50);
-  else w.onload = () => setTimeout(doPrint, 50);
+  const html = `${customerCopy}${kitchenCopy}`;
+  const id = "oo-receipt-frame";
+  const old = document.getElementById(id);
+  if (old) old.remove();
+  const f = document.createElement("iframe");
+  f.id = id;
+  f.style.cssText = "position:fixed;bottom:0;right:0;width:0;height:0;border:0;visibility:hidden;";
+  document.body.appendChild(f);
+  const doc = f.contentDocument || f.contentWindow.document;
+  doc.open();
+  doc.write(`<!doctype html><html><head><meta charset="utf-8"/><title>Receipt #${onum}</title>${styles}</head><body>${html}</body></html>`);
+  doc.close();
+  const doPrint = () => {
+    try { f.contentWindow.focus(); f.contentWindow.print(); } catch (_) {}
+    setTimeout(() => { try { f.remove(); } catch (_) {} }, 2000);
+  };
+  setTimeout(doPrint, 150);
 }
 
 // ── Receipt Modal ─────────────────────────────────────────────────────────────
@@ -729,7 +736,8 @@ const OnlineOrders = () => {
                   <button
                     className="oo-delivered-btn"
                     onClick={() => handleMarkDelivered(order.id)}
-                    disabled={isLoading}
+                    disabled={isLoading || (order.payment_method === "Pay on Collection" && order.payment_status !== "paid")}
+                    title={order.payment_method === "Pay on Collection" && order.payment_status !== "paid" ? "Mark as Paid first before delivering" : ""}
                   >
                     {isLoading ? "…" : "✓ Mark as Delivered"}
                   </button>
