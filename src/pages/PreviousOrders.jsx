@@ -3,6 +3,7 @@ import DashboardLayout from "../components/DashboardLayout";
 import api from "../services/api";
 import "./PreviousOrders.css";
 import usePagination from "../hooks/usePagination";
+import { btConnected, btPrintOnlineOrder } from "../services/bluetoothPrinter";
 
 const PreviousOrders = () => {
   const [orders, setOrders]               = useState([]);
@@ -220,7 +221,7 @@ const PreviousOrders = () => {
       </div>`;
   };
 
-  const printReceiptWindow = (html) => {
+  const printViaIframe = (html) => {
     const styles = `<style>
       @page { size: 72mm auto; margin: 0; }
       html, body { margin: 0; padding: 0; width: 72mm; height: auto; overflow: visible; background: #fff; }
@@ -241,13 +242,22 @@ const PreviousOrders = () => {
       .grand { font-size: 13px; font-weight: 900; padding-top: 1mm; margin-top: 1mm; }
       hr { border: 0; border-top: 1px dashed #555; margin: 2mm 0; }
     </style>`;
-    const w = window.open("", "_blank", "width=420,height=700");
-    if (!w) return;
-    w.document.open();
-    w.document.write(`<!doctype html><html><head><meta charset="utf-8"/><title>Receipt</title>${styles}</head><body>${html}</body></html>`);
-    w.document.close();
-    const imgs = w.document.getElementsByTagName("img");
-    const doPrint = () => { try { w.focus(); w.print(); } finally { setTimeout(() => w.close(), 500); } };
+    const id  = "po-receipt-frame";
+    const old = document.getElementById(id);
+    if (old) old.remove();
+    const f = document.createElement("iframe");
+    f.id = id;
+    f.style.cssText = "position:fixed;bottom:0;right:0;width:0;height:0;border:0;visibility:hidden;";
+    document.body.appendChild(f);
+    const doc = f.contentDocument || f.contentWindow.document;
+    doc.open();
+    doc.write(`<!doctype html><html><head><meta charset="utf-8"/><title>Receipt</title>${styles}</head><body>${html}</body></html>`);
+    doc.close();
+    const imgs = doc.getElementsByTagName("img");
+    const doPrint = () => {
+      try { f.contentWindow.focus(); f.contentWindow.print(); } catch (_) {}
+      setTimeout(() => { try { f.remove(); } catch (_) {} }, 2000);
+    };
     if (imgs.length === 0) { setTimeout(doPrint, 80); return; }
     let loaded = 0;
     const onLoad = () => { if (++loaded >= imgs.length) setTimeout(doPrint, 80); };
@@ -255,11 +265,13 @@ const PreviousOrders = () => {
   };
 
   const openReceipt = async (ord) => {
-    let qr = null;
+    let qr      = null;
+    let pagerUrl = null;
     if (ord.source !== "online") {
       try {
         const res = await api.post(`/pager/generate/${ord.id}`);
-        qr = res.data.qrCode;
+        qr       = res.data.qrCode;
+        pagerUrl = res.data.pagerUrl;
         setOrders((prev) =>
           prev.map((o) =>
             o.id === ord.id
@@ -269,7 +281,25 @@ const PreviousOrders = () => {
         );
       } catch (_) {}
     }
-    printReceiptWindow(buildReceiptHTML(ord, qr));
+
+    if (btConnected()) {
+      try {
+        await btPrintOnlineOrder({
+          ...ord,
+          order_number:   ord.order_number,
+          order_type:     ord.order_type || ord.orderType || '',
+          customer_name:  ord.customer_name || ord.customerName || '',
+          payment_method: ord.payment_method || ord.paymentMethod || '',
+          date:           ord.date || ord.orderDate || '',
+          items:          ord.items || [],
+          final_amount:   ord.final_amount ?? ord.total ?? 0,
+          customer_notes: ord.customer_notes || ord.customerNotes || '',
+          pagerUrl,
+        });
+        return;
+      } catch (_) {}
+    }
+    printViaIframe(buildReceiptHTML(ord, qr));
   };
 
 
