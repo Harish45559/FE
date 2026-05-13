@@ -218,6 +218,28 @@ const PreviousOrders = () => {
           <p style="font-size:9px;margin-top:2mm">We'll notify you when it's ready!</p>
         </div>` : ""}
         <p style="text-align:center;margin-top:4mm;font-size:9px">Thank you for visiting Mirchi Mafiya!</p>
+      </div>
+      <div class="bill-section" style="page-break-before:always;break-before:page">
+        <div style="text-align:center;margin-bottom:3mm">
+          <h2 style="font-size:14px;margin:0">KITCHEN</h2>
+          <div style="font-size:22px;font-weight:900;letter-spacing:1px;margin:2mm 0">#${ord.order_number}</div>
+          <div style="display:inline-block;border:3px solid #000;padding:2mm 6mm;font-size:17px;font-weight:900;letter-spacing:1px;margin:2mm 0">${(ord.order_type || "").toUpperCase()}</div>
+          <div style="font-size:13px;font-weight:700;margin-top:1mm">${ord.customer_name || ""}</div>
+        </div>
+        <hr/>
+        <table style="width:100%;border-collapse:collapse">
+          <tbody>${(ord.items || []).map((it) => {
+            const qty   = Number(it.qty ?? it.quantity ?? 0);
+            const price = Number(it.total ?? (it.price * qty));
+            return `<tr>
+              <td style="font-size:14px;font-weight:900;padding:2mm 0">${qty} X ${it.name.toUpperCase()}</td>
+              <td style="font-size:13px;font-weight:700;text-align:right;padding:2mm 0">£${price.toFixed(2)}</td>
+            </tr>`;
+          }).join("")}</tbody>
+        </table>
+        <hr/>
+        ${ord.customer_notes ? `<p style="font-size:12px;font-weight:900;margin:1mm 0">⚠ NOTES: ${ord.customer_notes}</p><hr/>` : ""}
+        <p style="text-align:center;font-size:10px;color:#111">${ord.date || ""}</p>
       </div>`;
   };
 
