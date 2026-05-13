@@ -240,8 +240,13 @@ const buildKitchen = (data) => {
   b.push(...CMD.ALIGN_CENTER, ...CMD.BOLD_ON, ...CMD.DOUBLE_SIZE);
   b.push(...enc(`KITCHEN${isOnline ? ' - ONLINE' : ''}\n`));
   b.push(...enc(`#${orderNumber}\n`));
-  b.push(...CMD.NORMAL_SIZE);
-  b.push(...enc(`${orderType.toUpperCase()}\n`));
+  b.push(...CMD.NORMAL_SIZE, ...CMD.BOLD_OFF);
+  b.push(...enc(divider() + '\n'));
+  // Highlighted order type — boxed with dashes above and below
+  b.push(...CMD.BOLD_ON, ...CMD.DOUBLE_SIZE);
+  b.push(...enc(`*** ${orderType.toUpperCase()} ***\n`));
+  b.push(...CMD.NORMAL_SIZE, ...CMD.BOLD_OFF);
+  b.push(...enc(divider() + '\n'));
   if (pickupTime)     b.push(...enc(`Pickup: ${pickupTime}\n`));
   if (estimatedReady) b.push(...enc(`Ready: ${estimatedReady}\n`));
   b.push(...CMD.BOLD_ON);
@@ -250,10 +255,12 @@ const buildKitchen = (data) => {
   b.push(...enc(divider() + '\n'));
 
   items.forEach(it => {
-    const qty = it.qty || 1;
+    const qty   = it.qty || 1;
+    const price = Number(it.total ?? it.price * qty).toFixed(2);
     b.push(...CMD.BOLD_ON, ...CMD.DOUBLE_SIZE);
     b.push(...enc(`${qty} X ${it.name.toUpperCase()}\n`));
     b.push(...CMD.NORMAL_SIZE, ...CMD.BOLD_OFF);
+    b.push(...enc(twoCol('', `£${price}`) + '\n'));
   });
 
   b.push(...enc(divider() + '\n'));

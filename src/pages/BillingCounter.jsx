@@ -318,8 +318,12 @@ const BillingCounter = () => {
 
     // ── KITCHEN COPY ───────────────────────────────────────────────
     const kitchenRows = items.map((it) => {
-      const qty = it.qty ?? it.quantity ?? 0;
-      return `<tr><td style="font-size:14px;font-weight:900;padding:2mm 0">${qty} X ${it.name.toUpperCase()}</td></tr>`;
+      const qty   = it.qty ?? it.quantity ?? 0;
+      const price = Number(it.total ?? (it.price * qty));
+      return `<tr>
+        <td style="font-size:14px;font-weight:900;padding:2mm 0">${qty} X ${it.name.toUpperCase()}</td>
+        <td style="font-size:13px;font-weight:700;text-align:right;padding:2mm 0">£${price.toFixed(2)}</td>
+      </tr>`;
     }).join("");
 
     const kitchenCopy = `
@@ -327,7 +331,7 @@ const BillingCounter = () => {
         <div style="text-align:center;margin-bottom:3mm">
           <h2 style="font-size:14px;margin:0">KITCHEN</h2>
           <div style="font-size:22px;font-weight:900;letter-spacing:1px;margin:2mm 0">#${onum ?? "—"}</div>
-          <div style="font-size:15px;font-weight:800">${(otype || "").toUpperCase()}</div>
+          <div style="display:inline-block;border:3px solid #000;padding:2mm 6mm;font-size:17px;font-weight:900;letter-spacing:1px;margin:2mm 0">${(otype || "").toUpperCase()}</div>
           <div style="font-size:13px;font-weight:700;margin-top:1mm">${cname || ""}</div>
         </div>
         <hr/>
