@@ -490,8 +490,8 @@ const PreviousOrders = () => {
                               </span>
                             )}
 
-                            {/* Action buttons */}
-                            <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                            {/* Action buttons — hidden once order is delivered */}
+                            {o.pager_status !== "done" && <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
                               <button
                                 onClick={() => showQR(o)}
                                 disabled={qrLoading === o.id}
@@ -539,7 +539,7 @@ const PreviousOrders = () => {
                                   {completing === o.id ? "…" : "✓ Done"}
                                 </button>
                               )}
-                            </div>
+                            </div>}
                           </div>
                         )}
                       </td>

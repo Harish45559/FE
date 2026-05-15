@@ -70,6 +70,7 @@ const BillingCounter = () => {
   const [pagerData, setPagerData] = useState(null);
   const [pagerLoading, setPagerLoading] = useState(false);
   const [isPlacing, setIsPlacing] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   useEffect(() => {
     // Optimistic local state while API loads
@@ -659,9 +660,9 @@ const BillingCounter = () => {
         </div>
       )}
 
-      <div className="bc-pos">
+      <div className={`bc-pos${sidebarOpen ? "" : " bc-pos--no-sidebar"}`}>
         {/* ── SIDEBAR ── */}
-        <div className="bc-sidebar">
+        {sidebarOpen && <div className="bc-sidebar">
           <div className="bc-sidebar-logo">
             <div className="bc-sidebar-brand">🌶 Mirchi Mafiya</div>
             <div className="bc-sidebar-sub">Point of Sale</div>
@@ -678,11 +679,18 @@ const BillingCounter = () => {
               </button>
             ))}
           </div>
-        </div>
+        </div>}
 
         {/* ── CENTER MENU ── */}
         <div className="bc-center">
           <div className="bc-ctopbar">
+            <button
+              className="bc-sidebar-toggle"
+              onClick={() => setSidebarOpen((v) => !v)}
+              title={sidebarOpen ? "Hide categories" : "Show categories"}
+            >
+              {sidebarOpen ? "◀" : "▶"}
+            </button>
             <input
               className="bc-search"
               type="text"
