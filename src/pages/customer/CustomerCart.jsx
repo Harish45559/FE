@@ -164,13 +164,9 @@ const CustomerCart = () => {
                 {orderType === "Eat In" ? "Table Ready Time" : "Pickup Time"}
               </h3>
               <label className="c-label">Date</label>
-              <input
-                type="date"
-                className="c-input"
-                min={today}
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-              />
+              <div className="c-input" style={{ background: "#f3f4f6", color: "#555", cursor: "default", userSelect: "none" }}>
+                {formatDate(selectedDate)}
+              </div>
               <label className="c-label" style={{ marginTop: 14 }}>
                 Time Slot
               </label>
