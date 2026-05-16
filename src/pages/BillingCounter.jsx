@@ -662,24 +662,26 @@ const BillingCounter = () => {
 
       <div className={`bc-pos${sidebarOpen ? "" : " bc-pos--no-sidebar"}`}>
         {/* ── SIDEBAR ── */}
-        {sidebarOpen && <div className="bc-sidebar">
-          <div className="bc-sidebar-logo">
-            <div className="bc-sidebar-brand">🌶 Mirchi Mafiya</div>
-            <div className="bc-sidebar-sub">Point of Sale</div>
+        {sidebarOpen && (
+          <div className="bc-sidebar">
+            <div className="bc-sidebar-logo">
+              <div className="bc-sidebar-brand">🌶 Mirchi Mafiya</div>
+              <div className="bc-sidebar-sub">Point of Sale</div>
+            </div>
+            <div className="bc-sidebar-cats">
+              {allCategories.map((cat) => (
+                <button
+                  key={cat}
+                  className={`bc-scat${activeCategory === cat ? " active" : ""}`}
+                  onClick={() => setActiveCategory(cat)}
+                >
+                  <span className="bc-scat-name">{cat}</span>
+                  <span className="bc-scat-count">{getCatCount(cat)}</span>
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="bc-sidebar-cats">
-            {allCategories.map((cat) => (
-              <button
-                key={cat}
-                className={`bc-scat${activeCategory === cat ? " active" : ""}`}
-                onClick={() => setActiveCategory(cat)}
-              >
-                <span className="bc-scat-name">{cat}</span>
-                <span className="bc-scat-count">{getCatCount(cat)}</span>
-              </button>
-            ))}
-          </div>
-        </div>}
+        )}
 
         {/* ── CENTER MENU ── */}
         <div className="bc-center">
@@ -818,7 +820,6 @@ const BillingCounter = () => {
               </button>
             </div>
           </div>
-
           {/* Bluetooth printer */}
           {btSupported() && (
             <button
@@ -829,11 +830,10 @@ const BillingCounter = () => {
               {btConnecting
                 ? "🔵 Connecting…"
                 : btPrinter
-                ? `🖨️ ${btPrinter} ✓`
-                : "🔵 Connect Printer"}
+                  ? `🖨️ ${btPrinter} ✓`
+                  : "🔵 Connect Printer"}
             </button>
           )}
-
           {/* Order type toggle */}
           <div className="bc-pay-row" style={{ marginBottom: 8 }}>
             <button
@@ -849,7 +849,6 @@ const BillingCounter = () => {
               🥡 Take Away
             </button>
           </div>
-
           {/* Customer */}
           <input
             className="bc-cust-inp"
@@ -858,8 +857,8 @@ const BillingCounter = () => {
             value={customerName}
             onChange={(e) => setCustomerName(e.target.value)}
           />
-
           {/* Special Requests */}
+          {/*
           <div className="bc-notes-wrap">
             <textarea
               className="bc-notes-inp"
@@ -872,7 +871,7 @@ const BillingCounter = () => {
               <span className="bc-notes-count">{customerNotes.length}/500</span>
             )}
           </div>
-
+          */}
           {/* Cart */}
           <div className="bc-cart">
             {selectedItems.length === 0 ? (
@@ -931,7 +930,6 @@ const BillingCounter = () => {
               </div>
             )}
           </div>
-
           {/* Summary */}
           {selectedItems.length > 0 && (
             <div className="bc-summary">
@@ -999,7 +997,6 @@ const BillingCounter = () => {
               </div>
             </div>
           )}
-
           {/* Actions */}
           <div className="bc-actions">
             <div className="bc-pay-row">
@@ -1156,22 +1153,36 @@ const BillingCounter = () => {
       {pagerModal && pagerData && (
         <div
           style={{
-            position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)",
-            display: "flex", alignItems: "center", justifyContent: "center",
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.55)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
             zIndex: 9999,
           }}
           onClick={() => setPagerModal(false)}
         >
           <div
             style={{
-              background: "#fff", borderRadius: 20, padding: "32px 28px",
-              maxWidth: 360, width: "90%", textAlign: "center",
+              background: "#fff",
+              borderRadius: 20,
+              padding: "32px 28px",
+              maxWidth: 360,
+              width: "90%",
+              textAlign: "center",
               boxShadow: "0 8px 40px rgba(0,0,0,0.18)",
             }}
             onClick={(e) => e.stopPropagation()}
           >
             <div style={{ fontSize: "1.8rem", marginBottom: 4 }}>📱</div>
-            <h3 style={{ margin: "0 0 4px", color: "#1a1a1a", fontSize: "1.15rem" }}>
+            <h3
+              style={{
+                margin: "0 0 4px",
+                color: "#1a1a1a",
+                fontSize: "1.15rem",
+              }}
+            >
               Pager QR — Order #{pagerData.orderNumber}
             </h3>
             <p style={{ color: "#888", fontSize: "0.85rem", marginBottom: 16 }}>
@@ -1180,32 +1191,60 @@ const BillingCounter = () => {
             <img
               src={pagerData.qrCode}
               alt="Pager QR Code"
-              style={{ width: 220, height: 220, borderRadius: 12, border: "1px solid #eee" }}
+              style={{
+                width: 220,
+                height: 220,
+                borderRadius: 12,
+                border: "1px solid #eee",
+              }}
             />
-            <p style={{ fontSize: "0.75rem", color: "#aaa", marginTop: 10, wordBreak: "break-all" }}>
+            <p
+              style={{
+                fontSize: "0.75rem",
+                color: "#aaa",
+                marginTop: 10,
+                wordBreak: "break-all",
+              }}
+            >
               {pagerData.pagerUrl}
             </p>
             <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
               <button
                 onClick={() => {
                   const w = window.open("", "_blank");
-                  w.document.write(`<img src="${pagerData.qrCode}" style="width:300px"/>`);
+                  w.document.write(
+                    `<img src="${pagerData.qrCode}" style="width:300px"/>`,
+                  );
                   w.print();
                 }}
                 style={{
-                  flex: 1, padding: "10px 0", background: "#f3f4f6",
-                  border: "none", borderRadius: 8, fontWeight: 600,
-                  cursor: "pointer", fontSize: "0.9rem",
+                  flex: 1,
+                  padding: "10px 0",
+                  background: "#f3f4f6",
+                  border: "none",
+                  borderRadius: 8,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  fontSize: "0.9rem",
                 }}
               >
                 🖨️ Print QR
               </button>
               <button
-                onClick={() => { setPagerModal(false); startNewOrder(); }}
+                onClick={() => {
+                  setPagerModal(false);
+                  startNewOrder();
+                }}
                 style={{
-                  flex: 1, padding: "10px 0", background: "#7c3aed", color: "#fff",
-                  border: "none", borderRadius: 8, fontWeight: 700,
-                  cursor: "pointer", fontSize: "0.9rem",
+                  flex: 1,
+                  padding: "10px 0",
+                  background: "#7c3aed",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 8,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  fontSize: "0.9rem",
                 }}
               >
                 Done
