@@ -30,6 +30,7 @@ const Login = () => {
 
       if (role === "admin") navigate("/dashboard");
       else if (role === "employee") navigate("/attendance");
+      else if (role === "cashier") navigate("/billing");
       else setError("Unknown role");
     } catch (err) {
       const errorData = err?.response?.data;
