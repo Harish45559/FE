@@ -110,7 +110,7 @@ const DashboardLayout = ({ children }) => {
   // Poll pending online orders every 10s — works on ANY staff page
   const fetchPendingOnline = useCallback(async () => {
     const u = JSON.parse(localStorage.getItem("user"));
-    if (!u || u.role !== "admin") return;
+    if (!u || (u.role !== "admin" && u.role !== "cashier")) return;
     try {
       const res = await api.get("/orders/online/pending");
       const count = (res.data.orders || []).length;
