@@ -94,7 +94,7 @@ const AppRouter = () => {
     {
       path: "/billing",
       element: (
-        <ProtectedRoute allowedRoles={["admin"]}>
+        <ProtectedRoute allowedRoles={["admin", "cashier"]}>
           <BillingCounter />
         </ProtectedRoute>
       ),
@@ -102,7 +102,7 @@ const AppRouter = () => {
     {
       path: "/previous-orders",
       element: (
-        <ProtectedRoute allowedRoles={["admin"]}>
+        <ProtectedRoute allowedRoles={["admin", "cashier"]}>
           <PreviousOrders />
         </ProtectedRoute>
       ),
@@ -110,7 +110,7 @@ const AppRouter = () => {
     {
       path: "/held-orders",
       element: (
-        <ProtectedRoute allowedRoles={["admin"]}>
+        <ProtectedRoute allowedRoles={["admin", "cashier"]}>
           <HeldOrders />
         </ProtectedRoute>
       ),
@@ -119,7 +119,7 @@ const AppRouter = () => {
     {
       path: "/online-orders",
       element: (
-        <ProtectedRoute allowedRoles={["admin"]}>
+        <ProtectedRoute allowedRoles={["admin", "cashier"]}>
           <OnlineOrders />
         </ProtectedRoute>
       ),

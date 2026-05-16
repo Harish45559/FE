@@ -334,6 +334,48 @@ const DashboardLayout = ({ children }) => {
             </>
           )}
 
+          {user?.role === "cashier" && (
+            <>
+              <div className="dl-section">Online Ordering</div>
+              <NavLink
+                to="/online-orders"
+                className={({ isActive }) => `dl-item${isActive ? " active" : ""}`}
+                onClick={() => setMenuOpen(false)}
+              >
+                <span className="dl-item-icon">🌐</span>
+                <span className="dl-item-label">Online Orders</span>
+                {pendingOnlineCount > 0 && (
+                  <span className="dl-pending-badge">{pendingOnlineCount}</span>
+                )}
+              </NavLink>
+              <div className="dl-section">Operations</div>
+              <NavLink
+                to="/held-orders"
+                className={({ isActive }) => `dl-item${isActive ? " active" : ""}`}
+                onClick={() => setMenuOpen(false)}
+              >
+                <span className="dl-item-icon">⏳</span>
+                <span className="dl-item-label">Held Orders</span>
+              </NavLink>
+              <NavLink
+                to="/billing"
+                className={({ isActive }) => `dl-item${isActive ? " active" : ""}`}
+                onClick={() => setMenuOpen(false)}
+              >
+                <span className="dl-item-icon">💵</span>
+                <span className="dl-item-label">Billing Counter</span>
+              </NavLink>
+              <NavLink
+                to="/previous-orders"
+                className={({ isActive }) => `dl-item${isActive ? " active" : ""}`}
+                onClick={() => setMenuOpen(false)}
+              >
+                <span className="dl-item-icon">📜</span>
+                <span className="dl-item-label">Previous Orders</span>
+              </NavLink>
+            </>
+          )}
+
           <NavLink
             to="/attendance"
             className={({ isActive }) => `dl-item${isActive ? " active" : ""}`}
@@ -351,7 +393,7 @@ const DashboardLayout = ({ children }) => {
             <div className="dl-user-info">
               <span className="dl-user-name">{getDisplayName()}</span>
               <span className="dl-user-role">
-                {user?.role === "admin" ? "👑 Administrator" : "👤 Employee"}
+                {user?.role === "admin" ? "👑 Administrator" : user?.role === "cashier" ? "🧾 Cashier" : "👤 Employee"}
               </span>
             </div>
           </div>

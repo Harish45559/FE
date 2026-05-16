@@ -442,6 +442,7 @@ const Employees = () => {
                     onChange={handleChange}
                   >
                     <option value="employee">Employee</option>
+                    <option value="cashier">Cashier</option>
                     <option value="admin">Admin</option>
                   </select>
                 </Field>
@@ -486,6 +487,7 @@ const Employees = () => {
           >
             <option value="all">All roles</option>
             <option value="admin">Admin</option>
+            <option value="cashier">Cashier</option>
             <option value="employee">Employee</option>
           </select>
           <span className="ep-count">
