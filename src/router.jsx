@@ -86,7 +86,7 @@ const AppRouter = () => {
     {
       path: "/attendance",
       element: (
-        <ProtectedRoute allowedRoles={["admin", "employee"]}>
+        <ProtectedRoute allowedRoles={["admin", "employee", "cashier"]}>
           <Attendance />
         </ProtectedRoute>
       ),
