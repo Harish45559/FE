@@ -229,13 +229,26 @@ const CustomerCart = () => {
           {/* Summary + Place Order */}
           <div className="c-card cc-summary">
             {error && <div className="c-error">{error}</div>}
+            {/* 2nd Anniversary — 10% discount banner */}
+            {today === "2026-05-18" && (
+              <div style={{ background: "#fff7ed", border: "1.5px solid #fed7aa", borderRadius: 10, padding: "10px 14px", marginBottom: 12, textAlign: "center" }}>
+                <div style={{ fontSize: "1rem" }}>🎉 2nd Anniversary Special!</div>
+                <div style={{ fontSize: "0.82rem", color: "#dd3a00", fontWeight: 700 }}>10% discount applied automatically</div>
+              </div>
+            )}
             <div className="cc-summary-row">
               <span>Subtotal</span>
               <span>£{total.toFixed(2)}</span>
             </div>
+            {today === "2026-05-18" && (
+              <div className="cc-summary-row" style={{ color: "#16a34a", fontWeight: 700 }}>
+                <span>🎉 10% Anniversary Discount</span>
+                <span>-£{(total * 0.1).toFixed(2)}</span>
+              </div>
+            )}
             <div className="cc-summary-row total">
               <span>Total</span>
-              <span>£{total.toFixed(2)}</span>
+              <span>£{today === "2026-05-18" ? (total * 0.9).toFixed(2) : total.toFixed(2)}</span>
             </div>
             {(orderType === "Takeaway" || orderType === "Eat In") && pickupTime && (
               <div className="cc-pickup-info">
