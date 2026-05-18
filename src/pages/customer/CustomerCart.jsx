@@ -10,7 +10,7 @@ const CustomerCart = () => {
   const { cart, updateQty, removeItem, clearCart, total } = useCart();
 
   const [orderType, setOrderType] = useState("Takeaway");
-  const [paymentMethod, setPaymentMethod] = useState("Pay on Collection");
+  const [paymentMethod, setPaymentMethod] = useState("Card");
   const [slots, setSlots] = useState([]);
   const [pickupTime, setPickupTime] = useState("");
   const [selectedDate, setSelectedDate] = useState(
@@ -193,7 +193,7 @@ const CustomerCart = () => {
             <h3 className="cc-section-title">Payment</h3>
             <div className="cc-type-btns">
               {[
-                { value: "Pay on Collection", label: "🏪 Pay on Collection" },
+                // { value: "Pay on Collection", label: "🏪 Pay on Collection" },
                 { value: "Card", label: "💳 Pay Online (Card)" },
               ].map(({ value, label }) => (
                 <button
