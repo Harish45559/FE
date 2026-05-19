@@ -481,6 +481,7 @@ const BillingCounter = () => {
         printViaIframe(renderReceiptHTML({ ...receiptData, customerPhone: null }));
       }
       if (resumedHeldOrderId) {
+
         try {
           await api.delete(`/orders/held/${resumedHeldOrderId}`);
         } catch (err) {
@@ -488,6 +489,8 @@ const BillingCounter = () => {
         }
         setResumedHeldOrderId(null);
       }
+      // Auto-clear after print so the counter is ready for the next order
+      startNewOrder();
     } catch (err) {
       toast.error(err?.response?.data?.error || "Failed to place order");
     } finally {
@@ -1039,7 +1042,8 @@ const BillingCounter = () => {
                 ✕
               </button>
             </div>
-            {lastPlacedOrder && (
+            {/* QR and New Order buttons removed — QR is in the receipt, order auto-clears on place */}
+            {/* {lastPlacedOrder && (
               <div style={{ marginTop: 10, display: "flex", gap: 8 }}>
                 <button
                   onClick={generatePagerQR}
@@ -1075,7 +1079,7 @@ const BillingCounter = () => {
                   ✓ New Order
                 </button>
               </div>
-            )}
+            )} */}
           </div>
         </div>
       </div>
