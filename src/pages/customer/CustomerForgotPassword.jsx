@@ -19,8 +19,12 @@ const CustomerForgotPassword = () => {
     try {
       setLoading(true);
       const res = await customerApi.post("/customer/auth/forgot-password", { email });
-      setResetToken(res.data.resetToken || "");
-      setSent(true);
+      const token = res.data.resetToken;
+      if (token) {
+        navigate(`/customer/reset-password?token=${token}`);
+      } else {
+        setSent(true);
+      }
     } catch (err) {
       setError(err?.response?.data?.message || "Something went wrong. Please try again.");
     } finally {
