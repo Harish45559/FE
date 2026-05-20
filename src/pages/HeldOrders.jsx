@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import DashboardLayout from "../components/DashboardLayout";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import "./HeldOrders.css";
@@ -52,7 +51,7 @@ const HeldOrders = () => {
   };
 
   return (
-    <DashboardLayout>
+    <>
       <div className="held-orders-wrapper">
         <h2 id="held-orders-title">🕒 Held Orders</h2>
 
@@ -105,7 +104,7 @@ const HeldOrders = () => {
           </>
         )}
       </div>
-    </DashboardLayout>
+    </>
   );
 };
 

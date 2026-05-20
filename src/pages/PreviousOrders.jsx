@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from "react";
-import DashboardLayout from "../components/DashboardLayout";
 import api from "../services/api";
 import "./PreviousOrders.css";
 import usePagination from "../hooks/usePagination";
@@ -331,7 +330,7 @@ const PreviousOrders = () => {
   const visiblePages = pages.filter((p) => p === 1 || p === pageCount || Math.abs(p - page) <= 1);
 
   return (
-    <DashboardLayout>
+    <>
       <div className="previous-orders">
         {/* ── Header ── */}
         <div className="po-header">
@@ -689,7 +688,7 @@ const PreviousOrders = () => {
           </div>
         </div>
       )}
-    </DashboardLayout>
+    </>
   );
 };
 

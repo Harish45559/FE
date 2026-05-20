@@ -1,90 +1,73 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
-import DashboardLayout from "../components/DashboardLayout";
+import React, { useEffect, useState, useRef, useCallback, memo } from "react";
 import api from "../services/api";
 import socket from "../services/appSocket";
 import "./OnlineOrders.css";
 import { btConnected, btPrintOnlineOrder } from "../services/bluetoothPrinter";
+import {
+  getAudioCtx,
+  unlockAudioCtx,
+  requestNotifPermission,
+  playNewOrderSound,
+} from "../services/audio";
+
+// ── Opt 4: STATUS_CFG moved to top (was line 880) — no hoisting confusion ─────
+const STATUS_CFG = {
+  pending: {
+    bg: "#1c1100",
+    border: "#FF8C00",
+    stripe: "linear-gradient(90deg, #FF6A00, #DD3A00)",
+    statusColor: "#fff",
+    label: "Pending",
+    chipBg: "#FF6A00",
+    chipColor: "#fff",
+  },
+  accepted: {
+    bg: "#061510",
+    border: "#00a854",
+    stripe: "linear-gradient(90deg, #00a854, #007a38)",
+    statusColor: "#fff",
+    label: "Accepted",
+    chipBg: "#00a854",
+    chipColor: "#fff",
+  },
+  ready: {
+    bg: "#041420",
+    border: "#80d4ff",
+    stripe: "linear-gradient(90deg, #0099cc, #006699)",
+    statusColor: "#fff",
+    label: "Ready",
+    chipBg: "#80d4ff",
+    chipColor: "#000",
+  },
+  rejected: {
+    bg: "#160808",
+    border: "#DD3A00",
+    stripe: "linear-gradient(90deg, #DD3A00, #9a2800)",
+    statusColor: "#fff",
+    label: "Rejected",
+    chipBg: "#DD3A00",
+    chipColor: "#fff",
+  },
+  completed: {
+    bg: "#0c0e14",
+    border: "#4a90d9",
+    stripe: "linear-gradient(90deg, #4a90d9, #2c6090)",
+    statusColor: "#fff",
+    label: "Delivered",
+    chipBg: "#4a90d9",
+    chipColor: "#fff",
+  },
+};
 
 const TIME_PRESETS = [0, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60];
 
-// ── Shared AudioContext — one instance, resumed on user gesture ───────────────
-// Mobile browsers suspend AudioContext until a user interaction occurs.
-// We create it once and keep it alive so polling-triggered sounds work.
-let _audioCtx = null;
-function getAudioCtx() {
-  if (!_audioCtx || _audioCtx.state === "closed") {
-    _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  }
-  return _audioCtx;
-}
-
-// Call this from a user gesture (click/touch) to unlock audio for the session
-async function unlockAudioCtx() {
-  try {
-    const ctx = getAudioCtx();
-    if (ctx.state === "suspended") await ctx.resume();
-  } catch {}
-  // Unlock speechSynthesis on mobile — requires a silent utterance with user gesture
-  if ("speechSynthesis" in window) {
-    try {
-      const silent = new SpeechSynthesisUtterance(" ");
-      silent.volume = 0;
-      window.speechSynthesis.speak(silent);
-    } catch {}
-  }
-}
-
-// ── Request notification permission (call after user interaction on mobile) ───
-function requestNotifPermission() {
-  if ("Notification" in window && Notification.permission === "default") {
-    Notification.requestPermission();
-  }
-}
-
-// ── Uber Eats-style ascending ding (uses shared unlocked AudioContext) ────────
-function playNewOrderSound() {
-  try {
-    const ctx = getAudioCtx();
-    // If still suspended (no user gesture yet), bail — mobile will block it
-    if (ctx.state === "suspended") return;
-
-    const master = ctx.createGain();
-    master.gain.value = 0.5;
-    master.connect(ctx.destination);
-
-    const note = (freq, start, dur) => {
-      const osc = ctx.createOscillator();
-      const g = ctx.createGain();
-      osc.connect(g);
-      g.connect(master);
-      osc.type = "sine";
-      osc.frequency.value = freq;
-      g.gain.setValueAtTime(0, ctx.currentTime + start);
-      g.gain.linearRampToValueAtTime(0.85, ctx.currentTime + start + 0.025);
-      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur);
-      osc.start(ctx.currentTime + start);
-      osc.stop(ctx.currentTime + start + dur + 0.05);
-    };
-
-    note(784, 0.0, 0.18); // G5
-    note(988, 0.18, 0.18); // B5
-    note(1175, 0.36, 0.18); // D6
-    note(1568, 0.54, 0.4); // G6 — hold
-    note(1175, 0.96, 0.15); // D6
-    note(1568, 1.14, 0.5); // G6 — final
-  } catch {}
-}
-
-// ── Auto-print receipt on Accept (customer copy + kitchen copy) ───────────────
+// ── Auto-print receipt on Accept ───────────────────────────────────────────────
 async function printOnlineReceipt(order) {
-  // If Bluetooth printer is connected, use it — silent, no dialog, real auto-cut
   if (btConnected()) {
     try {
       await btPrintOnlineOrder(order);
       return;
-    } catch (_) {
-      // Fall through to iframe print if BT fails
-    }
+    } catch (_) {}
   }
   const items = order.items || [];
   const onum = order.order_number;
@@ -281,37 +264,215 @@ const ReceiptModal = ({ order, onClose }) => {
   );
 };
 
+// ── Opt 2: OrderCard extracted as memoized component ──────────────────────────
+// React.memo prevents re-rendering cards that haven't changed when one order updates
+const OrderCard = memo(({
+  order, cfg,
+  isAccepting, isLoading, selectedMin,
+  onAcceptClick, onCancelAccept, onSelectMinutes,
+  onConfirmAccept, onReject, onNotifyReady,
+  onMarkDelivered, onSetPaidModal,
+}) => (
+  <div
+    className="oo-card"
+    style={{ borderColor: cfg.border, background: cfg.bg }}
+  >
+    <div className="oo-card-stripe" style={{ background: cfg.stripe }}>
+      <div className="oo-card-id">#{order.order_number}</div>
+      <div className="oo-card-status" style={{ color: cfg.statusColor }}>
+        {cfg.label}
+      </div>
+    </div>
+
+    <div className="oo-card-body">
+      <div className="oo-card-meta-row">
+        <span className={`oo-type-chip ${order.order_type === "Takeaway" ? "takeaway" : "eatin"}`}>
+          {order.order_type === "Takeaway" ? "🥡 Takeaway" : "🍽️ Eat In"}
+        </span>
+        {order.pickup_time && (
+          <span className="oo-pickup-pill">🕐 {order.pickup_time}</span>
+        )}
+      </div>
+
+      <div className="oo-card-customer">
+        <span className="oo-cust-name">👤 {order.customer_name}</span>
+        {order.customer_contact?.phone && (
+          <span className="oo-cust-phone">📞 {order.customer_contact.phone}</span>
+        )}
+      </div>
+
+      <div className="oo-items-box">
+        {(order.items || []).map((item, i) => (
+          <div key={i} className="oo-item-line">
+            <span className="oo-item-name">{item.name}</span>
+            <span className="oo-item-qty">×{item.qty}</span>
+            <span className="oo-item-price">£{(item.price * item.qty).toFixed(2)}</span>
+          </div>
+        ))}
+      </div>
+
+      {order.customer_notes && (
+        <div className="oo-notes-box">
+          <span className="oo-notes-label">📝 Notes:</span>
+          <span className="oo-notes-text">{order.customer_notes}</span>
+        </div>
+      )}
+
+      <div className="oo-total-bar">
+        <span>Total</span>
+        <strong className="oo-total-val">£{parseFloat(order.final_amount).toFixed(2)}</strong>
+      </div>
+
+      <div className="oo-pay-row">
+        <span>{order.payment_method}</span>
+        <span>
+          {order.payment_status === "paid"
+            ? `✅ Paid (${order.payment_method})`
+            : order.payment_method === "Card"
+            ? "⏳ Awaiting Online Payment"
+            : "🏪 Collect payment on arrival"}
+        </span>
+      </div>
+
+      {/* Accept time picker */}
+      {order.order_status === "pending" && isAccepting && (
+        <div className="oo-time-picker">
+          <p className="oo-time-label">⏱ Ready in how many minutes?</p>
+          <div className="oo-presets">
+            {TIME_PRESETS.map((m) => (
+              <button
+                key={m}
+                className={`oo-preset ${selectedMin === m ? "active" : ""}`}
+                onClick={() => onSelectMinutes(order.id, m)}
+              >
+                {m === 0 ? "00" : m}
+              </button>
+            ))}
+          </div>
+          <div className="oo-confirm-row">
+            <button
+              className="oo-confirm-btn"
+              onClick={() => onConfirmAccept(order.id, selectedMin)}
+              disabled={isLoading}
+            >
+              {isLoading ? "…" : `✓ Confirm — ${selectedMin === 0 ? "00" : selectedMin} min`}
+            </button>
+            <button className="oo-cancel-btn" onClick={() => onCancelAccept(order.id)}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Pending actions */}
+      {order.order_status === "pending" && !isAccepting && (
+        <div className="oo-actions">
+          <button
+            className="oo-accept-btn"
+            onClick={() => onAcceptClick(order.id)}
+            disabled={isLoading}
+          >
+            ✓ Accept
+          </button>
+          <button
+            className="oo-reject-btn"
+            onClick={() => onReject(order.id)}
+            disabled={isLoading}
+          >
+            ✕ Reject
+          </button>
+        </div>
+      )}
+
+      {/* Accepted footer */}
+      {order.order_status === "accepted" && (
+        <div className="oo-accepted-footer">
+          {order.estimated_ready && (
+            <div className="oo-ready-badge">
+              🕐 Ready at <strong>{order.estimated_ready}</strong>
+            </div>
+          )}
+          <button
+            className="oo-notify-ready-btn"
+            onClick={() => onNotifyReady(order)}
+            disabled={isLoading}
+          >
+            🔔 Order is Ready!
+          </button>
+        </div>
+      )}
+
+      {/* Ready footer */}
+      {order.order_status === "ready" && (
+        <div className="oo-accepted-footer">
+          {order.estimated_ready && (
+            <div className="oo-ready-badge">
+              🕐 Ready at <strong>{order.estimated_ready}</strong>
+            </div>
+          )}
+          <div className="oo-announced-badge">
+            🔔 Customer notified — waiting to collect
+          </div>
+          {/* Pay on Collection — disabled for now, uncomment to enable
+          {order.payment_method === "Pay on Collection" && order.payment_status !== "paid" && (
+            <button
+              className="oo-mark-paid-btn"
+              onClick={() => onSetPaidModal(order.id)}
+              disabled={isLoading}
+            >
+              💰 Mark as Paid
+            </button>
+          )} */}
+          <button
+            className="oo-delivered-btn"
+            onClick={() => onMarkDelivered(order.id)}
+            disabled={isLoading}
+          >
+            {isLoading ? "…" : "✓ Mark as Delivered"}
+          </button>
+        </div>
+      )}
+    </div>
+  </div>
+));
+
 const OnlineOrders = () => {
   const [orders, setOrders] = useState([]);
   const [onlineEnabled, setOnlineEnabled] = useState(true);
   const [filter, setFilter] = useState("pending");
   const [loading, setLoading] = useState(true);
-  const [accepting, setAccepting] = useState({});
-  const [selectedMinutes, setSelectedMinutes] = useState({});
-  const [actionLoading, setActionLoading] = useState({});
+
+  // Opt 3: merged accepting + selectedMinutes + actionLoading into one object
+  // orderUiState[id] = { accepting: bool, minutes: number, loading: bool }
+  const [orderUiState, setOrderUiState] = useState({});
+
   const [receiptOrder, setReceiptOrder] = useState(null);
-  const [markPaidModal, setMarkPaidModal] = useState(null); // order id awaiting pay method selection
+  const [markPaidModal, setMarkPaidModal] = useState(null);
   const [audioReady, setAudioReady] = useState(false);
-  const [readyAnnounced, setReadyAnnounced] = useState({}); // tracks which orders had "ready" announced
   const [inAppAlert, setInAppAlert] = useState(false);
   const prevPendingCountRef = useRef(null);
+  const ordersRef = useRef(orders);
 
-  // ── Handle tap-to-enable audio (required on mobile) ──────────────────────
+  // Keep ordersRef in sync — lets callbacks read latest orders without being in deps
+  useEffect(() => { ordersRef.current = orders; }, [orders]);
+
+  const patchUi = useCallback((id, patch) => {
+    setOrderUiState((prev) => ({
+      ...prev,
+      [id]: { accepting: false, minutes: 20, loading: false, ...prev[id], ...patch },
+    }));
+  }, []);
+
   const handleEnableAudio = async () => {
     await unlockAudioCtx();
     requestNotifPermission();
     setAudioReady(true);
-    // Play sound immediately so user hears confirmation
     playNewOrderSound();
   };
 
-  // ── Auto-detect if AudioContext is already running (desktop) ─────────────
   useEffect(() => {
     try {
-      const ctx = getAudioCtx();
-      if (ctx.state === "running") {
-        setAudioReady(true);
-      }
+      if (getAudioCtx().state === "running") setAudioReady(true);
     } catch {}
     requestNotifPermission();
   }, []);
@@ -322,9 +483,8 @@ const OnlineOrders = () => {
         api.get("/orders/online"),
         api.get("/orders/online/status"),
       ]);
-      const fresh = ordersRes.data.orders || [];
       setOnlineEnabled(statusRes.data.online_orders_enabled ?? true);
-      setOrders(fresh);
+      setOrders(ordersRes.data.orders || []);
     } catch {
     } finally {
       if (!silent) setLoading(false);
@@ -344,19 +504,18 @@ const OnlineOrders = () => {
     };
   }, [fetchOrders]);
 
-  // ── In-app alert + browser notification when new pending orders arrive ────────
+  // In-app alert + browser notification when new pending orders arrive
   useEffect(() => {
     const pendingCount = orders.filter((o) => o.order_status === "pending").length;
     if (prevPendingCountRef.current !== null && pendingCount > prevPendingCountRef.current) {
       setInAppAlert(true);
       playNewOrderSound();
-      // Fire browser notification — works even when tab is in background
       if ("Notification" in window && Notification.permission === "granted") {
         try {
           new Notification("🔔 New Order!", {
             body: `${pendingCount} pending order${pendingCount > 1 ? "s" : ""} waiting`,
             icon: "/favicon.ico",
-            tag: "new-order",   // replaces previous notification instead of stacking
+            tag: "new-order",
             renotify: true,
           });
         } catch {}
@@ -366,8 +525,7 @@ const OnlineOrders = () => {
     prevPendingCountRef.current = pendingCount;
   }, [orders]);
 
-  const handleToggleOnline = async () => {
-    // Any button press is a user gesture — unlock audio silently
+  const handleToggleOnline = useCallback(async () => {
     if (!audioReady) {
       await unlockAudioCtx();
       requestNotifPermission();
@@ -377,82 +535,77 @@ const OnlineOrders = () => {
       const res = await api.patch("/orders/online/toggle");
       setOnlineEnabled(res.data.online_orders_enabled);
     } catch {}
-  };
+  }, [audioReady]);
 
-  const handleAcceptClick = (id) => {
+  const handleAcceptClick = useCallback((id) => {
     if (!audioReady) {
-      unlockAudioCtx().then(() => {
-        requestNotifPermission();
-        setAudioReady(true);
-      });
+      unlockAudioCtx().then(() => { requestNotifPermission(); setAudioReady(true); });
     }
-    setAccepting((prev) => ({ ...prev, [id]: true }));
-    setSelectedMinutes((prev) => ({ ...prev, [id]: 20 }));
-  };
+    patchUi(id, { accepting: true, minutes: 20 });
+  }, [audioReady, patchUi]);
 
-  const handleConfirmAccept = async (id) => {
-    const minutes = selectedMinutes[id] ?? 20;
-    setActionLoading((prev) => ({ ...prev, [id]: true }));
+  const handleCancelAccept = useCallback((id) => {
+    patchUi(id, { accepting: false });
+  }, [patchUi]);
+
+  const handleSelectMinutes = useCallback((id, minutes) => {
+    patchUi(id, { minutes });
+  }, [patchUi]);
+
+  const handleConfirmAccept = useCallback(async (id, minutes) => {
+    patchUi(id, { loading: true });
     try {
       const res = await api.patch(`/orders/online/${id}/accept`, { minutes });
       const estimatedReady = res.data.estimated_ready;
-      const order = orders.find((o) => o.id === id);
+      const order = ordersRef.current.find((o) => o.id === id);
       setOrders((prev) =>
-        prev.map((o) => (o.id === id ? { ...o, order_status: "accepted", estimated_ready: estimatedReady } : o)),
+        prev.map((o) => o.id === id ? { ...o, order_status: "accepted", estimated_ready: estimatedReady } : o),
       );
-      setAccepting((prev) => ({ ...prev, [id]: false }));
-      // Auto-print receipt (customer copy + kitchen copy) on accept
       if (order) printOnlineReceipt({ ...order, estimated_ready: estimatedReady });
+      patchUi(id, { accepting: false, loading: false });
     } catch {
-    } finally {
-      setActionLoading((prev) => ({ ...prev, [id]: false }));
+      patchUi(id, { loading: false });
     }
-  };
+  }, [patchUi]);
 
-  const handleReject = async (id) => {
-    setActionLoading((prev) => ({ ...prev, [id]: true }));
+  const handleReject = useCallback(async (id) => {
+    patchUi(id, { loading: true });
     try {
       await api.patch(`/orders/online/${id}/reject`);
       setOrders((prev) =>
-        prev.map((o) => (o.id === id ? { ...o, order_status: "rejected" } : o)),
+        prev.map((o) => o.id === id ? { ...o, order_status: "rejected" } : o),
       );
     } catch {
     } finally {
-      setActionLoading((prev) => ({ ...prev, [id]: false }));
+      patchUi(id, { loading: false });
     }
-  };
+  }, [patchUi]);
 
-  // ── Staff taps "Order Ready" → updates DB status to "ready" ─────────────────
-  // Speech + notification fires on the CUSTOMER'S screen via CustomerLayout polling
-  const handleNotifyReady = async (order) => {
+  const handleNotifyReady = useCallback(async (order) => {
     try {
       await api.patch(`/orders/online/${order.id}/ready`);
       setOrders((prev) =>
-        prev.map((o) => (o.id === order.id ? { ...o, order_status: "ready" } : o)),
+        prev.map((o) => o.id === order.id ? { ...o, order_status: "ready" } : o),
       );
     } catch {}
-    setReadyAnnounced((prev) => ({ ...prev, [order.id]: true }));
-  };
+  }, []);
 
-  const handleMarkDelivered = async (id) => {
-    setActionLoading((prev) => ({ ...prev, [id]: true }));
+  const handleMarkDelivered = useCallback(async (id) => {
+    patchUi(id, { loading: true });
     try {
       await api.patch(`/orders/online/${id}/complete`);
       setOrders((prev) =>
-        prev.map((o) =>
-          o.id === id ? { ...o, order_status: "completed" } : o,
-        ),
+        prev.map((o) => o.id === id ? { ...o, order_status: "completed" } : o),
       );
-      setReadyAnnounced((prev) => { const n = { ...prev }; delete n[id]; return n; });
     } catch {
     } finally {
-      setActionLoading((prev) => ({ ...prev, [id]: false }));
+      patchUi(id, { loading: false });
     }
-  };
+  }, [patchUi]);
 
-  const handleMarkPaid = async (id, method) => {
+  const handleMarkPaid = useCallback(async (id, method) => {
     setMarkPaidModal(null);
-    setActionLoading((prev) => ({ ...prev, [id]: true }));
+    patchUi(id, { loading: true });
     try {
       await api.patch(`/orders/online/${id}/mark-paid`, { payment_method: method });
       setOrders((prev) =>
@@ -462,18 +615,16 @@ const OnlineOrders = () => {
       );
     } catch {
     } finally {
-      setActionLoading((prev) => ({ ...prev, [id]: false }));
+      patchUi(id, { loading: false });
     }
-  };
+  }, [patchUi]);
 
-  // Card orders that haven't been paid yet are awaiting payment — exclude from pending tab
   const isAwaitingPayment = (o) => o.payment_method === "Card" && o.payment_status !== "paid";
 
   const pendingCount = orders.filter(
-    (o) => o.order_status === "pending" && !isAwaitingPayment(o)
+    (o) => o.order_status === "pending" && !isAwaitingPayment(o),
   ).length;
 
-  // "accepted" tab shows both accepted and ready orders
   const filtered = orders.filter((o) => {
     if (filter === "all") return true;
     if (filter === "accepted") return o.order_status === "accepted" || o.order_status === "ready";
@@ -481,7 +632,7 @@ const OnlineOrders = () => {
     return o.order_status === filter;
   });
 
-  // ── ALL tab: table ──────────────────────────────────────────────────────────
+  // ── ALL tab: table ────────────────────────────────────────────────────────────
   const renderAllTable = () => (
     <div className="oo-table-wrap">
       <table className="oo-table">
@@ -506,27 +657,16 @@ const OnlineOrders = () => {
                 <td className="oo-td-num">{order.order_number}</td>
                 <td>{order.customer_name}</td>
                 <td>
-                  <span
-                    className={`oo-type-chip ${order.order_type === "Takeaway" ? "takeaway" : "eatin"}`}
-                  >
-                    {order.order_type === "Takeaway"
-                      ? "🥡 Takeaway"
-                      : "🍽️ Eat In"}
+                  <span className={`oo-type-chip ${order.order_type === "Takeaway" ? "takeaway" : "eatin"}`}>
+                    {order.order_type === "Takeaway" ? "🥡 Takeaway" : "🍽️ Eat In"}
                   </span>
                 </td>
                 <td className="oo-td-muted">{order.pickup_time || "—"}</td>
                 <td className="oo-td-muted">{(order.items || []).length}pc</td>
-                <td className="oo-td-amount">
-                  £{parseFloat(order.final_amount).toFixed(2)}
-                </td>
+                <td className="oo-td-amount">£{parseFloat(order.final_amount).toFixed(2)}</td>
                 <td className="oo-td-muted">
-                  {order.payment_method}
-                  {" "}
-                  {order.payment_status === "paid"
-                    ? "✅"
-                    : order.payment_method === "Card"
-                    ? "⏳"
-                    : ""}
+                  {order.payment_method}{" "}
+                  {order.payment_status === "paid" ? "✅" : order.payment_method === "Card" ? "⏳" : ""}
                 </td>
                 <td>
                   <span
@@ -553,224 +693,42 @@ const OnlineOrders = () => {
     </div>
   );
 
-  // ── Card tabs: pending / accepted / rejected ────────────────────────────────
+  // ── Card tabs: pending / accepted / rejected ──────────────────────────────────
   const renderCards = () => (
     <div className="oo-grid">
       {filtered.map((order) => {
-        const cfg = STATUS_CFG[order.order_status] || STATUS_CFG.pending;
-        const isAcceptingThis = accepting[order.id];
-        const isLoading = actionLoading[order.id];
-
+        const ui = orderUiState[order.id] || {};
         return (
-          <div
+          <OrderCard
             key={order.id}
-            className="oo-card"
-            style={{ borderColor: cfg.border, background: cfg.bg }}
-          >
-            {/* Header stripe */}
-            <div className="oo-card-stripe" style={{ background: cfg.stripe }}>
-              <div className="oo-card-id">#{order.order_number}</div>
-              <div
-                className="oo-card-status"
-                style={{ color: cfg.statusColor }}
-              >
-                {cfg.label}
-              </div>
-            </div>
-
-            {/* Meta */}
-            <div className="oo-card-body">
-              <div className="oo-card-meta-row">
-                <span
-                  className={`oo-type-chip ${order.order_type === "Takeaway" ? "takeaway" : "eatin"}`}
-                >
-                  {order.order_type === "Takeaway"
-                    ? "🥡 Takeaway"
-                    : "🍽️ Eat In"}
-                </span>
-                {order.pickup_time && (
-                  <span className="oo-meta-pill">🕐 {order.pickup_time}</span>
-                )}
-              </div>
-
-              <div className="oo-card-customer">
-                <span className="oo-cust-name">👤 {order.customer_name}</span>
-                {order.customer_contact?.phone && (
-                  <span className="oo-cust-phone">
-                    📞 {order.customer_contact.phone}
-                  </span>
-                )}
-              </div>
-
-              {/* Items list */}
-              <div className="oo-items-box">
-                {(order.items || []).map((item, i) => (
-                  <div key={i} className="oo-item-line">
-                    <span className="oo-item-name">{item.name}</span>
-                    <span className="oo-item-qty">×{item.qty}</span>
-                    <span className="oo-item-price">
-                      £{(item.price * item.qty).toFixed(2)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Customer notes */}
-              {order.customer_notes && (
-                <div className="oo-notes-box">
-                  <span className="oo-notes-label">📝 Notes:</span>
-                  <span className="oo-notes-text">{order.customer_notes}</span>
-                </div>
-              )}
-
-              {/* Total row */}
-              <div className="oo-total-bar">
-                <span>Total</span>
-                <strong className="oo-total-val">
-                  £{parseFloat(order.final_amount).toFixed(2)}
-                </strong>
-              </div>
-
-              {/* Payment */}
-              <div className="oo-pay-row">
-                <span>{order.payment_method}</span>
-                <span>
-                  {order.payment_status === "paid"
-                    ? `✅ Paid (${order.payment_method})`
-                    : order.payment_method === "Card"
-                    ? "⏳ Awaiting Online Payment"
-                    : "🏪 Collect payment on arrival"}
-                </span>
-              </div>
-
-              {/* Accept time picker */}
-              {order.order_status === "pending" && isAcceptingThis && (
-                <div className="oo-time-picker">
-                  <p className="oo-time-label">⏱ Ready in how many minutes?</p>
-                  <div className="oo-presets">
-                    {TIME_PRESETS.map((m) => (
-                      <button
-                        key={m}
-                        className={`oo-preset ${selectedMinutes[order.id] === m ? "active" : ""}`}
-                        onClick={() =>
-                          setSelectedMinutes((prev) => ({
-                            ...prev,
-                            [order.id]: m,
-                          }))
-                        }
-                      >
-                        {m === 0 ? "00" : m}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="oo-confirm-row">
-                    <button
-                      className="oo-confirm-btn"
-                      onClick={() => handleConfirmAccept(order.id)}
-                      disabled={isLoading}
-                    >
-                      {isLoading
-                        ? "…"
-                        : (() => { const m = selectedMinutes[order.id] ?? 20; return `✓ Confirm — ${m === 0 ? "00" : m} min`; })()}
-                    </button>
-                    <button
-                      className="oo-cancel-btn"
-                      onClick={() =>
-                        setAccepting((prev) => ({ ...prev, [order.id]: false }))
-                      }
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Pending actions */}
-              {order.order_status === "pending" && !isAcceptingThis && (
-                <div className="oo-actions">
-                  <button
-                    className="oo-accept-btn"
-                    onClick={() => handleAcceptClick(order.id)}
-                    disabled={isLoading}
-                  >
-                    ✓ Accept
-                  </button>
-                  <button
-                    className="oo-reject-btn"
-                    onClick={() => handleReject(order.id)}
-                    disabled={isLoading}
-                  >
-                    ✕ Reject
-                  </button>
-                </div>
-              )}
-
-              {/* Accepted footer — step 1: notify ready (updates DB to "ready") */}
-              {order.order_status === "accepted" && (
-                <div className="oo-accepted-footer">
-                  {order.estimated_ready && (
-                    <div className="oo-ready-badge">
-                      🕐 Ready at <strong>{order.estimated_ready}</strong>
-                    </div>
-                  )}
-                  <button
-                    className="oo-notify-ready-btn"
-                    onClick={() => handleNotifyReady(order)}
-                    disabled={isLoading}
-                  >
-                    🔔 Order is Ready!
-                  </button>
-                </div>
-              )}
-
-              {/* Ready footer — step 2: mark paid (if Pay on Collection) then mark delivered */}
-              {order.order_status === "ready" && (
-                <div className="oo-accepted-footer">
-                  {order.estimated_ready && (
-                    <div className="oo-ready-badge">
-                      🕐 Ready at <strong>{order.estimated_ready}</strong>
-                    </div>
-                  )}
-                  <div className="oo-announced-badge">
-                    🔔 Customer notified — waiting to collect
-                  </div>
-                  {order.payment_method === "Pay on Collection" && order.payment_status !== "paid" && (
-                    <button
-                      className="oo-mark-paid-btn"
-                      onClick={() => setMarkPaidModal(order.id)}
-                      disabled={isLoading}
-                    >
-                      💰 Mark as Paid
-                    </button>
-                  )}
-                  <button
-                    className="oo-delivered-btn"
-                    onClick={() => handleMarkDelivered(order.id)}
-                    disabled={isLoading || (order.payment_method === "Pay on Collection" && order.payment_status !== "paid")}
-                    title={order.payment_method === "Pay on Collection" && order.payment_status !== "paid" ? "Mark as Paid first before delivering" : ""}
-                  >
-                    {isLoading ? "…" : "✓ Mark as Delivered"}
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
+            order={order}
+            cfg={STATUS_CFG[order.order_status] || STATUS_CFG.pending}
+            isAccepting={ui.accepting || false}
+            isLoading={ui.loading || false}
+            selectedMin={ui.minutes ?? 20}
+            onAcceptClick={handleAcceptClick}
+            onCancelAccept={handleCancelAccept}
+            onSelectMinutes={handleSelectMinutes}
+            onConfirmAccept={handleConfirmAccept}
+            onReject={handleReject}
+            onNotifyReady={handleNotifyReady}
+            onMarkDelivered={handleMarkDelivered}
+            onSetPaidModal={setMarkPaidModal}
+          />
         );
       })}
     </div>
   );
 
   return (
-    <DashboardLayout>
+    <>
       <div className="oo-page">
-        {/* ── Tap-to-enable audio banner (mobile) ── */}
         {!audioReady && (
           <button className="oo-audio-unlock-btn" onClick={handleEnableAudio}>
             🔔 Tap here to enable sound &amp; notifications
           </button>
         )}
 
-        {/* ── In-app new order alert (iOS fallback — no Web Notifications on iOS Safari) ── */}
         {inAppAlert && (
           <div className="oo-inapp-alert" onClick={() => setInAppAlert(false)}>
             <span className="oo-inapp-alert-icon">🔔</span>
@@ -778,7 +736,6 @@ const OnlineOrders = () => {
           </div>
         )}
 
-        {/* ── Header ── */}
         <div className="oo-header">
           <div className="oo-title-row">
             <h1 className="oo-title">🌐 Online Orders</h1>
@@ -797,7 +754,6 @@ const OnlineOrders = () => {
           </div>
         </div>
 
-        {/* ── Tabs ── */}
         <div className="oo-tabs">
           {["pending", "accepted", "rejected", "all"].map((tab) => (
             <button
@@ -813,14 +769,11 @@ const OnlineOrders = () => {
           ))}
         </div>
 
-        {/* ── Content ── */}
         {loading ? (
           <div className="oo-loading">Loading orders…</div>
         ) : filtered.length === 0 ? (
           <div className="oo-empty">
-            {filter === "pending"
-              ? "✅ No pending orders right now."
-              : "No orders in this category."}
+            {filter === "pending" ? "✅ No pending orders right now." : "No orders in this category."}
           </div>
         ) : filter === "all" ? (
           renderAllTable()
@@ -829,100 +782,33 @@ const OnlineOrders = () => {
         )}
 
         {receiptOrder && (
-          <ReceiptModal
-            order={receiptOrder}
-            onClose={() => setReceiptOrder(null)}
-          />
+          <ReceiptModal order={receiptOrder} onClose={() => setReceiptOrder(null)} />
         )}
 
-        {/* ── Mark as Paid modal ── */}
+        {/* Opt 6: markPaidModal uses CSS classes instead of inline styles */}
         {markPaidModal && (
-          <div
-            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999 }}
-            onClick={() => setMarkPaidModal(null)}
-          >
-            <div
-              style={{ background: "#fff", borderRadius: 16, padding: "28px 24px", width: 300, textAlign: "center", boxShadow: "0 8px 32px rgba(0,0,0,0.18)" }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div style={{ fontSize: "1.8rem", marginBottom: 8 }}>💰</div>
-              <h3 style={{ margin: "0 0 6px", fontSize: "1.05rem" }}>How did the customer pay?</h3>
-              <p style={{ color: "#9ca3af", fontSize: "0.82rem", marginBottom: 20 }}>Select the payment method used at collection</p>
-              <div style={{ display: "flex", gap: 10 }}>
-                <button
-                  onClick={() => handleMarkPaid(markPaidModal, "Cash")}
-                  style={{ flex: 1, padding: "12px 0", background: "#f0fdf4", color: "#16a34a", border: "1.5px solid #bbf7d0", borderRadius: 10, fontWeight: 700, fontSize: "0.95rem", cursor: "pointer" }}
-                >
+          <div className="oo-paid-overlay" onClick={() => setMarkPaidModal(null)}>
+            <div className="oo-paid-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="oo-paid-icon">💰</div>
+              <h3 className="oo-paid-title">How did the customer pay?</h3>
+              <p className="oo-paid-subtitle">Select the payment method used at collection</p>
+              <div className="oo-paid-btns">
+                <button className="oo-paid-btn-cash" onClick={() => handleMarkPaid(markPaidModal, "Cash")}>
                   💵 Cash
                 </button>
-                <button
-                  onClick={() => handleMarkPaid(markPaidModal, "Card on Collection")}
-                  style={{ flex: 1, padding: "12px 0", background: "#eff6ff", color: "#2563eb", border: "1.5px solid #bfdbfe", borderRadius: 10, fontWeight: 700, fontSize: "0.95rem", cursor: "pointer" }}
-                >
+                <button className="oo-paid-btn-card" onClick={() => handleMarkPaid(markPaidModal, "Card on Collection")}>
                   💳 Card
                 </button>
               </div>
-              <button
-                onClick={() => setMarkPaidModal(null)}
-                style={{ marginTop: 14, width: "100%", padding: "10px 0", background: "#f3f4f6", border: "none", borderRadius: 10, color: "#6b7280", fontWeight: 600, cursor: "pointer" }}
-              >
+              <button className="oo-paid-cancel" onClick={() => setMarkPaidModal(null)}>
                 Cancel
               </button>
             </div>
           </div>
         )}
       </div>
-    </DashboardLayout>
+    </>
   );
-};
-
-// ── Status display config ─────────────────────────────────────────────────────
-const STATUS_CFG = {
-  pending: {
-    bg: "#1c1100",
-    border: "#FF8C00",
-    stripe: "linear-gradient(90deg, #FF6A00, #DD3A00)",
-    statusColor: "#fff",
-    label: "Pending",
-    chipBg: "#FF6A00",
-    chipColor: "#fff",
-  },
-  accepted: {
-    bg: "#061510",
-    border: "#00a854",
-    stripe: "linear-gradient(90deg, #00a854, #007a38)",
-    statusColor: "#fff",
-    label: "Accepted",
-    chipBg: "#00a854",
-    chipColor: "#fff",
-  },
-  ready: {
-    bg: "#041420",
-    border: "#80d4ff",
-    stripe: "linear-gradient(90deg, #0099cc, #006699)",
-    statusColor: "#fff",
-    label: "Ready",
-    chipBg: "#80d4ff",
-    chipColor: "#000",
-  },
-  rejected: {
-    bg: "#160808",
-    border: "#DD3A00",
-    stripe: "linear-gradient(90deg, #DD3A00, #9a2800)",
-    statusColor: "#fff",
-    label: "Rejected",
-    chipBg: "#DD3A00",
-    chipColor: "#fff",
-  },
-  completed: {
-    bg: "#0c0e14",
-    border: "#4a90d9",
-    stripe: "linear-gradient(90deg, #4a90d9, #2c6090)",
-    statusColor: "#fff",
-    label: "Delivered",
-    chipBg: "#4a90d9",
-    chipColor: "#fff",
-  },
 };
 
 export default OnlineOrders;

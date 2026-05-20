@@ -1,5 +1,6 @@
 import React from "react";
 import { useRoutes } from "react-router-dom";
+import DashboardLayout from "./components/DashboardLayout";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import Attendance from "./pages/Attendance";
@@ -36,101 +37,22 @@ const AppRouter = () => {
     { path: "/login", element: <Login /> },
     { path: "/forgot-password", element: <ForgotPassword /> },
 
-    // 🔐 Admin-only routes
+    // 🔐 Staff routes — DashboardLayout mounted once, persists across navigation
     {
-      path: "/dashboard",
-      element: (
-        <ProtectedRoute allowedRoles={["admin"]}>
-          <Dashboard />
-        </ProtectedRoute>
-      ),
-    },
-
-    {
-      path: "/employees",
-      element: (
-        <ProtectedRoute allowedRoles={["admin"]}>
-          <Employees />
-        </ProtectedRoute>
-      ),
-    },
-
-    {
-      path: "/reports",
-      element: (
-        <ProtectedRoute allowedRoles={["admin"]}>
-          <Reports />
-        </ProtectedRoute>
-      ),
-    },
-
-    {
-      path: "/master-data",
-      element: (
-        <ProtectedRoute allowedRoles={["admin"]}>
-          <MasterData />
-        </ProtectedRoute>
-      ),
-    },
-
-    {
-      path: "/eod-sales",
-      element: (
-        <ProtectedRoute allowedRoles={["admin"]}>
-          <EndOfDaySales />
-        </ProtectedRoute>
-      ),
-    },
-
-    // 🔐 Shared routes - for both admin and employee
-    {
-      path: "/attendance",
-      element: (
-        <ProtectedRoute allowedRoles={["admin", "employee", "cashier"]}>
-          <Attendance />
-        </ProtectedRoute>
-      ),
-    },
-    {
-      path: "/billing",
-      element: (
-        <ProtectedRoute allowedRoles={["admin", "cashier"]}>
-          <BillingCounter />
-        </ProtectedRoute>
-      ),
-    },
-    {
-      path: "/previous-orders",
-      element: (
-        <ProtectedRoute allowedRoles={["admin", "cashier"]}>
-          <PreviousOrders />
-        </ProtectedRoute>
-      ),
-    },
-    {
-      path: "/held-orders",
-      element: (
-        <ProtectedRoute allowedRoles={["admin", "cashier"]}>
-          <HeldOrders />
-        </ProtectedRoute>
-      ),
-    },
-
-    {
-      path: "/online-orders",
-      element: (
-        <ProtectedRoute allowedRoles={["admin", "cashier"]}>
-          <OnlineOrders />
-        </ProtectedRoute>
-      ),
-    },
-    {
-      path: "/customers",
-      element: (
-        <ProtectedRoute allowedRoles={["admin"]}>
-          <Customers />
-        </ProtectedRoute>
-      ),
+      element: <DashboardLayout />,
+      children: [
+        { path: "/dashboard", element: <ProtectedRoute allowedRoles={["admin"]}><Dashboard /></ProtectedRoute> },
+        { path: "/employees", element: <ProtectedRoute allowedRoles={["admin"]}><Employees /></ProtectedRoute> },
+        { path: "/reports", element: <ProtectedRoute allowedRoles={["admin"]}><Reports /></ProtectedRoute> },
+        { path: "/master-data", element: <ProtectedRoute allowedRoles={["admin"]}><MasterData /></ProtectedRoute> },
+        { path: "/eod-sales", element: <ProtectedRoute allowedRoles={["admin"]}><EndOfDaySales /></ProtectedRoute> },
+        { path: "/customers", element: <ProtectedRoute allowedRoles={["admin"]}><Customers /></ProtectedRoute> },
+        { path: "/attendance", element: <ProtectedRoute allowedRoles={["admin", "employee", "cashier"]}><Attendance /></ProtectedRoute> },
+        { path: "/billing", element: <ProtectedRoute allowedRoles={["admin", "cashier"]}><BillingCounter /></ProtectedRoute> },
+        { path: "/previous-orders", element: <ProtectedRoute allowedRoles={["admin", "cashier"]}><PreviousOrders /></ProtectedRoute> },
+        { path: "/held-orders", element: <ProtectedRoute allowedRoles={["admin", "cashier"]}><HeldOrders /></ProtectedRoute> },
+        { path: "/online-orders", element: <ProtectedRoute allowedRoles={["admin", "cashier"]}><OnlineOrders /></ProtectedRoute> },
+      ],
     },
 
     // ── Customer-facing routes ──────────────────────────────

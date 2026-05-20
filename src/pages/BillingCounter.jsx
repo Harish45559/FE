@@ -1,7 +1,6 @@
 // BillingCounter.jsx — 3-column POS layout
 import React, { useEffect, useRef, useState } from "react";
 import api from "../services/api";
-import DashboardLayout from "../components/DashboardLayout";
 import { DateTime } from "luxon";
 import "./BillingCounter.css";
 import { toast } from "react-toastify";
@@ -606,7 +605,7 @@ const BillingCounter = () => {
     isPlacing || !isTillOpen || !paymentMethod || selectedItems.length === 0;
 
   return (
-    <DashboardLayout>
+    <>
       {/* Auth Modal */}
       {showAuthModal && (
         <div className="bc-overlay" onClick={() => setShowAuthModal(false)}>
@@ -1257,7 +1256,7 @@ const BillingCounter = () => {
           </div>
         </div>
       )}
-    </DashboardLayout>
+    </>
   );
 };
 

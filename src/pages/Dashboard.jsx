@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import DashboardLayout from "../components/DashboardLayout";
 import api from "../services/api";
 import { DateTime } from "luxon";
 import "./Dashboard.css";
@@ -123,17 +122,17 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <DashboardLayout>
+      <>
         <div className="dash-loading">
           <div className="dash-spinner" />
           <span>Loading dashboard…</span>
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
   return (
-    <DashboardLayout>
+    <>
       <div className="dash">
         {/* Header */}
         <div className="dash-header">
@@ -358,7 +357,7 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </>
   );
 };
 

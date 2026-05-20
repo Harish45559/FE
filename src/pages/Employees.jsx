@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useMemo } from "react";
-import DashboardLayout from "../components/DashboardLayout";
 import api from "../services/api";
 import "./Employees.css";
 import { useNavigate } from "react-router-dom";
@@ -254,7 +253,7 @@ const Employees = () => {
   }, [employees, search, roleFilter]);
 
   return (
-    <DashboardLayout>
+    <>
       <div className="ep-container">
         {/* Header */}
         <div className="ep-header">
@@ -578,7 +577,7 @@ const Employees = () => {
           </table>
         </div>
       </div>
-    </DashboardLayout>
+    </>
   );
 };
 
