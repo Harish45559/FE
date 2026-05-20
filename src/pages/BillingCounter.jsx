@@ -70,6 +70,8 @@ const BillingCounter = () => {
   const [pagerLoading, setPagerLoading] = useState(false);
   const [isPlacing, setIsPlacing] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [showNoPrinterModal, setShowNoPrinterModal] = useState(false);
+  const noPrinterResolveRef = useRef(null);
 
   useEffect(() => {
     // Optimistic local state while API loads
@@ -403,6 +405,17 @@ const BillingCounter = () => {
     if (!paymentMethod) return toast.error("Select a payment method.");
     if (!customerName.trim()) return toast.error("Customer name is required.");
 
+    // Warn if BT printer is supported but not connected — prevents user from
+    // placing the order, closing the OS print dialog, and placing again thinking
+    // the first one didn't go through.
+    if (btSupported() && !btConnected()) {
+      const proceed = await new Promise((resolve) => {
+        noPrinterResolveRef.current = resolve;
+        setShowNoPrinterModal(true);
+      });
+      if (!proceed) return;
+    }
+
     setIsPlacing(true);
     const payload = {
       customer_name: customerName,
@@ -438,6 +451,8 @@ const BillingCounter = () => {
           // Pager generation is optional — don't block the order
         }
       }
+
+      toast.success(`Order #${placed.order_number ?? nextTempOrderNumber} placed!`, { autoClose: 4000 });
 
       setLastPlacedOrder({
         id: placed.id,
@@ -480,7 +495,6 @@ const BillingCounter = () => {
         printViaIframe(renderReceiptHTML({ ...receiptData, customerPhone: null }));
       }
       if (resumedHeldOrderId) {
-
         try {
           await api.delete(`/orders/held/${resumedHeldOrderId}`);
         } catch (err) {
@@ -488,7 +502,6 @@ const BillingCounter = () => {
         }
         setResumedHeldOrderId(null);
       }
-      // Auto-clear after print so the counter is ready for the next order
       startNewOrder();
     } catch (err) {
       toast.error(err?.response?.data?.error || "Failed to place order");
@@ -606,6 +619,46 @@ const BillingCounter = () => {
 
   return (
     <>
+      {/* No Printer Warning Modal */}
+      {showNoPrinterModal && (
+        <div className="bc-overlay">
+          <div className="bc-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="bc-modal-header">
+              <span className="bc-modal-title">🖨️ Printer Not Connected</span>
+            </div>
+            <div className="bc-modal-body">
+              <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6, color: "#333" }}>
+                Bluetooth printer is <strong>not connected</strong>.
+              </p>
+              <p style={{ margin: "10px 0 0", fontSize: 13, color: "#666", lineHeight: 1.6 }}>
+                The order <strong>will be saved</strong> to the system, but you won't get a printout.
+                Connect the printer first if you need a receipt.
+              </p>
+            </div>
+            <div className="bc-modal-footer">
+              <button
+                className="bc-btn-sec"
+                onClick={() => {
+                  setShowNoPrinterModal(false);
+                  noPrinterResolveRef.current?.(false);
+                }}
+              >
+                Cancel — Connect Printer
+              </button>
+              <button
+                className="bc-btn-pri red"
+                onClick={() => {
+                  setShowNoPrinterModal(false);
+                  noPrinterResolveRef.current?.(true);
+                }}
+              >
+                Place Order Anyway
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Auth Modal */}
       {showAuthModal && (
         <div className="bc-overlay" onClick={() => setShowAuthModal(false)}>
