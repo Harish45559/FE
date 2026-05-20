@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import api from "../services/api";
 import "./MasterData.css";
-import DashboardLayout from "../components/DashboardLayout";
 import usePagination from "../hooks/usePagination";
 import PaginationBar from "../components/PaginationBar";
 
@@ -200,7 +199,7 @@ const MasterData = () => {
   };
 
   return (
-    <DashboardLayout>
+    <>
       <div className="md-wrapper">
         <div className="md-header">
           <h1 className="md-title">Master data</h1>
@@ -598,7 +597,7 @@ const MasterData = () => {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </>
   );
 };
 

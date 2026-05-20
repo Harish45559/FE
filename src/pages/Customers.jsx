@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useMemo } from "react";
-import DashboardLayout from "../components/DashboardLayout";
 import api from "../services/api";
 import "./Customers.css";
 
@@ -58,7 +57,7 @@ const Customers = () => {
   }).length;
 
   return (
-    <DashboardLayout>
+    <>
       {/* ── Header ── */}
       <div className="cx-header">
         <div>
@@ -234,7 +233,7 @@ const Customers = () => {
           </div>
         </div>
       )}
-    </DashboardLayout>
+    </>
   );
 };
 

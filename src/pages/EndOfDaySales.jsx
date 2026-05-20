@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState, useRef } from "react";
-import DashboardLayout from "../components/DashboardLayout";
 import api from "../services/api";
 import { DateTime } from "luxon";
 import { Bar, Pie, Line } from "react-chartjs-2";
@@ -244,7 +243,7 @@ const EndOfDaySales = () => {
   const maxQty = topItems[0]?.quantity || 1;
 
   return (
-    <DashboardLayout>
+    <>
       <div className="eod-container">
         {/* ── Header ── */}
         <div className="eod-header">
@@ -608,7 +607,7 @@ const EndOfDaySales = () => {
           </div>
         )}
       </div>
-    </DashboardLayout>
+    </>
   );
 };
 

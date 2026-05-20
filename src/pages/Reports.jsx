@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { DateTime } from "luxon";
-import DashboardLayout from "../components/DashboardLayout";
 import api from "../services/api";
 import "./Reports.css";
 import usePagination from "../hooks/usePagination";
@@ -371,7 +370,7 @@ export default function Reports() {
 
   /* ── Render ── */
   return (
-    <DashboardLayout>
+    <>
       <div className="rp-container">
         {/* Header */}
         <div className="rp-header">
@@ -736,6 +735,6 @@ export default function Reports() {
           </div>
         </div>
       )}
-    </DashboardLayout>
+    </>
   );
 }

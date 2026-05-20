@@ -164,8 +164,8 @@ const CustomerCart = () => {
                 {orderType === "Eat In" ? "Table Ready Time" : "Pickup Time"}
               </h3>
               <label className="c-label">Date</label>
-              <div className="c-input" style={{ background: "#f3f4f6", color: "#555", cursor: "default", userSelect: "none" }}>
-                {formatDate(selectedDate)}
+              <div className="cc-date-display">
+                📅 {formatDate(selectedDate)}
               </div>
               <label className="c-label" style={{ marginTop: 14 }}>
                 Time Slot
@@ -183,6 +183,11 @@ const CustomerCart = () => {
                       {slot}
                     </button>
                   ))}
+                </div>
+              )}
+              {pickupTime && (
+                <div className="cc-selection-summary">
+                  ✅ Selected: <strong>{formatDate(selectedDate)}</strong> at <strong>{pickupTime}</strong>
                 </div>
               )}
             </div>

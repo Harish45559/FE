@@ -1,44 +1,12 @@
 // DashboardLayout.jsx
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import { useNavigate, NavLink } from "react-router-dom";
+import { useNavigate, NavLink, Outlet } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import api from "../services/api";
 import socket from "../services/appSocket";
+import { unlockAudioCtx, requestNotifPermission, playNewOrderSound } from "../services/audio";
 import "./DashboardLayout.css";
-
-// ── Module-level AudioContext (persists across re-renders) ────────────────────
-let _dlAudioCtx = null;
-function getDlAudioCtx() {
-  if (!_dlAudioCtx || _dlAudioCtx.state === "closed") {
-    _dlAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  }
-  return _dlAudioCtx;
-}
-
-function playDlNewOrderSound() {
-  try {
-    const ctx = getDlAudioCtx();
-    if (ctx.state === "suspended") return;
-    const master = ctx.createGain();
-    master.gain.value = 0.5;
-    master.connect(ctx.destination);
-    const note = (freq, start, dur) => {
-      const osc = ctx.createOscillator();
-      const g = ctx.createGain();
-      osc.connect(g); g.connect(master);
-      osc.type = "sine"; osc.frequency.value = freq;
-      g.gain.setValueAtTime(0, ctx.currentTime + start);
-      g.gain.linearRampToValueAtTime(0.85, ctx.currentTime + start + 0.025);
-      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur);
-      osc.start(ctx.currentTime + start);
-      osc.stop(ctx.currentTime + start + dur + 0.05);
-    };
-    note(784, 0.0, 0.18); note(988, 0.18, 0.18);
-    note(1175, 0.36, 0.18); note(1568, 0.54, 0.4);
-    note(1175, 0.96, 0.15); note(1568, 1.14, 0.5);
-  } catch {}
-}
 
 function sendDlNewOrderNotif(count) {
   if ("Notification" in window && Notification.permission === "granted") {
@@ -64,89 +32,44 @@ function speakDlNewOrder() {
   } catch {}
 }
 
-const DashboardLayout = ({ children }) => {
-  const navigate = useNavigate();
-  const [menuOpen, setMenuOpen] = useState(false);
+// ── Opt 3: custom hook — pending orders polling + alerts ──────────────────────
+function usePendingOrders(user) {
   const [pendingOnlineCount, setPendingOnlineCount] = useState(0);
   const prevPendingRef = useRef(null);
   const soundLoopRef = useRef(null);
   const speechLoopRef = useRef(null);
 
-  const [user, setUser] = useState(() =>
-    JSON.parse(localStorage.getItem("user")),
-  );
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const updatedUser = JSON.parse(localStorage.getItem("user"));
-      setUser(updatedUser);
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Unlock AudioContext + speech synthesis + notifications on first click anywhere
-  useEffect(() => {
-    const unlock = () => {
-      try {
-        const ctx = getDlAudioCtx();
-        if (ctx.state === "suspended") ctx.resume().catch(() => {});
-      } catch {}
-      if ("speechSynthesis" in window) {
-        try {
-          const s = new SpeechSynthesisUtterance("");
-          s.volume = 0;
-          window.speechSynthesis.speak(s);
-        } catch {}
-      }
-      if ("Notification" in window && Notification.permission === "default") {
-        Notification.requestPermission();
-      }
-      document.removeEventListener("click", unlock, true);
-    };
-    document.addEventListener("click", unlock, true);
-    return () => document.removeEventListener("click", unlock, true);
-  }, []);
-
-  // Poll pending online orders every 10s — works on ANY staff page
   const fetchPendingOnline = useCallback(async () => {
-    const u = JSON.parse(localStorage.getItem("user"));
-    if (!u || (u.role !== "admin" && u.role !== "cashier")) return;
+    // Opt 4: uses user from state, no localStorage re-parse
+    if (!user || (user.role !== "admin" && user.role !== "cashier")) return;
     try {
       const res = await api.get("/orders/online/pending");
       const count = (res.data.orders || []).length;
       setPendingOnlineCount(count);
 
       if (prevPendingRef.current !== null && count > prevPendingRef.current) {
-        const newCount = count - prevPendingRef.current;
-        sendDlNewOrderNotif(newCount);
+        sendDlNewOrderNotif(count - prevPendingRef.current);
       }
 
       if (count > 0) {
-        // Start sound loop if not already running
         if (!soundLoopRef.current) {
-          playDlNewOrderSound();
-          soundLoopRef.current = setInterval(playDlNewOrderSound, 4500);
+          playNewOrderSound();
+          soundLoopRef.current = setInterval(playNewOrderSound, 4500);
         }
-        // Start speech loop if not already running — repeats every 12s until accepted
         if (!speechLoopRef.current) {
           speakDlNewOrder();
           speechLoopRef.current = setInterval(speakDlNewOrder, 12000);
         }
       } else {
-        // No pending orders — stop both loops
-        if (soundLoopRef.current) {
-          clearInterval(soundLoopRef.current);
-          soundLoopRef.current = null;
-        }
+        if (soundLoopRef.current) { clearInterval(soundLoopRef.current); soundLoopRef.current = null; }
         if (speechLoopRef.current) {
-          clearInterval(speechLoopRef.current);
-          speechLoopRef.current = null;
+          clearInterval(speechLoopRef.current); speechLoopRef.current = null;
           try { window.speechSynthesis?.cancel(); } catch {}
         }
       }
       prevPendingRef.current = count;
     } catch {}
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     fetchPendingOnline();
@@ -162,6 +85,48 @@ const DashboardLayout = ({ children }) => {
     };
   }, [fetchPendingOnline]);
 
+  return pendingOnlineCount;
+}
+
+// ── Opt 2: shared NavItem — eliminates ~60 lines of repeated JSX ──────────────
+const NavItem = ({ to, icon, label, badge, onClose }) => (
+  <NavLink
+    to={to}
+    className={({ isActive }) => `dl-item${isActive ? " active" : ""}`}
+    onClick={onClose}
+  >
+    <span className="dl-item-icon">{icon}</span>
+    <span className="dl-item-label">{label}</span>
+    {badge > 0 && <span className="dl-pending-badge">{badge}</span>}
+  </NavLink>
+);
+
+const DashboardLayout = ({ children }) => {
+  const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const closeMenu = () => setMenuOpen(false);
+
+  // Opt 1: storage event instead of 1s setInterval poll
+  const [user, setUser] = useState(() => JSON.parse(localStorage.getItem("user")));
+  useEffect(() => {
+    const onStorage = () => setUser(JSON.parse(localStorage.getItem("user")));
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
+  // Unlock AudioContext + speech + notifications on first click
+  useEffect(() => {
+    const unlock = () => {
+      unlockAudioCtx();
+      requestNotifPermission();
+      document.removeEventListener("click", unlock, true);
+    };
+    document.addEventListener("click", unlock, true);
+    return () => document.removeEventListener("click", unlock, true);
+  }, []);
+
+  const pendingOnlineCount = usePendingOrders(user);
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -176,217 +141,73 @@ const DashboardLayout = ({ children }) => {
   };
 
   const getDisplayName = () => {
-    if (user?.first_name)
-      return `${user.first_name} ${user.last_name || ""}`.trim();
+    if (user?.first_name) return `${user.first_name} ${user.last_name || ""}`.trim();
     if (user?.username) return user.username;
     return "User";
   };
 
   return (
     <div className="dl-layout">
-      {/* Mobile overlay */}
-      {menuOpen && (
-        <div className="dl-overlay" onClick={() => setMenuOpen(false)} />
-      )}
-      {/* Mobile top bar */}
+      {menuOpen && <div className="dl-overlay" onClick={closeMenu} />}
+
       <div className="dl-topbar">
         <button className="dl-hamburger" onClick={() => setMenuOpen((o) => !o)}>
-          <span />
-          <span />
-          <span />
+          <span /><span /><span />
         </button>
         <div className="dl-logo dl-logo--topbar">
-          <img
-            src="/bg-chili.png"
-            alt="Mirchi Mafiya"
-            className="dl-logo-img"
-          />
+          <img src="/bg-chili.png" alt="Mirchi Mafiya" className="dl-logo-img" />
           <span className="dl-brand">Mirchi Mafiya</span>
         </div>
       </div>
+
       <aside className={`dl-sidebar${menuOpen ? " dl-sidebar--open" : ""}`}>
-        <button className="dl-sidebar-close" onClick={() => setMenuOpen(false)}>
-          ✕
-        </button>
-        {/* Logo */}
+        <button className="dl-sidebar-close" onClick={closeMenu}>✕</button>
         <div className="dl-logo">
-          <img
-            src="/bg-chili.png"
-            alt="Mirchi Mafiya"
-            className="dl-logo-img"
-          />
+          <img src="/bg-chili.png" alt="Mirchi Mafiya" className="dl-logo-img" />
           <div className="dl-logo-text">
             <span className="dl-brand">Mirchi Mafiya</span>
             <span className="dl-tagline">Point of Sale</span>
           </div>
         </div>
 
-        {/* Navigation */}
         <nav className="dl-nav">
           {user?.role === "admin" && (
             <>
               <div className="dl-section">Main</div>
-              <NavLink
-                to="/dashboard"
-                className={({ isActive }) =>
-                  `dl-item${isActive ? " active" : ""}`
-                }
-                onClick={() => setMenuOpen(false)}
-              >
-                <span className="dl-item-icon">📊</span>
-                <span className="dl-item-label">Dashboard</span>
-              </NavLink>
+              <NavItem to="/dashboard" icon="📊" label="Dashboard" onClose={closeMenu} />
 
               <div className="dl-section">Online Ordering</div>
-              <NavLink
-                to="/online-orders"
-                className={({ isActive }) => `dl-item${isActive ? " active" : ""}`}
-                onClick={() => setMenuOpen(false)}
-              >
-                <span className="dl-item-icon">🌐</span>
-                <span className="dl-item-label">Online Orders</span>
-                {pendingOnlineCount > 0 && (
-                  <span className="dl-pending-badge">{pendingOnlineCount}</span>
-                )}
-              </NavLink>
-              <NavLink
-                to="/customers"
-                className={({ isActive }) => `dl-item${isActive ? " active" : ""}`}
-                onClick={() => setMenuOpen(false)}
-              >
-                <span className="dl-item-icon">👤</span>
-                <span className="dl-item-label">Customers</span>
-              </NavLink>
+              <NavItem to="/online-orders" icon="🌐" label="Online Orders" badge={pendingOnlineCount} onClose={closeMenu} />
+              <NavItem to="/customers" icon="👤" label="Customers" onClose={closeMenu} />
 
               <div className="dl-section">Management</div>
-              <NavLink
-                to="/employees"
-                className={({ isActive }) =>
-                  `dl-item${isActive ? " active" : ""}`
-                }
-                onClick={() => setMenuOpen(false)}
-              >
-                <span className="dl-item-icon">👥</span>
-                <span className="dl-item-label">Employees</span>
-              </NavLink>
-              <NavLink
-                to="/reports"
-                className={({ isActive }) =>
-                  `dl-item${isActive ? " active" : ""}`
-                }
-                onClick={() => setMenuOpen(false)}
-              >
-                <span className="dl-item-icon">📈</span>
-                <span className="dl-item-label">Reports</span>
-              </NavLink>
-              <NavLink
-                to="/master-data"
-                className={({ isActive }) =>
-                  `dl-item${isActive ? " active" : ""}`
-                }
-                onClick={() => setMenuOpen(false)}
-              >
-                <span className="dl-item-icon">🗂️</span>
-                <span className="dl-item-label">Master Data</span>
-              </NavLink>
-              <NavLink
-                to="/eod-sales"
-                className={({ isActive }) =>
-                  `dl-item${isActive ? " active" : ""}`
-                }
-                onClick={() => setMenuOpen(false)}
-              >
-                <span className="dl-item-icon">📊</span>
-                <span className="dl-item-label">EOD Sales</span>
-              </NavLink>
+              <NavItem to="/employees" icon="👥" label="Employees" onClose={closeMenu} />
+              <NavItem to="/reports" icon="📈" label="Reports" onClose={closeMenu} />
+              <NavItem to="/master-data" icon="🗂️" label="Master Data" onClose={closeMenu} />
+              <NavItem to="/eod-sales" icon="📊" label="EOD Sales" onClose={closeMenu} />
 
               <div className="dl-section">Operations</div>
-              <NavLink
-                to="/held-orders"
-                className={({ isActive }) =>
-                  `dl-item${isActive ? " active" : ""}`
-                }
-                onClick={() => setMenuOpen(false)}
-              >
-                <span className="dl-item-icon">⏳</span>
-                <span className="dl-item-label">Held Orders</span>
-              </NavLink>
-              <NavLink
-                to="/billing"
-                className={({ isActive }) =>
-                  `dl-item${isActive ? " active" : ""}`
-                }
-                onClick={() => setMenuOpen(false)}
-              >
-                <span className="dl-item-icon">💵</span>
-                <span className="dl-item-label">Billing Counter</span>
-              </NavLink>
-              <NavLink
-                to="/previous-orders"
-                className={({ isActive }) =>
-                  `dl-item${isActive ? " active" : ""}`
-                }
-                onClick={() => setMenuOpen(false)}
-              >
-                <span className="dl-item-icon">📜</span>
-                <span className="dl-item-label">Previous Orders</span>
-              </NavLink>
+              <NavItem to="/held-orders" icon="⏳" label="Held Orders" onClose={closeMenu} />
+              <NavItem to="/billing" icon="💵" label="Billing Counter" onClose={closeMenu} />
+              <NavItem to="/previous-orders" icon="📜" label="Previous Orders" onClose={closeMenu} />
             </>
           )}
 
           {user?.role === "cashier" && (
             <>
               <div className="dl-section">Online Ordering</div>
-              <NavLink
-                to="/online-orders"
-                className={({ isActive }) => `dl-item${isActive ? " active" : ""}`}
-                onClick={() => setMenuOpen(false)}
-              >
-                <span className="dl-item-icon">🌐</span>
-                <span className="dl-item-label">Online Orders</span>
-                {pendingOnlineCount > 0 && (
-                  <span className="dl-pending-badge">{pendingOnlineCount}</span>
-                )}
-              </NavLink>
+              <NavItem to="/online-orders" icon="🌐" label="Online Orders" badge={pendingOnlineCount} onClose={closeMenu} />
+
               <div className="dl-section">Operations</div>
-              <NavLink
-                to="/held-orders"
-                className={({ isActive }) => `dl-item${isActive ? " active" : ""}`}
-                onClick={() => setMenuOpen(false)}
-              >
-                <span className="dl-item-icon">⏳</span>
-                <span className="dl-item-label">Held Orders</span>
-              </NavLink>
-              <NavLink
-                to="/billing"
-                className={({ isActive }) => `dl-item${isActive ? " active" : ""}`}
-                onClick={() => setMenuOpen(false)}
-              >
-                <span className="dl-item-icon">💵</span>
-                <span className="dl-item-label">Billing Counter</span>
-              </NavLink>
-              <NavLink
-                to="/previous-orders"
-                className={({ isActive }) => `dl-item${isActive ? " active" : ""}`}
-                onClick={() => setMenuOpen(false)}
-              >
-                <span className="dl-item-icon">📜</span>
-                <span className="dl-item-label">Previous Orders</span>
-              </NavLink>
+              <NavItem to="/held-orders" icon="⏳" label="Held Orders" onClose={closeMenu} />
+              <NavItem to="/billing" icon="💵" label="Billing Counter" onClose={closeMenu} />
+              <NavItem to="/previous-orders" icon="📜" label="Previous Orders" onClose={closeMenu} />
             </>
           )}
 
-          <NavLink
-            to="/attendance"
-            className={({ isActive }) => `dl-item${isActive ? " active" : ""}`}
-            onClick={() => setMenuOpen(false)}
-          >
-            <span className="dl-item-icon">⏰</span>
-            <span className="dl-item-label">Attendance</span>
-          </NavLink>
+          <NavItem to="/attendance" icon="⏰" label="Attendance" onClose={closeMenu} />
         </nav>
 
-        {/* Footer */}
         <div className="dl-footer">
           <div className="dl-user">
             <div className="dl-user-av">{getInitials()}</div>
@@ -404,7 +225,7 @@ const DashboardLayout = ({ children }) => {
       </aside>
 
       <main className="dl-main">
-        {children}
+        {children ?? <Outlet />}
         <ToastContainer position="top-center" autoClose={3000} />
       </main>
     </div>

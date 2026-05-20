@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import customerApi from "../../services/customerApi";
 import CustomerLayout from "../../components/CustomerLayout";
@@ -8,6 +8,52 @@ const OrderConfirmation = () => {
   const { state } = useLocation();
   const navigate = useNavigate();
   const order = state?.order;
+  const [accepted, setAccepted] = useState(false);
+  const [rejected, setRejected] = useState(false);
+  const [countdown, setCountdown] = useState(4);
+  const pollRef = useRef(null);
+  const countRef = useRef(null);
+
+  useEffect(() => {
+    if (!order?.id) return;
+
+    pollRef.current = setInterval(async () => {
+      try {
+        const res = await customerApi.get(`/customer/orders/${order.id}`);
+        const status = res.data.order?.order_status;
+        if (status === "accepted" || status === "ready" || status === "completed") {
+          clearInterval(pollRef.current);
+          setAccepted(true);
+          let secs = 4;
+          countRef.current = setInterval(() => {
+            secs -= 1;
+            setCountdown(secs);
+            if (secs <= 0) {
+              clearInterval(countRef.current);
+              navigate("/customer/orders");
+            }
+          }, 1000);
+        } else if (status === "rejected") {
+          clearInterval(pollRef.current);
+          setRejected(true);
+          let secs = 4;
+          countRef.current = setInterval(() => {
+            secs -= 1;
+            setCountdown(secs);
+            if (secs <= 0) {
+              clearInterval(countRef.current);
+              navigate("/customer/orders");
+            }
+          }, 1000);
+        }
+      } catch {}
+    }, 5000);
+
+    return () => {
+      clearInterval(pollRef.current);
+      clearInterval(countRef.current);
+    };
+  }, [order?.id, navigate]);
 
   const handleDownloadReceipt = async () => {
     try {
@@ -41,6 +87,16 @@ const OrderConfirmation = () => {
   return (
     <CustomerLayout>
       <div className="oc-wrapper">
+        {accepted && (
+          <div className="oc-accepted-banner">
+            🎉 Your order has been accepted! Redirecting to My Orders in {countdown}s…
+          </div>
+        )}
+        {rejected && (
+          <div className="oc-rejected-banner">
+            ❌ Your order was rejected. Redirecting to My Orders in {countdown}s…
+          </div>
+        )}
         <div className="oc-icon">✅</div>
         <h1 className="oc-title">Order Received!</h1>
         <p className="oc-sub">We've got your order — our team will confirm it shortly. You'll see the status update in My Orders.</p>

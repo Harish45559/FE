@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from "react";
-import DashboardLayout from "../components/DashboardLayout";
 import api from "../services/api";
 import { DateTime } from "luxon";
 import "./Attendance.css";
@@ -269,7 +268,7 @@ const Attendance = () => {
   );
 
   return (
-    <DashboardLayout>
+    <>
       <div className="att-wrap">
         <div className="att-panel">
           {/* ══ LEFT — keypad (desktop only) ══ */}
@@ -378,7 +377,7 @@ const Attendance = () => {
           </div>
         </div>
       )}
-    </DashboardLayout>
+    </>
   );
 };
 
