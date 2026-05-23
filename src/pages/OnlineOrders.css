@@ -307,11 +307,27 @@
 .oo-item-qty  { color: #888; min-width: 26px; }
 .oo-item-price { color: #FFD166; font-weight: 700; min-width: 50px; text-align: right; }
 
-/* Total bar */
-.oo-total-bar {
+/* Promo bar */
+.oo-promo-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 5px 8px;
+  margin: 4px 0;
+  background: rgba(100, 220, 150, 0.1);
+  border: 1px solid rgba(100, 220, 150, 0.25);
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: #6effc2;
+  font-weight: 700;
+}
+
+.oo-promo-saving {
+  font-weight: 800;
+}
+
+/* Total bar */
+.oo-total-bar {
   padding: 8px 0 0;
   border-top: 1px solid rgba(255,255,255,0.08);
   font-size: 0.9rem;
@@ -319,10 +335,37 @@
   font-weight: 600;
 }
 
+.oo-subtotal-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #777;
+  margin-bottom: 3px;
+}
+
+.oo-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .oo-total-val {
   font-size: 1.05rem;
   font-weight: 900;
   color: #FFD166;
+}
+
+/* Promo tag in table */
+.oo-td-promo { white-space: nowrap; }
+.oo-promo-tag {
+  background: rgba(100, 220, 150, 0.15);
+  color: #6effc2;
+  border: 1px solid rgba(100, 220, 150, 0.3);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: default;
 }
 
 .oo-pay-row {

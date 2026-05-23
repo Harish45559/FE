@@ -17,6 +17,7 @@ import EndOfDaySales from "./pages/EndOfDaySales";
 // Staff online ordering pages
 import OnlineOrders from "./pages/OnlineOrders";
 import Customers from "./pages/Customers";
+import Offers from "./pages/Offers";
 
 // Customer-facing pages
 import CustomerLogin from "./pages/customer/CustomerLogin";
@@ -52,6 +53,7 @@ const AppRouter = () => {
         { path: "/previous-orders", element: <ProtectedRoute allowedRoles={["admin", "cashier"]}><PreviousOrders /></ProtectedRoute> },
         { path: "/held-orders", element: <ProtectedRoute allowedRoles={["admin", "cashier"]}><HeldOrders /></ProtectedRoute> },
         { path: "/online-orders", element: <ProtectedRoute allowedRoles={["admin", "cashier"]}><OnlineOrders /></ProtectedRoute> },
+        { path: "/offers", element: <ProtectedRoute allowedRoles={["admin"]}><Offers /></ProtectedRoute> },
       ],
     },
 

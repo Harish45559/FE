@@ -36,6 +36,20 @@ function speakDlNewOrder() {
 function usePendingOrders(user) {
   const [pendingOnlineCount, setPendingOnlineCount] = useState(0);
   const prevPendingRef = useRef(null);
+  const pendingCountRef = useRef(0);
+  const reminderRef = useRef(null);
+
+  const startReminder = useCallback(() => {
+    if (reminderRef.current) return; // already running
+    reminderRef.current = setInterval(() => {
+      if (pendingCountRef.current > 0) {
+        playNewOrderSound();
+      } else {
+        clearInterval(reminderRef.current);
+        reminderRef.current = null;
+      }
+    }, 30000); // ring every 30s while orders are pending
+  }, []);
 
   const fetchPendingOnline = useCallback(async () => {
     if (!user || (user.role !== "admin" && user.role !== "cashier")) return;
@@ -43,17 +57,26 @@ function usePendingOrders(user) {
       const res = await api.get("/orders/online/pending");
       const count = (res.data.orders || []).length;
       setPendingOnlineCount(count);
+      pendingCountRef.current = count;
 
-      // Only alert when a NEW order arrives (count increased), not continuously
+      // Alert immediately when a NEW order arrives
       if (prevPendingRef.current !== null && count > prevPendingRef.current) {
         playNewOrderSound();
         speakDlNewOrder();
         sendDlNewOrderNotif(count - prevPendingRef.current);
       }
 
+      // Start 30s reminder loop while there are pending orders
+      if (count > 0) {
+        startReminder();
+      } else {
+        clearInterval(reminderRef.current);
+        reminderRef.current = null;
+      }
+
       prevPendingRef.current = count;
     } catch {}
-  }, [user]);
+  }, [user, startReminder]);
 
   useEffect(() => {
     fetchPendingOnline();
@@ -75,6 +98,7 @@ function usePendingOrders(user) {
     socket.on("order:status-changed", fetchPendingOnline);
     return () => {
       clearInterval(pollTimer);
+      clearInterval(reminderRef.current);
       document.removeEventListener("visibilitychange", onVisibility);
       socket.off("connect", fetchPendingOnline);
       socket.off("order:new", fetchPendingOnline);
@@ -175,6 +199,7 @@ const DashboardLayout = ({ children }) => {
 
               <div className="dl-section">Online Ordering</div>
               <NavItem to="/online-orders" icon="🌐" label="Online Orders" badge={pendingOnlineCount} onClose={closeMenu} />
+              <NavItem to="/offers" icon="🏷️" label="Offers" onClose={closeMenu} />
               <NavItem to="/customers" icon="👤" label="Customers" onClose={closeMenu} />
 
               <div className="dl-section">Management</div>
