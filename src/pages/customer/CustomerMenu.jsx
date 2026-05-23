@@ -5,16 +5,7 @@ import customerApi from "../../services/customerApi";
 import CustomerLayout from "../../components/CustomerLayout";
 import { useCart } from "../../hooks/useCart";
 import "./CustomerMenu.css";
-
-function getItemImage(item) {
-  if (item.image_url) return item.image_url;
-  const slug = item.name
-    .toLowerCase()
-    .replace(/[''']/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/[^a-z0-9-]/g, "");
-  return `/images/${slug}.jpg`;
-}
+import { getMenuImageUrl } from "../../services/imageBase";
 
 const CustomerMenu = () => {
   const [categories, setCategories]   = useState([]);
@@ -202,7 +193,7 @@ const CustomerMenu = () => {
                       </button>
                       {!imgErrors[item.id] ? (
                         <img
-                          src={getItemImage(item)}
+                          src={getMenuImageUrl(item)}
                           alt={item.name}
                           className="cm-img"
                           onError={() => handleImgError(item.id)}
