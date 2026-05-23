@@ -73,10 +73,25 @@ function usePendingOrders(user) {
 
   useEffect(() => {
     fetchPendingOnline();
+
+    // Fallback poll every 15s — catches socket misses
+    const pollTimer = setInterval(fetchPendingOnline, 15000);
+
+    // When admin comes back to this tab, resume AudioContext and re-check immediately
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") {
+        unlockAudioCtx();
+        fetchPendingOnline();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
     socket.on("connect", fetchPendingOnline);
     socket.on("order:new", fetchPendingOnline);
     socket.on("order:status-changed", fetchPendingOnline);
     return () => {
+      clearInterval(pollTimer);
+      document.removeEventListener("visibilitychange", onVisibility);
       socket.off("connect", fetchPendingOnline);
       socket.off("order:new", fetchPendingOnline);
       socket.off("order:status-changed", fetchPendingOnline);

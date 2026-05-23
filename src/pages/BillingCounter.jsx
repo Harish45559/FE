@@ -5,7 +5,7 @@ import { DateTime } from "luxon";
 import "./BillingCounter.css";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import imageMapping from "./imageMapping";
+import { getMenuImageUrl } from "../services/imageBase";
 import {
   btSupported, btConnected, btDeviceName,
   btConnect, btDisconnect, btPrintBoth, btAutoConnect,
@@ -808,7 +808,7 @@ const BillingCounter = () => {
                     <img
                       className="bc-card-img"
                       src={
-                        imageMapping[item.name] || "/images/default-food.jpg"
+                        getMenuImageUrl(item)
                       }
                       alt={item.name}
                       onError={(e) => {
@@ -942,7 +942,7 @@ const BillingCounter = () => {
                     <img
                       className="bc-cart-img"
                       src={
-                        imageMapping[item.name] || "/images/default-food.jpg"
+                        getMenuImageUrl(item)
                       }
                       alt={item.name}
                       onError={(e) => {
