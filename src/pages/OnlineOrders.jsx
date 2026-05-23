@@ -80,6 +80,10 @@ async function printOnlineReceipt(order) {
   const ready = order.estimated_ready || "";
   const notes = order.customer_notes || "";
 
+  const promoCode = order.promo_code || "";
+  const discountAmt = promoCode ? parseFloat(order.discount_amount || 0).toFixed(2) : "";
+  const subtotal = promoCode ? parseFloat(order.total_amount || 0).toFixed(2) : "";
+
   const itemRows = items.map((it) => {
     const qty = it.qty || 1;
     return `<div class="item-row"><span class="item-name">${qty}x ${it.name}</span><span class="item-price">£${(it.price * qty).toFixed(2)}</span></div>`;
@@ -109,6 +113,8 @@ async function printOnlineReceipt(order) {
       <div class="items-block">${itemRows}</div>
       <hr/>
       <div class="receipt-summary">
+        ${promoCode ? `<div class="summary-row"><span>Subtotal</span><span>£${subtotal}</span></div>` : ""}
+        ${promoCode ? `<div class="summary-row promo-row"><span>🏷️ ${promoCode}</span><span>-£${discountAmt}</span></div>` : ""}
         <div class="summary-row grand-total"><span>TOTAL</span><span>£${total}</span></div>
         <div class="summary-row highlight-pay"><span>Payment</span><span>${pay}</span></div>
       </div>
@@ -151,6 +157,7 @@ async function printOnlineReceipt(order) {
     .summary-row { display: flex; justify-content: space-between; margin: 0.6mm 0; }
     .grand-total { font-size: 13px; font-weight: 900; border-top: 2px solid #000; padding-top: 1mm; margin-top: 1mm; }
     .highlight-pay { font-size: 12px; font-weight: 900; }
+    .promo-row { font-size: 11px; font-weight: 700; color: #333; }
     .kitchen { page-break-before: always; break-before: page; }
     hr { border: 0; border-top: 1px dashed #333; margin: 2mm 0; }
   </style>`;
@@ -225,6 +232,18 @@ const ReceiptModal = ({ order, onClose }) => {
             </div>
           ))}
           <div className="oo-receipt-divider" />
+          {order.promo_code && (
+            <>
+              <div className="oo-receipt-row">
+                <span>Subtotal</span>
+                <span>£{parseFloat(order.total_amount).toFixed(2)}</span>
+              </div>
+              <div className="oo-receipt-row" style={{ color: "#6effc2" }}>
+                <span>🏷️ {order.promo_code}</span>
+                <span>-£{parseFloat(order.discount_amount || 0).toFixed(2)}</span>
+              </div>
+            </>
+          )}
           <div className="oo-receipt-total">
             <span>TOTAL</span>
             <strong>£{parseFloat(order.final_amount).toFixed(2)}</strong>
@@ -318,9 +337,24 @@ const OrderCard = memo(({
         </div>
       )}
 
+      {order.promo_code && (
+        <div className="oo-promo-bar">
+          <span>🏷️ {order.promo_code}</span>
+          <span className="oo-promo-saving">-£{parseFloat(order.discount_amount || 0).toFixed(2)}</span>
+        </div>
+      )}
+
       <div className="oo-total-bar">
-        <span>Total</span>
-        <strong className="oo-total-val">£{parseFloat(order.final_amount).toFixed(2)}</strong>
+        {order.promo_code && (
+          <div className="oo-subtotal-row">
+            <span>Subtotal</span>
+            <span>£{parseFloat(order.total_amount).toFixed(2)}</span>
+          </div>
+        )}
+        <div className="oo-total-row">
+          <span>Total</span>
+          <strong className="oo-total-val">£{parseFloat(order.final_amount).toFixed(2)}</strong>
+        </div>
       </div>
 
       <div className="oo-pay-row">
@@ -506,7 +540,7 @@ const OnlineOrders = () => {
 
   // In-app alert + browser notification when new pending orders arrive
   useEffect(() => {
-    const pendingCount = orders.filter((o) => o.order_status === "pending").length;
+    const pendingCount = orders.filter((o) => o.order_status === "pending" && !isAwaitingPayment(o)).length;
     if (prevPendingCountRef.current !== null && pendingCount > prevPendingCountRef.current) {
       setInAppAlert(true);
       playNewOrderSound();
@@ -643,6 +677,7 @@ const OnlineOrders = () => {
             <th>Type</th>
             <th>Pickup</th>
             <th>Items</th>
+            <th>Promo</th>
             <th>Total</th>
             <th>Payment</th>
             <th>Status</th>
@@ -663,6 +698,11 @@ const OnlineOrders = () => {
                 </td>
                 <td className="oo-td-muted">{order.pickup_time || "—"}</td>
                 <td className="oo-td-muted">{(order.items || []).length}pc</td>
+                <td className="oo-td-promo">
+                  {order.promo_code
+                    ? <span className="oo-promo-tag" title={`-£${parseFloat(order.discount_amount || 0).toFixed(2)}`}>🏷️ {order.promo_code}</span>
+                    : <span className="oo-td-muted">—</span>}
+                </td>
                 <td className="oo-td-amount">£{parseFloat(order.final_amount).toFixed(2)}</td>
                 <td className="oo-td-muted">
                   {order.payment_method}{" "}
@@ -793,9 +833,9 @@ const OnlineOrders = () => {
               <h3 className="oo-paid-title">How did the customer pay?</h3>
               <p className="oo-paid-subtitle">Select the payment method used at collection</p>
               <div className="oo-paid-btns">
-                <button className="oo-paid-btn-cash" onClick={() => handleMarkPaid(markPaidModal, "Cash")}>
+                {/* <button className="oo-paid-btn-cash" onClick={() => handleMarkPaid(markPaidModal, "Cash")}>
                   💵 Cash
-                </button>
+                </button> */}
                 <button className="oo-paid-btn-card" onClick={() => handleMarkPaid(markPaidModal, "Card on Collection")}>
                   💳 Card
                 </button>
