@@ -36,37 +36,21 @@ function speakDlNewOrder() {
 function usePendingOrders(user) {
   const [pendingOnlineCount, setPendingOnlineCount] = useState(0);
   const prevPendingRef = useRef(null);
-  const soundLoopRef = useRef(null);
-  const speechLoopRef = useRef(null);
 
   const fetchPendingOnline = useCallback(async () => {
-    // Opt 4: uses user from state, no localStorage re-parse
     if (!user || (user.role !== "admin" && user.role !== "cashier")) return;
     try {
       const res = await api.get("/orders/online/pending");
       const count = (res.data.orders || []).length;
       setPendingOnlineCount(count);
 
+      // Only alert when a NEW order arrives (count increased), not continuously
       if (prevPendingRef.current !== null && count > prevPendingRef.current) {
+        playNewOrderSound();
+        speakDlNewOrder();
         sendDlNewOrderNotif(count - prevPendingRef.current);
       }
 
-      if (count > 0) {
-        if (!soundLoopRef.current) {
-          playNewOrderSound();
-          soundLoopRef.current = setInterval(playNewOrderSound, 4500);
-        }
-        if (!speechLoopRef.current) {
-          speakDlNewOrder();
-          speechLoopRef.current = setInterval(speakDlNewOrder, 12000);
-        }
-      } else {
-        if (soundLoopRef.current) { clearInterval(soundLoopRef.current); soundLoopRef.current = null; }
-        if (speechLoopRef.current) {
-          clearInterval(speechLoopRef.current); speechLoopRef.current = null;
-          try { window.speechSynthesis?.cancel(); } catch {}
-        }
-      }
       prevPendingRef.current = count;
     } catch {}
   }, [user]);
@@ -95,8 +79,6 @@ function usePendingOrders(user) {
       socket.off("connect", fetchPendingOnline);
       socket.off("order:new", fetchPendingOnline);
       socket.off("order:status-changed", fetchPendingOnline);
-      if (soundLoopRef.current) clearInterval(soundLoopRef.current);
-      if (speechLoopRef.current) clearInterval(speechLoopRef.current);
     };
   }, [fetchPendingOnline]);
 
