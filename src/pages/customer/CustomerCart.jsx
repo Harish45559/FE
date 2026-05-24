@@ -258,7 +258,7 @@ const CustomerCart = () => {
             <h3 className="cc-section-title">Payment</h3>
             <div className="cc-type-btns">
               {[
-                { value: "Pay on Collection", label: "🏪 Pay on Collection" },
+                // { value: "Pay on Collection", label: "🏪 Pay on Collection" },
                 { value: "Card", label: "💳 Pay Online (Card)" },
               ].map(({ value, label }) => (
                 <button
