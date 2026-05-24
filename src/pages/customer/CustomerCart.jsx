@@ -19,6 +19,12 @@ const CustomerCart = () => {
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [promoInput, setPromoInput] = useState("");
+  const [promoCode, setPromoCode] = useState("");
+  const [promoDiscount, setPromoDiscount] = useState(0);
+  const [promoMsg, setPromoMsg] = useState("");
+  const [promoError, setPromoError] = useState("");
+  const [promoLoading, setPromoLoading] = useState(false);
 
   // Fetch time slots for both Takeaway and Eat In
   useEffect(() => {
@@ -38,6 +44,59 @@ const CustomerCart = () => {
     fetchSlots();
   }, [selectedDate, orderType]);
 
+  // Re-validate promo whenever cart changes while a promo is applied
+  useEffect(() => {
+    if (!promoCode) return;
+    const revalidate = async () => {
+      try {
+        const res = await customerApi.post("/customer/orders/validate-promo", {
+          code: promoCode,
+          items: cart.map((i) => ({ id: i.id, price: i.price, qty: i.qty, category_id: i.categoryId })),
+        });
+        setPromoDiscount(res.data.discount_amount || 0);
+        setPromoMsg(`🏷️ ${res.data.description || res.data.code} — £${res.data.discount_amount.toFixed(2)} off applied!`);
+        setPromoError("");
+      } catch (err) {
+        // Promo no longer valid for current cart — clear it
+        setPromoCode("");
+        setPromoDiscount(0);
+        setPromoMsg("");
+        setPromoError(err?.response?.data?.message || "Promo code no longer valid for your current cart");
+      }
+    };
+    revalidate();
+  }, [cart]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleApplyPromo = async () => {
+    if (!promoInput.trim()) return;
+    setPromoError("");
+    setPromoMsg("");
+    setPromoLoading(true);
+    try {
+      const res = await customerApi.post("/customer/orders/validate-promo", {
+        code: promoInput.trim(),
+        items: cart.map((i) => ({ id: i.id, price: i.price, qty: i.qty, category_id: i.categoryId })),
+      });
+      setPromoCode(promoInput.trim().toUpperCase());
+      setPromoDiscount(res.data.discount_amount || 0);
+      setPromoMsg(`🏷️ ${res.data.description || res.data.code} — £${res.data.discount_amount.toFixed(2)} off applied!`);
+    } catch (err) {
+      setPromoError(err?.response?.data?.message || "Invalid promo code");
+      setPromoCode("");
+      setPromoDiscount(0);
+    } finally {
+      setPromoLoading(false);
+    }
+  };
+
+  const handleRemovePromo = () => {
+    setPromoCode("");
+    setPromoInput("");
+    setPromoDiscount(0);
+    setPromoMsg("");
+    setPromoError("");
+  };
+
   const handlePlaceOrder = async () => {
     setError("");
     if (cart.length === 0) return setError("Your cart is empty");
@@ -53,6 +112,7 @@ const CustomerCart = () => {
         payment_method: paymentMethod,
         pickup_time: needsSlot ? `${pickupTime} ${formatDate(selectedDate)}` : null,
         customer_notes: notes.trim() || null,
+        promo_code: promoCode || null,
       };
       const res = await customerApi.post("/customer/orders", payload);
       const order = res.data.order;
@@ -198,7 +258,7 @@ const CustomerCart = () => {
             <h3 className="cc-section-title">Payment</h3>
             <div className="cc-type-btns">
               {[
-                // { value: "Pay on Collection", label: "🏪 Pay on Collection" },
+                { value: "Pay on Collection", label: "🏪 Pay on Collection" },
                 { value: "Card", label: "💳 Pay Online (Card)" },
               ].map(({ value, label }) => (
                 <button
@@ -231,29 +291,52 @@ const CustomerCart = () => {
             <div className="cc-notes-count">{notes.length}/500</div>
           </div>
 
+          {/* Promo Code */}
+          <div className="c-card">
+            <h3 className="cc-section-title">Promo Code</h3>
+            {promoCode ? (
+              <div className="cc-promo-applied">
+                <span>🏷️ <strong>{promoCode}</strong> — -£{promoDiscount.toFixed(2)} off</span>
+                <button className="cc-promo-remove" onClick={handleRemovePromo}>✕ Remove</button>
+              </div>
+            ) : (
+              <div className="cc-promo-row">
+                <input
+                  className="cc-promo-input"
+                  placeholder="Enter promo code"
+                  value={promoInput}
+                  onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+                  onKeyDown={(e) => e.key === "Enter" && handleApplyPromo()}
+                />
+                <button
+                  className="cc-promo-btn"
+                  onClick={handleApplyPromo}
+                  disabled={promoLoading || !promoInput.trim()}
+                >
+                  {promoLoading ? "…" : "Apply"}
+                </button>
+              </div>
+            )}
+            {promoMsg && <div className="cc-promo-msg">{promoMsg}</div>}
+            {promoError && <div className="cc-promo-error">{promoError}</div>}
+          </div>
+
           {/* Summary + Place Order */}
           <div className="c-card cc-summary">
             {error && <div className="c-error">{error}</div>}
-            {/* 2nd Anniversary — 10% discount banner */}
-            {today === "2026-05-18" && (
-              <div style={{ background: "#fff7ed", border: "1.5px solid #fed7aa", borderRadius: 10, padding: "10px 14px", marginBottom: 12, textAlign: "center" }}>
-                <div style={{ fontSize: "1rem" }}>🎉 2nd Anniversary Special!</div>
-                <div style={{ fontSize: "0.82rem", color: "#dd3a00", fontWeight: 700 }}>10% discount applied automatically</div>
-              </div>
-            )}
             <div className="cc-summary-row">
               <span>Subtotal</span>
               <span>£{total.toFixed(2)}</span>
             </div>
-            {today === "2026-05-18" && (
+            {promoCode && (
               <div className="cc-summary-row" style={{ color: "#16a34a", fontWeight: 700 }}>
-                <span>🎉 10% Anniversary Discount</span>
-                <span>-£{(total * 0.1).toFixed(2)}</span>
+                <span>🏷️ {promoCode}</span>
+                <span>-£{promoDiscount.toFixed(2)}</span>
               </div>
             )}
             <div className="cc-summary-row total">
               <span>Total</span>
-              <span>£{today === "2026-05-18" ? (total * 0.9).toFixed(2) : total.toFixed(2)}</span>
+              <span>£{Math.max(0, total - promoDiscount).toFixed(2)}</span>
             </div>
             {(orderType === "Takeaway" || orderType === "Eat In") && pickupTime && (
               <div className="cc-pickup-info">
@@ -265,7 +348,7 @@ const CustomerCart = () => {
               onClick={handlePlaceOrder}
               disabled={loading}
             >
-              {loading ? "Placing Order…" : "Place Order"}
+              {loading ? "Placing Order…" : `Place Order · £${Math.max(0, total - promoDiscount).toFixed(2)}`}
             </button>
             <button
               className="c-btn c-btn-secondary"

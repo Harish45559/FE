@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import socket from "../../services/appSocket";
 import customerApi from "../../services/customerApi";
@@ -16,6 +16,9 @@ const CustomerMenu = () => {
   const [loading, setLoading]         = useState(true);
   const [imgErrors, setImgErrors]     = useState({});
   const [favourites, setFavourites]   = useState([]);
+  const [promos, setPromos]           = useState([]);
+  const [promoIdx, setPromoIdx]       = useState(0);
+  const promoTimer                    = useRef(null);
   const { cart, addItem, updateQty, removeItem, total, itemCount } = useCart();
   const navigate = useNavigate();
 
@@ -37,6 +40,10 @@ const CustomerMenu = () => {
     fetchMenu();
     customerApi.get("/customer/profile/favourites")
       .then((r) => setFavourites(r.data.favourites || []))
+      .catch(() => {});
+
+    customerApi.get("/promos/active")
+      .then((r) => setPromos(r.data.promos || []))
       .catch(() => {});
 
     const handler = ({ id, available }) => {
@@ -84,6 +91,13 @@ const CustomerMenu = () => {
     });
   }, [items, activeCategory, vegFilter, search, favourites]);
 
+  // Cycle promo banner every 3.5s
+  useEffect(() => {
+    if (promos.length <= 1) return;
+    promoTimer.current = setInterval(() => setPromoIdx((i) => (i + 1) % promos.length), 3500);
+    return () => clearInterval(promoTimer.current);
+  }, [promos.length]);
+
   const hasCart = itemCount > 0;
 
   return (
@@ -92,6 +106,25 @@ const CustomerMenu = () => {
 
         {/* ── Left: menu area ── */}
         <div className="cm-menu-area">
+
+          {/* Promo banner */}
+          {promos.length > 0 && (
+            <div className="cm-promo-banner">
+              <span className="cm-promo-tag">🏷️ OFFER</span>
+              <span className="cm-promo-text">
+                {promos[promoIdx].description || `${promos[promoIdx].discount_type === "percentage" ? `${promos[promoIdx].discount_value}% off` : promos[promoIdx].discount_type === "fixed" ? `£${promos[promoIdx].discount_value} off` : "Buy 1 Get 1 Free"}`}
+                {" · "}
+                <strong>Use code: {promos[promoIdx].code}</strong>
+              </span>
+              {promos.length > 1 && (
+                <div className="cm-promo-dots">
+                  {promos.map((_, i) => (
+                    <span key={i} className={`cm-promo-dot ${i === promoIdx ? "active" : ""}`} onClick={() => setPromoIdx(i)} />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Search */}
           <div className="cm-search-wrap">

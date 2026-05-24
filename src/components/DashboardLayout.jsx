@@ -48,7 +48,7 @@ function usePendingOrders(user) {
         clearInterval(reminderRef.current);
         reminderRef.current = null;
       }
-    }, 30000); // ring every 30s while orders are pending
+    }, 8000); // ring every 8s until all pending orders are accepted/rejected
   }, []);
 
   const fetchPendingOnline = useCallback(async () => {
@@ -66,7 +66,7 @@ function usePendingOrders(user) {
         sendDlNewOrderNotif(count - prevPendingRef.current);
       }
 
-      // Start 30s reminder loop while there are pending orders
+      // Start 8s reminder loop while there are pending orders
       if (count > 0) {
         startReminder();
       } else {
