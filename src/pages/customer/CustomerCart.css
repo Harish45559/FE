@@ -189,3 +189,14 @@
 @media (max-width: 780px) {
   .cc-layout { grid-template-columns: 1fr; }
 }
+
+/* Promo code */
+.cc-promo-row { display: flex; gap: 8px; }
+.cc-promo-input { flex: 1; padding: 9px 12px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 0.88rem; letter-spacing: 1px; outline: none; }
+.cc-promo-input:focus { border-color: #dd3a00; }
+.cc-promo-btn { padding: 9px 18px; background: #dd3a00; color: #fff; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.cc-promo-btn:disabled { background: #ccc; cursor: default; }
+.cc-promo-applied { display: flex; justify-content: space-between; align-items: center; background: #f0fdf4; border: 1.5px solid #bbf7d0; border-radius: 8px; padding: 10px 14px; font-size: 0.88rem; color: #16a34a; }
+.cc-promo-remove { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 0.8rem; font-weight: 700; }
+.cc-promo-msg { margin-top: 8px; font-size: 0.82rem; color: #16a34a; font-weight: 600; }
+.cc-promo-error { margin-top: 8px; font-size: 0.82rem; color: #ef4444; font-weight: 600; }

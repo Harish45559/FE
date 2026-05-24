@@ -229,6 +229,9 @@ const CustomerOrders = () => {
                       </td>
 
                       <td data-label="Total">
+                        {order.promo_code && (
+                          <div className="co-promo-tag">🏷️ {order.promo_code} (-£{parseFloat(order.discount_amount || 0).toFixed(2)})</div>
+                        )}
                         <div className="co-total">£{parseFloat(order.final_amount).toFixed(2)}</div>
                         <div className="co-payment">{order.payment_method}</div>
                       </td>

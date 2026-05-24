@@ -417,3 +417,35 @@
   .cm-name      { font-size: 0.8rem; }
   .cm-add-btn   { padding: 6px 10px; font-size: 0.75rem; }
 }
+
+/* Promo banner */
+.cm-promo-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(90deg, #dd3a00, #ff6b35);
+  color: #fff;
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  font-size: 0.85rem;
+  flex-wrap: wrap;
+}
+.cm-promo-tag {
+  background: rgba(255,255,255,0.2);
+  border-radius: 4px;
+  padding: 2px 7px;
+  font-weight: 800;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+.cm-promo-text { flex: 1; }
+.cm-promo-dots { display: flex; gap: 5px; align-items: center; }
+.cm-promo-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.4);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.cm-promo-dot.active { background: #fff; }

@@ -123,7 +123,7 @@ const OrderConfirmation = () => {
           <div className="oc-row">
             <span>Status</span>
             <span className={`oc-value ${order.payment_status === "paid" ? "oc-paid" : "oc-pending"}`}>
-              {order.payment_status === "paid" ? "✅ Paid" : "Pay on Collection"}
+              {order.payment_status === "paid" ? "✅ Paid" : "⏳ Awaiting Payment"}
             </span>
           </div>
 
@@ -138,6 +138,20 @@ const OrderConfirmation = () => {
             ))}
           </div>
 
+          <div className="oc-divider" />
+
+          {order.promo_code && (
+            <>
+              <div className="oc-total-row" style={{ fontSize: "0.85rem", color: "#888" }}>
+                <span>Subtotal</span>
+                <span>£{parseFloat(order.total_amount).toFixed(2)}</span>
+              </div>
+              <div className="oc-total-row" style={{ color: "#16a34a", fontWeight: 700 }}>
+                <span>🏷️ {order.promo_code}</span>
+                <span>-£{parseFloat(order.discount_amount || 0).toFixed(2)}</span>
+              </div>
+            </>
+          )}
           <div className="oc-total-row">
             <span>Total</span>
             <span>£{parseFloat(order.final_amount).toFixed(2)}</span>
