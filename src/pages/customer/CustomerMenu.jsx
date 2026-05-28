@@ -37,22 +37,34 @@ const CustomerMenu = () => {
         setLoading(false);
       }
     };
+
+    const fetchPromos = () => {
+      customerApi.get("/promos/active")
+        .then((r) => setPromos(r.data.promos || []))
+        .catch(() => {});
+    };
+
     fetchMenu();
+    fetchPromos();
     customerApi.get("/customer/profile/favourites")
       .then((r) => setFavourites(r.data.favourites || []))
       .catch(() => {});
 
-    customerApi.get("/promos/active")
-      .then((r) => setPromos(r.data.promos || []))
-      .catch(() => {});
-
-    const handler = ({ id, available }) => {
+    const handleAvailability = ({ id, available }) => {
       setItems((prev) =>
         prev.map((item) => (item.id === id ? { ...item, available } : item)),
       );
     };
-    socket.on("menu:availability-changed", handler);
-    return () => socket.off("menu:availability-changed", handler);
+
+    socket.on("menu:availability-changed", handleAvailability);
+    socket.on("menu:changed", fetchMenu);
+    socket.on("promo:updated", fetchPromos);
+
+    return () => {
+      socket.off("menu:availability-changed", handleAvailability);
+      socket.off("menu:changed", fetchMenu);
+      socket.off("promo:updated", fetchPromos);
+    };
   }, []);
 
   const handleImgError = (id) =>
