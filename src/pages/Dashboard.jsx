@@ -25,9 +25,22 @@ const Dashboard = () => {
   const [heldOrders, setHeldOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [today] = useState(DateTime.now().setZone("Europe/London"));
+  const [tillOpen, setTillOpen] = useState(localStorage.getItem("isTillOpen") === "true");
+  const [tillOpenedBy, setTillOpenedBy] = useState(localStorage.getItem("tillOpenedBy") || "—");
 
-  const tillOpen = localStorage.getItem("isTillOpen") === "true";
-  const tillOpenedBy = localStorage.getItem("tillOpenedBy") || "—";
+  useEffect(() => {
+    const refreshTill = () => {
+      setTillOpen(localStorage.getItem("isTillOpen") === "true");
+      setTillOpenedBy(localStorage.getItem("tillOpenedBy") || "—");
+    };
+    const onVisibility = () => { if (document.visibilityState === "visible") refreshTill(); };
+    window.addEventListener("storage", refreshTill);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("storage", refreshTill);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, []);
 
   useEffect(() => {
     const fetchAll = async () => {
