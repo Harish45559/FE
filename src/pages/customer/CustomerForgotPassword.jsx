@@ -78,10 +78,17 @@ const CustomerForgotPassword = () => {
                 </button>
               </>
             ) : (
-              <p style={{ color: "#6effc2", fontSize: "0.92rem", marginBottom: "18px", lineHeight: "1.6" }}>
-                ✅ Password reset email sent.<br />
-                Please check your inbox and click the link to reset your password.
-              </p>
+              <div style={{ color: "#6effc2", fontSize: "0.92rem", marginBottom: "18px", lineHeight: "1.8", textAlign: "left" }}>
+                <p style={{ marginBottom: "12px" }}>✅ Password reset email sent to <strong>{email}</strong></p>
+                <p style={{ color: "#aaa", fontSize: "0.85rem" }}>
+                  📬 If you don't see it in your inbox within 2 minutes:
+                </p>
+                <ul style={{ color: "#aaa", fontSize: "0.85rem", paddingLeft: "18px", marginTop: "6px" }}>
+                  <li>Check your <strong style={{ color: "#fff" }}>Spam</strong> or <strong style={{ color: "#fff" }}>Junk</strong> folder</li>
+                  <li>Check <strong style={{ color: "#fff" }}>Promotions</strong> tab (Gmail)</li>
+                  <li>Search for <strong style={{ color: "#fff" }}>mirchimafiyaluton@gmail.com</strong></li>
+                </ul>
+              </div>
             )}
           </div>
         )}
