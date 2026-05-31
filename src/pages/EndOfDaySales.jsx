@@ -49,6 +49,8 @@ const EndOfDaySales = () => {
   const [filterMode, setFilterMode] = useState("today");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const [fromTime, setFromTime] = useState("00:00");
+  const [toTime, setToTime] = useState("23:59");
   const [paymentFilter, setPaymentFilter] = useState("all");
   const [chartType, setChartType] = useState("bar");
 
@@ -58,27 +60,21 @@ const EndOfDaySales = () => {
 
   const activeRange = useMemo(() => {
     const today = DateTime.now().toISODate();
-    if (filterMode === "today") return { from: today, to: today };
+    if (filterMode === "today") return { from: today, to: today, fromTime: "00:00", toTime: "23:59" };
     if (filterMode === "weekly")
-      return {
-        from: DateTime.now().minus({ days: 6 }).toISODate(),
-        to: today,
-      };
+      return { from: DateTime.now().minus({ days: 6 }).toISODate(), to: today, fromTime: "00:00", toTime: "23:59" };
     if (filterMode === "monthly")
-      return {
-        from: DateTime.now().startOf("month").toISODate(),
-        to: today,
-      };
+      return { from: DateTime.now().startOf("month").toISODate(), to: today, fromTime: "00:00", toTime: "23:59" };
     if (filterMode === "custom" && fromDate && toDate)
-      return { from: fromDate, to: toDate };
-    return { from: today, to: today };
-  }, [filterMode, fromDate, toDate]);
+      return { from: fromDate, to: toDate, fromTime: fromTime || "00:00", toTime: toTime || "23:59" };
+    return { from: today, to: today, fromTime: "00:00", toTime: "23:59" };
+  }, [filterMode, fromDate, toDate, fromTime, toTime]);
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
       try {
-        const params = { fromDate: activeRange.from, toDate: activeRange.to };
+        const params = { fromDate: activeRange.from, toDate: activeRange.to, fromTime: activeRange.fromTime, toTime: activeRange.toTime };
         const [s, t, o] = await Promise.all([
           api.get("/sales/summary", { params }),
           api.get("/sales/topselling", { params }),
@@ -172,6 +168,8 @@ const EndOfDaySales = () => {
   const resetFilters = () => {
     setFromDate("");
     setToDate("");
+    setFromTime("00:00");
+    setToTime("23:59");
     setPaymentFilter("all");
     setSourceFilter("all");
     setFilterMode("today");
@@ -279,12 +277,24 @@ const EndOfDaySales = () => {
               value={fromDate}
               onChange={(e) => setFromDate(e.target.value)}
             />
+            <input
+              type="time"
+              className="eod-date-inp"
+              value={fromTime}
+              onChange={(e) => setFromTime(e.target.value)}
+            />
             <span className="eod-sep">to</span>
             <input
               type="date"
               className="eod-date-inp"
               value={toDate}
               onChange={(e) => setToDate(e.target.value)}
+            />
+            <input
+              type="time"
+              className="eod-date-inp"
+              value={toTime}
+              onChange={(e) => setToTime(e.target.value)}
             />
             <button className="eod-apply-btn" onClick={applyCustom}>
               Apply
