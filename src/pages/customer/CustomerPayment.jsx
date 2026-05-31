@@ -132,27 +132,27 @@ const CustomerPayment = () => {
           checkoutId,
           onResponse(type) {
             if (type === "success") {
-              // Verify with backend — only navigate if SumUp confirms PAID
               customerApi
                 .post(`/customer/orders/${order.id}/verify-payment`, { checkoutId })
                 .then((res) => {
                   if (res.data.success) {
                     onSuccess();
                   } else {
-                    setFetchError("Payment could not be verified. Please try again or contact us.");
+                    customerApi.post(`/customer/orders/${order.id}/mark-payment-failed`).catch(() => {});
+                    navigate("/customer/payment-failed", { state: { order } });
                   }
                 })
                 .catch((err) => {
                   if (err?.response?.data?.success === false) {
-                    // Backend confirmed payment failed — show error, don't navigate
-                    setFetchError("Payment failed. Please check your card and try again.");
+                    customerApi.post(`/customer/orders/${order.id}/mark-payment-failed`).catch(() => {});
+                    navigate("/customer/payment-failed", { state: { order } });
                   } else {
-                    // Network error only — navigate anyway, webhook will update DB
                     onSuccess();
                   }
                 });
             } else if (type === "error") {
-              setFetchError("Payment failed. Please check your card details and try again.");
+              customerApi.post(`/customer/orders/${order.id}/mark-payment-failed`).catch(() => {});
+              navigate("/customer/payment-failed", { state: { order } });
             }
           },
         });

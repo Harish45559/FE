@@ -14,6 +14,12 @@ const ORDER_STATUS = {
   completed: { label: "Delivered", color: "#9ca3af", bg: "#f9fafb", border: "#e5e7eb" },
 };
 
+const getOrderStatusCfg = (order) => {
+  if (order.payment_status === "failed") return { label: "Payment Failed", color: "#ef4444", bg: "#fff5f5", border: "#fecaca" };
+  if (order.payment_status === "pending" && order.payment_method === "Card") return { label: "Awaiting Payment", color: "#f59e0b", bg: "#fffbeb", border: "#fde68a" };
+  return ORDER_STATUS[order.order_status] || ORDER_STATUS.pending;
+};
+
 const STATUS_FILTERS = [
   { key: "all",       label: "All" },
   { key: "pending",   label: "Pending" },
@@ -192,7 +198,7 @@ const CustomerOrders = () => {
               </thead>
               <tbody>
                 {filtered.map((order) => {
-                  const cfg     = ORDER_STATUS[order.order_status] || ORDER_STATUS.pending;
+                  const cfg     = getOrderStatusCfg(order);
                   const isReady = order.order_status === "ready";
                   return (
                     <tr key={order.id} className={isReady ? "co-row-ready" : ""}>
