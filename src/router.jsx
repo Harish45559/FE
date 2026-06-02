@@ -30,6 +30,7 @@ import OrderConfirmation from "./pages/customer/OrderConfirmation";
 import CustomerOrders from "./pages/customer/CustomerOrders";
 import CustomerProfile from "./pages/customer/CustomerProfile";
 import CustomerPayment from "./pages/customer/CustomerPayment";
+import PaymentFailed from "./pages/customer/PaymentFailed";
 import CustomerProtectedRoute from "./components/CustomerProtectedRoute";
 
 const AppRouter = () => {
@@ -92,6 +93,14 @@ const AppRouter = () => {
       element: (
         <CustomerProtectedRoute>
           <CustomerPayment />
+        </CustomerProtectedRoute>
+      ),
+    },
+    {
+      path: "/customer/payment-failed",
+      element: (
+        <CustomerProtectedRoute>
+          <PaymentFailed />
         </CustomerProtectedRoute>
       ),
     },
