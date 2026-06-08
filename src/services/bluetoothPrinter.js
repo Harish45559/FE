@@ -287,6 +287,9 @@ export const btPrintBoth = async (data) => {
   await send(buildKitchen(data));
 };
 
+export const btPrintCustomer = async (data) => { await send(buildCustomer(data)); };
+export const btPrintKitchen  = async (data) => { await send(buildKitchen(data)); };
+
 export const btPrintOnlineOrder = async (order) => {
   const data = {
     orderNumber:    order.order_number,
