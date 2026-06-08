@@ -391,6 +391,37 @@
   color: #888;
 }
 
+/* ── Print settings card ── */
+.md-print-settings {
+  margin-bottom: 16px;
+}
+
+.md-print-toggles {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  padding: 8px 0 4px;
+}
+
+.md-print-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.md-print-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-primary, #111);
+  min-width: 150px;
+}
+
+.md-print-hint {
+  font-size: 11px;
+  color: var(--color-text-secondary, #888);
+  margin: 6px 0 0;
+}
+
 /* ── Unavailable row dim ── */
 .md-row--unavailable td {
   opacity: 0.5;

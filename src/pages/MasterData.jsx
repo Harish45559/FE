@@ -5,6 +5,20 @@ import usePagination from "../hooks/usePagination";
 import PaginationBar from "../components/PaginationBar";
 
 const MasterData = () => {
+  const [printKitchen,  setPrintKitchen]  = useState(() => localStorage.getItem("printKitchenReceipt")  !== "false");
+  const [printCustomer, setPrintCustomer] = useState(() => localStorage.getItem("printCustomerReceipt") !== "false");
+
+  const toggleKitchen = () => {
+    const next = !printKitchen;
+    setPrintKitchen(next);
+    localStorage.setItem("printKitchenReceipt", String(next));
+  };
+  const toggleCustomer = () => {
+    const next = !printCustomer;
+    setPrintCustomer(next);
+    localStorage.setItem("printCustomerReceipt", String(next));
+  };
+
   const [categories, setCategories] = useState([]);
   const [menuItems, setMenuItems] = useState([]);
   const [newCategory, setNewCategory] = useState("");
@@ -204,6 +218,36 @@ const MasterData = () => {
         <div className="md-header">
           <h1 className="md-title">Master data</h1>
           <p className="md-subtitle">Manage categories and menu items</p>
+        </div>
+
+        {/* ── Print Settings ── */}
+        <div className="md-card md-print-settings">
+          <div className="md-card-header">
+            <span className="md-card-title">Receipt print settings</span>
+          </div>
+          <div className="md-print-toggles">
+            <div className="md-print-toggle-row">
+              <span className="md-print-label">🍳 Kitchen receipt</span>
+              <button
+                className={`md-toggle-btn ${printKitchen ? "md-toggle-btn--on" : "md-toggle-btn--off"}`}
+                onClick={toggleKitchen}
+                type="button"
+              >
+                {printKitchen ? "On" : "Off"}
+              </button>
+            </div>
+            <div className="md-print-toggle-row">
+              <span className="md-print-label">🧾 Customer receipt</span>
+              <button
+                className={`md-toggle-btn ${printCustomer ? "md-toggle-btn--on" : "md-toggle-btn--off"}`}
+                onClick={toggleCustomer}
+                type="button"
+              >
+                {printCustomer ? "On" : "Off"}
+              </button>
+            </div>
+          </div>
+          <p className="md-print-hint">Changes apply immediately — no save needed.</p>
         </div>
 
         <div className="md-layout">

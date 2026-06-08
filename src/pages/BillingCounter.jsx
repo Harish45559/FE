@@ -8,7 +8,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { getMenuImageUrl } from "../services/imageBase";
 import {
   btSupported, btConnected, btDeviceName,
-  btConnect, btDisconnect, btPrintBoth, btAutoConnect,
+  btConnect, btDisconnect, btPrintBoth, btPrintCustomer, btPrintKitchen, btAutoConnect,
 } from "../services/bluetoothPrinter";
 
 const toVegBool = (raw) => {
@@ -269,7 +269,7 @@ const BillingCounter = () => {
     }
   };
 
-  const renderReceiptHTML = (data) => {
+  const renderReceiptHTML = (data, options) => {
     const { orderNumber: onum, orderType: otype, customerName: cname, customerPhone: cphone, paymentMethod: pay, customerNotes: cnotes, orderDate: odate, items, totals, staffName, pagerQR } = data;
 
     // Items rows: "2x Punugulu  £5.00" — name left, price right
@@ -345,7 +345,10 @@ const BillingCounter = () => {
         <p style="text-align:center;font-size:10px;color:#111">${odate || ""}</p>
       </div>`;
 
-    return `${customerCopy}${kitchenCopy}`;
+    const inc = options || {};
+    const showCustomer = inc.customer !== false;
+    const showKitchen  = inc.kitchen  !== false;
+    return `${showCustomer ? customerCopy : ""}${showKitchen ? kitchenCopy : ""}`;
   };
 
   const receiptStyles = `<style>
@@ -482,17 +485,27 @@ const BillingCounter = () => {
         pagerUrl:      autoPager?.pagerUrl ?? null,
       };
 
-      if (btConnected()) {
-        // Bluetooth: silent, no dialog, real auto-cut
-        try {
-          await btPrintBoth(receiptData);
-        } catch (btErr) {
-          toast.warning("Bluetooth print failed, falling back to browser print");
-          printViaIframe(renderReceiptHTML({ ...receiptData, customerPhone: null }));
+      const printOpts = {
+        customer: localStorage.getItem("printCustomerReceipt") !== "false",
+        kitchen:  localStorage.getItem("printKitchenReceipt")  !== "false",
+      };
+
+      if (printOpts.customer || printOpts.kitchen) {
+        if (btConnected()) {
+          // Bluetooth: silent, no dialog, real auto-cut
+          try {
+            if (printOpts.customer) await btPrintCustomer(receiptData);
+            if (printOpts.kitchen)  await btPrintKitchen(receiptData);
+          } catch (btErr) {
+            toast.warning("Bluetooth print failed, falling back to browser print");
+            const html = renderReceiptHTML({ ...receiptData, customerPhone: null }, printOpts);
+            if (html) printViaIframe(html);
+          }
+        } else {
+          // Fallback: iframe print (shows OS dialog)
+          const html = renderReceiptHTML({ ...receiptData, customerPhone: null }, printOpts);
+          if (html) printViaIframe(html);
         }
-      } else {
-        // Fallback: iframe print (shows OS dialog)
-        printViaIframe(renderReceiptHTML({ ...receiptData, customerPhone: null }));
       }
       if (resumedHeldOrderId) {
         try {
