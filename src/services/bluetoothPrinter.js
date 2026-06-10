@@ -6,7 +6,7 @@ const GS  = 0x1D;
 
 const CMD = {
   INIT:         [ESC, 0x40],
-  CODE_PAGE:    [ESC, 0x74, 0x13],  // ESC t 19 = Windows-1252 — fixes £ showing as "Tú"
+  CODE_PAGE:    [ESC, 0x74, 0x00],  // ESC t 0 = CP437 (printer default)
   ALIGN_LEFT:   [ESC, 0x61, 0x00],
   ALIGN_CENTER: [ESC, 0x61, 0x01],
   BOLD_ON:      [ESC, 0x45, 0x01],
@@ -127,14 +127,15 @@ const send = async (bytes) => {
   }
 };
 
-// CP1252 encoder — £ (U+00A3) → 0xA3 single byte; avoids UTF-8 two-byte "Tú" artefact
+// CP437 encoder — £ (U+00A3) → 0x9C (CP437 position for £)
 const enc = (text) => {
   const bytes = [];
   for (let i = 0; i < text.length; i++) {
     const c = text.charCodeAt(i);
-    if (c < 128) bytes.push(c);
-    else if (c < 256) bytes.push(c); // Latin-1 / CP1252 passthrough (covers £ = 0xA3)
-    else bytes.push(0x3F);           // '?' fallback for chars outside CP1252
+    if (c === 0xA3) bytes.push(0x9C); // £ → CP437 byte
+    else if (c < 128) bytes.push(c);
+    else if (c < 256) bytes.push(c);
+    else bytes.push(0x3F);            // '?' fallback for chars outside Latin-1
   }
   return bytes;
 };
